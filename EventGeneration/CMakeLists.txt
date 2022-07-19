@@ -1,0 +1,2 @@
+add_library(EventGeneration ITritiumSpectrum.cxx)
+target_link_libraries(EventGeneration PUBLIC)
