@@ -1,0 +1,74 @@
+/// Event.cxx
+
+#include "EventGeneration/Event.h"
+
+#include "EventGeneration/ParticleState.h"
+#include "ElectronDynamics/BaseField.h"
+#include "ElectronDynamics/BorisSolver.h"
+
+#include "TMath.h"
+#include "TVector3.h"
+
+#include <cassert>
+#include <tuple>
+
+rad::Event::Event(std::vector<ParticleState> particles, BaseField* field, double simStepSize, double simTime)
+{
+  assert(particles.size() > 0);
+  
+  particleList          = particles;
+  magneticField         = field;
+  simulationStepSize    = simStepSize;
+  maximumSimulationTime = simTime;
+  
+  clockTime = 0.0; // Just for simplicity
+
+  // Create a separate Boris solver for each particle
+  // keep them in the same ordering as the particles
+  solverList.clear();
+  for (auto & part : particleList) {
+    BorisSolver solver(field, part.GetParticleCharge(), part.GetParticleMass(), 2*R_E/(3*TMath::C()));
+    solverList.push_back(solver);
+  }
+}
+
+bool rad::Event::ParticleStartCheck(ParticleState part)
+{
+  return (part.currentTime <= clockTime);
+}
+
+void rad::Event::AdvanceParticleStep(int particleNumber)
+{
+  std::tuple<TVector3, TVector3> outputVectors = solverList[particleNumber].advance_step(simulationStepSize, particleList[particleNumber].GetPositionVector(), particleList[particleNumber].GetVelocityVector());
+  
+  // Update the relevant stats 
+  particleList[particleNumber].positionVector = std::get<0>(outputVectors);
+  particleList[particleNumber].velocityVector = std::get<1>(outputVectors);
+  particleList[particleNumber].currentTime += simulationStepSize;
+}
+
+void rad::Event::PropagateParticles()
+{
+  std::cout<<"Simulation time is "<<maximumSimulationTime<<" s"<<std::endl;
+  std::cout<<"Simulation step size is "<<simulationStepSize<<" s"<<std::endl;
+  int nTimeSteps = maximumSimulationTime / simulationStepSize;
+  std::cout<<"Time steps = "<<nTimeSteps<<std::endl;
+
+  // Move forward through time
+  for (int iStep = 0; iStep < nTimeSteps; iStep++) {
+    
+    for (int iPart = 0; iPart < particleList.size(); iPart++) {
+      // Check if this particle is meant to be active yet
+      if (ParticleStartCheck(particleList[iPart])) {
+	particleList[iPart].currentTime = clockTime;
+	AdvanceParticleStep(iPart);
+      }
+    }
+    clockTime += simulationStepSize;
+      
+  }
+  
+}
+
+
+
