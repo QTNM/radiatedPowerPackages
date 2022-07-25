@@ -39,7 +39,7 @@ bool rad::Event::ParticleStartCheck(ParticleState part)
 
 void rad::Event::AdvanceParticleStep(int particleNumber)
 {
-  std::tuple<TVector3, TVector3> outputVectors = solverList[particleNumber].advance_step(clockTime-particleList[particleNumber].currentTime), particleList[particleNumber].GetPositionVector(), particleList[particleNumber].GetVelocityVector());
+  std::tuple<TVector3, TVector3> outputVectors = solverList[particleNumber].advance_step(clockTime-particleList[particleNumber].currentTime, particleList[particleNumber].GetPositionVector(), particleList[particleNumber].GetVelocityVector());
   
   // Update the relevant stats 
   particleList[particleNumber].positionVector = std::get<0>(outputVectors);
