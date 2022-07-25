@@ -13,7 +13,6 @@
 #include "ElectronDynamics/BorisSolver.h"
 
 #include <vector>
-#include <utility>
 
 namespace rad
 {
@@ -27,18 +26,24 @@ namespace rad
     /// \param simTime Total time for particles to be simulated for (in seconds)
     Event(std::vector<ParticleState> particles, BaseField* field, double simStepSize, double simTime);
 
+    /// Propagates the particles for the time specified at construction
     void PropagateParticles();
     
   private:
-    // Vector of particles
+    /// Vector of particles
     std::vector<ParticleState> particleList;
+
+    /// Vector of solvers corresponding to the particles
     std::vector<BorisSolver> solverList;
     
     double clockTime;
     double simulationStepSize;
     double maximumSimulationTime;
     BaseField* magneticField;
-    
+
+    /// Checks if a particle has started relative to the Event clock time
+    /// \param part The particle which we are checking if it has started
+    /// \Returns True if the particle should be being propagated
     bool ParticleStartCheck(ParticleState part);
 
     /// Moves a given particle forward one step in time (according to the supplied time step)
