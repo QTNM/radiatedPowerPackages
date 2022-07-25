@@ -67,5 +67,17 @@ void rad::Event::PropagateParticles()
   }
 }
 
+rad::ParticleState rad::Event::GetParticle(int particleIndex)
+{
+  if (particleIndex >= 0 && particleIndex < particleList.size()) {
+    return particleList[particleIndex];
+  }
+  else {
+    // Return a placeholder state so the application doesn't just crash
+    std::cout<<"Requested a particle that does not exist"<<std::endl;
+    ParticleState placeholder(clockTime, 0.0, 0.0, TVector3(9999.9, 9999.9, 9999.9), TVector3(0.0, 0.0, 0.0));
+    return placeholder;
+  }
+}
 
 

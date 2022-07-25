@@ -28,6 +28,15 @@ namespace rad
 
     /// Propagates the particles for the time specified at construction
     void PropagateParticles();
+
+    /// Gives the clock time of the event
+    /// \Returns The Event clock time (in seconds)
+    double GetClockTime() { return clockTime; }
+
+    /// Get the state for one of the particles in the Event
+    /// \param particleIndex Index of particle we wish to return
+    /// \Returns A copy of the selected ParticleState
+    ParticleState GetParticle(int particleIndex);
     
   private:
     /// Vector of particles
