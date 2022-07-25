@@ -39,7 +39,7 @@ bool rad::Event::ParticleStartCheck(ParticleState part)
 
 void rad::Event::AdvanceParticleStep(int particleNumber)
 {
-  std::tuple<TVector3, TVector3> outputVectors = solverList[particleNumber].advance_step(simulationStepSize, particleList[particleNumber].GetPositionVector(), particleList[particleNumber].GetVelocityVector());
+  std::tuple<TVector3, TVector3> outputVectors = solverList[particleNumber].advance_step(clockTime-particleList[particleNumber].currentTime), particleList[particleNumber].GetPositionVector(), particleList[particleNumber].GetVelocityVector());
   
   // Update the relevant stats 
   particleList[particleNumber].positionVector = std::get<0>(outputVectors);
@@ -56,7 +56,7 @@ void rad::Event::PropagateParticles()
 
   // Move forward through time
   for (int iStep = 0; iStep < nTimeSteps; iStep++) {
-    
+    clockTime += simulationStepSize;    
     for (int iPart = 0; iPart < particleList.size(); iPart++) {
       // Check if this particle is meant to be active yet
       if (ParticleStartCheck(particleList[iPart])) {
@@ -64,10 +64,7 @@ void rad::Event::PropagateParticles()
 	AdvanceParticleStep(iPart);
       }
     }
-    clockTime += simulationStepSize;
-      
   }
-  
 }
 
 
