@@ -11,6 +11,7 @@
 #include "EventGeneration/ParticleState.h"
 #include "ElectronDynamics/BaseField.h"
 #include "ElectronDynamics/BorisSolver.h"
+#include "Antennas/IAntenna.h"
 
 #include <vector>
 
@@ -21,11 +22,20 @@ namespace rad
 
     /// Parametrised constructor
     /// \param particles A vector of the various particle states one wishes to propagate
+    /// \param antennas A vector of the antennas at which signals are generated
+    /// \param field The magnetic field in which the particles are propagated
+    /// \param simStepSize The time step size to use in the simulation (in seconds)
+    /// \param simTime Total time for particles to be simulated for (in seconds)
+    Event(std::vector<ParticleState> particles, std::vector<IAntenna*> antennas,
+	  BaseField* field, double simStepSize, double simTime);
+
+    /// Parametrised constructor
+    /// \param particles A vector of the various particle states one wishes to propagate
     /// \param field The magnetic field in which the particles are propagated
     /// \param simStepSize The time step size to use in the simulation (in seconds)
     /// \param simTime Total time for particles to be simulated for (in seconds)
     Event(std::vector<ParticleState> particles, BaseField* field, double simStepSize, double simTime);
-
+    
     /// Propagates the particles for the time specified at construction
     void PropagateParticles();
 
@@ -44,6 +54,9 @@ namespace rad
 
     /// Vector of solvers corresponding to the particles
     std::vector<BorisSolver> solverList;
+
+    /// Vector of antennas for signals to be generated on
+    std::vector<IAntenna*> antennaList;
     
     double clockTime;
     double simulationStepSize;
@@ -58,6 +71,12 @@ namespace rad
     /// Moves a given particle forward one step in time (according to the supplied time step)
     /// \param particleNumber The index of the particle in the event to be propagated
     void AdvanceParticleStep(int particleNumber);
+
+    /// Calculates the light propagation time between a particle and an antenna point
+    /// \param particle The particle in question
+    /// \param antenna The selected antenna
+    /// \Return The light propagation time in seconds
+    double GetPropagationTime(ParticleState particle, IAntenna* antenna);
   };
 }
 

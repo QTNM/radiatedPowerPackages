@@ -5,6 +5,7 @@
 #include "EventGeneration/ParticleState.h"
 #include "ElectronDynamics/BaseField.h"
 #include "ElectronDynamics/BorisSolver.h"
+#include "Antennas/IAntenna.h"
 
 #include "TMath.h"
 #include "TVector3.h"
@@ -20,9 +21,32 @@ rad::Event::Event(std::vector<ParticleState> particles, BaseField* field, double
   magneticField         = field;
   simulationStepSize    = simStepSize;
   maximumSimulationTime = simTime;
+  antennaList = {};
   
   clockTime = 0.0; // Just for simplicity
 
+  // Create a separate Boris solver for each particle
+  // keep them in the same ordering as the particles
+  solverList.clear();
+  for (auto & part : particleList) {
+    BorisSolver solver(field, part.GetParticleCharge(), part.GetParticleMass(), 2*R_E/(3*TMath::C()));
+    solverList.push_back(solver);
+  }
+}
+
+rad::Event::Event(std::vector<ParticleState> particles, std::vector<IAntenna*> antennas,
+		  BaseField* field, double simStepSize, double simTime)
+{
+  assert(particles.size() > 0);
+  
+  particleList          = particles;
+  magneticField         = field;
+  simulationStepSize    = simStepSize;
+  maximumSimulationTime = simTime;
+  antennaList = antennas;
+  
+  clockTime = 0.0; // Just for simplicity
+  
   // Create a separate Boris solver for each particle
   // keep them in the same ordering as the particles
   solverList.clear();
@@ -80,4 +104,8 @@ rad::ParticleState rad::Event::GetParticle(int particleIndex)
   }
 }
 
-
+double rad::Event::GetPropagationTime(ParticleState particle, IAntenna* antenna)
+{
+  TVector3 disp = particle.GetPositionVector() - antenna->GetAntennaPosition();
+  return (disp.Mag() / TMath::C());
+}
