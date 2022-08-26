@@ -93,3 +93,21 @@ TVector3 rad::CircularWaveguide::GetModeHField(Mode_t modeType, int n, int m, TV
 {
   return GetModeHField(modeType, n, m, pos.Perp(), pos.Phi(), pos.Z(), omega, A, B);
 }
+
+double rad::CircularWaveguide::GetModeImpedance(Mode_t modeType, int n, int m, double omega)
+{
+  if (modeType == kTE) {
+    double pnmPrime{ GetBesselPrimeZero(n, m) }; 
+    double k_c{ pnmPrime / a };
+    double k{ omega/TMath::C() };
+    double beta{ sqrt(pow(k*k, 2) - k_c*k_c) };
+    return k * sqrt(MU0/EPSILON0) / beta;
+  }
+  else {
+    double pnm{ boost::math::cyl_bessel_j_zero(double(n), m) };
+    double k_c{ pnm / a };
+    double k{ omega/TMath::C() };
+    double beta{ sqrt(pow(k*k, 2) - k_c*k_c) };
+    return beta * sqrt(MU0/EPSILON0) / k;
+  }
+}
