@@ -95,6 +95,14 @@ double rad::GetSpeedFromKE(double T, double particleMass)
   return speed;
 }
 
+double rad::GetGyroradius(TVector3 velocity, TVector3 bField, double particleMass)
+{
+  double gamma{ 1 / sqrt( 1 - velocity.Dot(velocity)/(TMath::C()*TMath::C()) ) };
+  TVector3 vPerp{ velocity - (velocity.Dot(bField.Unit())*bField) };
+  double rg{ gamma*particleMass*vPerp.Mag() / (TMath::Qe()*bField.Mag()) };
+  return rg;
+}
+
 // Very similar to the FFTtools implementation but without the scaling of the x axis the MHz
 TGraph* rad::MakePowerSpectrumNorm(const TGraph* grWave)
 {

@@ -48,6 +48,12 @@ namespace rad
   /// \param particleMass The particle mass in kilograms
   /// \Returns The particle speed in metres per second
   double GetSpeedFromKE(double T, double particleMass);
+
+  /// Function for calculating the gyroradius/Larmor radius/cyclotron radius of a particle
+  /// \param velocity Velocity vector of the particle in questions. Units of metres per second.
+  /// \param bField The magnetioc field vector at the particle position in Tesla
+  /// \param particleMass The particle mass in kg
+  double GetGyroradius(TVector3 velocity, TVector3 bField, double particleMass);
   
   // Produces power spectrum with the desired normalisation
   TGraph* MakePowerSpectrumNorm(const TGraph* grWave);
