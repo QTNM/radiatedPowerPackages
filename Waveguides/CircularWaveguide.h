@@ -47,6 +47,16 @@ namespace rad {
     /// \param A Arbitrary amplitude for part of solution (default = 1)
     /// \param B Arbitrary amplitude for part of solution (default = 0)
     TVector3 GetModeEField(Mode_t modeType, int n, int m, double rho, double phi, double z, double omega, double A=1, double B=0);
+
+    /// Gets the electric field vector for a given mode at a point
+    /// \param modeType The mode type to get (either TE or TM)
+    /// \param n The angular number of the mode
+    /// \param m The radial number of the mode
+    /// \param pos The position vector (in metres)
+    /// \param omega Angular frequency of the chosen wave
+    /// \param A Arbitrary amplitude for part of solution (default = 1)
+    /// \param B Arbitrary amplitude for part of solution (default = 0)
+    TVector3 GetModeEField(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A=1, double B=0);
     
   };
 }

@@ -47,3 +47,8 @@ TVector3 rad::CircularWaveguide::GetModeEField(Mode_t modeType, int n, int m, do
     return eField;    
   }
 }
+
+TVector3 rad::CircularWaveguide::GetModeEField(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A, double B)
+{
+  return GetModeEField(modeType, n, m, pos.Perp(), pos.Phi(), pos.Z(), omega, A, B);
+}
