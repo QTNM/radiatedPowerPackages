@@ -142,6 +142,12 @@ namespace rad
   /// \Returns 1, for x > 0
   /// \Returns 0, for x <= 0
   double HeavisideFunc(double x);
+
+  /// Function for getting the zeros of the derivative of Bessel functions
+  /// \param n The order of the Bessel function being differentiated
+  /// \param m The zero of the derived function (must be > 0)
+  /// \Returns The specified root of the derivative of the nth Bessel function
+  double GetBesselPrimeZero(unsigned int n, unsigned int m);
 }
  
 #endif
