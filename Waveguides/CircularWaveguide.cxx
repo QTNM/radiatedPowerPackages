@@ -116,11 +116,16 @@ double rad::CircularWaveguide::GetModeImpedance(Mode_t modeType, int n, int m, d
     double beta{ sqrt(pow(k*k, 2) - k_c*k_c) };
     return k * sqrt(MU0/EPSILON0) / beta;
   }
-  else {
+  else if (modeType == kTM) {
     double pnm{ boost::math::cyl_bessel_j_zero(double(n), m) };
     double k_c{ pnm / a };
     double k{ omega/TMath::C() };
     double beta{ sqrt(pow(k*k, 2) - k_c*k_c) };
     return beta * sqrt(MU0/EPSILON0) / k;
+  }
+  else {
+    // This is a TEM mode that which is not supported by this waveguide
+    std::cout<<"TEM modes are not supported by circular waveguides."<<std::endl;
+    return -1;
   }
 }
