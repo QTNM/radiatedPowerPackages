@@ -7,11 +7,13 @@
 #ifndef CIRCULAR_WAVEGUIDE_H
 #define CIRCULAR_WAVEGUIDE_H
 
+#include "Waveguides/IWaveguide.h"
+
 #include "TVector3.h"
 
 namespace rad {
 
-  class CircularWaveguide {
+  class CircularWaveguide : public IWaveguide {
 
   private:
     double a; // Waveguide inner radius (in metres)
