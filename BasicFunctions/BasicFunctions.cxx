@@ -455,22 +455,22 @@ double rad::GetBesselPrimeZero(unsigned int n, unsigned int m)
   }
   else if (n < 6) {
     if (n == 0) {
-      p_prime_nm = zerosJ0Prime[m];
+      p_prime_nm = zerosJ0Prime[m-1];
     }
     else if (n == 1) {
-      p_prime_nm = zerosJ1Prime[m];
+      p_prime_nm = zerosJ1Prime[m-1];
     }
     else if (n == 2) {
-      p_prime_nm = zerosJ2Prime[m];
+      p_prime_nm = zerosJ2Prime[m-1];
     }
     else if (n == 3) {
-      p_prime_nm = zerosJ3Prime[m];
+      p_prime_nm = zerosJ3Prime[m-1];
     }
     else if (n == 4) {
-      p_prime_nm = zerosJ4Prime[m];
+      p_prime_nm = zerosJ4Prime[m-1];
     }
     else if (n == 5) {
-      p_prime_nm = zerosJ5Prime[m];
+      p_prime_nm = zerosJ5Prime[m-1];
     }
     return p_prime_nm;
   }
