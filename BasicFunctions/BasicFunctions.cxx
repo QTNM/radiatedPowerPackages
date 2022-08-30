@@ -439,7 +439,7 @@ double rad::HeavisideFunc(double x)
     return 0.0;
 }
 
-double GetBesselPrimeZero(unsigned int n, unsigned int m)
+double rad::GetBesselPrimeZero(unsigned int n, unsigned int m)
 {
   double zerosJ0Prime[5] = { 3.8317, 7.0156, 10.1735, 13.3237, 16.4706 };
   double zerosJ1Prime[5] = { 1.8412, 5.3314, 8.5363, 11.7060, 14.8636 };
