@@ -30,7 +30,7 @@ TVector3 rad::CircularWaveguide::GetModeEField(Mode_t modeType, int n, int m, do
     TVector3 eField{ Erho.real()*cos(phi) - Ephi.real()*sin(phi), Erho.real()*sin(phi) + Ephi.real()*cos(phi), Ez.real() };
     return eField;
   }
-  else {
+  else if (modeType == kTM) {
     // We have a TM mode
     double pnm{ boost::math::cyl_bessel_j_zero(double(n), m) };
     double k_c{ pnm / a };
@@ -45,6 +45,12 @@ TVector3 rad::CircularWaveguide::GetModeEField(Mode_t modeType, int n, int m, do
 
     TVector3 eField{ Erho.real()*cos(phi) - Ephi.real()*sin(phi), Erho.real()*sin(phi) + Ephi.real()*cos(phi), Ez.real() };
     return eField;    
+  }
+  else {
+    // This is a TEM mode that which is not supported by this waveguide
+    std::cout<<"TEM modes are not supported by circular waveguides."<<std::endl;
+    TVector3 eField{ 0, 0, 0 };
+    return eField;
   }
 }
 
@@ -72,7 +78,7 @@ TVector3 rad::CircularWaveguide::GetModeHField(Mode_t modeType, int n, int m, do
     TVector3 hField{ Hrho.real()*cos(phi) - Hphi.real()*sin(phi), Hrho.real()*sin(phi) + Hphi.real()*cos(phi), Hz.real() };
     return hField; 
   }
-  else {
+  else if (modeType == kTM) {
     // We have a TM mode
     double pnm{ boost::math::cyl_bessel_j_zero(double(n), m) };
     double k_c{ pnm / a };
@@ -86,6 +92,12 @@ TVector3 rad::CircularWaveguide::GetModeHField(Mode_t modeType, int n, int m, do
 
     TVector3 hField{ Hrho.real()*cos(phi) - Hphi.real()*sin(phi), Hrho.real()*sin(phi) + Hphi.real()*cos(phi), Hz.real() };
     return hField; 
+  }
+  else {
+    // This is a TEM mode that which is not supported by this waveguide
+    std::cout<<"TEM modes are not supported by circular waveguides."<<std::endl;
+    TVector3 eField{ 0, 0, 0 };
+    return eField;
   }
 }
 

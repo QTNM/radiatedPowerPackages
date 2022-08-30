@@ -20,11 +20,7 @@ namespace rad {
     double d; // Waveguide length (in metres)
     // double r_s; // Surface resistance
     
-  public:
-    enum Mode_t {
-      kTE, kTM
-    };
-    
+  public:    
     /// Parametrised  constructor
     /// \param radius Inner radius of the waveguide (in metres)
     /// \param length Length of the waveguide (in metres)
