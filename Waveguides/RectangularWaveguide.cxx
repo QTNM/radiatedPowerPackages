@@ -93,3 +93,22 @@ TVector3 rad::RectangularWaveguide::GetModeHField(Mode_t modeType, int m, int n,
     return hField;
   }
 }
+
+double rad::RectangularWaveguide::GetModeImpedance(Mode_t modeType, unsigned int m, unsigned int n, double omega)
+{
+  double k_c{ GetCutoffWavenumber(m, n) };
+  double k{ omega / TMath::C() };
+  double beta{ sqrt(k*k - k_c*k_c) };
+
+  if (modeType == kTE) {
+    return k * sqrt(MU0/EPSILON0) / beta;
+  }
+  else if (modeType == kTM) {
+    return beta * sqrt(MU0/EPSILON0) / k;
+  }
+  else {
+    // We have a TEM mode
+    std::cout<<"TEM modes are not supported by circular waveguides."<<std::endl;
+    return 0;
+  }
+}

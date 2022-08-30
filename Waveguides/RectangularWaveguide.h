@@ -57,7 +57,14 @@ namespace rad {
     /// \param A Arbitrary amplitude for solution (default = 1)
     /// \Returns The mode H field vector at the supplied point
     TVector3 GetModeHField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A=1);
-    
+
+    /// Gets the characteristic impedance for a particular mode
+    /// \param modeType The mode type to use (either TE or TM)
+    /// \param m The mode number in the x direction of the waveguide
+    /// \param n The mode number in the y direction of the waveguide
+    /// \param omega Angular frequency of the chosen wave
+    /// \Returns The impedance of the mode (in Ohms)
+    double GetModeImpedance(Mode_t modeType, unsigned int m, unsigned int n, double omega);
   };
 }
 
