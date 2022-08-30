@@ -20,7 +20,7 @@ namespace rad {
     };
 
     /// Gets the electric field vector for a given mode at a point                               
-    /// \param modeType The mode type to get (either TE or TM)                                     
+    /// \param modeType The mode type to get (TE, TM, TEM)                                     
     /// \param n The angular number of the mode                                               
     /// \param m The radial number of the mode                                                
     /// \param pos The position vector (in metres)                                              
@@ -31,7 +31,7 @@ namespace rad {
     virtual TVector3 GetModeEField(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A=1, double B=0) = 0;
 
     /// Gets the H field vector for a given mode at a point                                
-    /// \param modeType The mode type to get (either TE or TM)                                   
+    /// \param modeType The mode type to get (TE, TM, TEM)                                   
     /// \param n The angular number of the mode                                                   
     /// \param m The radial number of the mode                                                 
     /// \param pos The position vector (in metres)                                     
@@ -42,12 +42,19 @@ namespace rad {
     virtual TVector3 GetModeHField(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A=1, double B=0) = 0;
 
     /// Gets the characteristic mode impedance for a given mode                             
-    /// \param modeType The mode type to get (either TE or TM)                                   
+    /// \param modeType The mode type to get (TE, TM, TEM)                                   
     /// \param n The angular number of the mode                                                   
     /// \param m The radial number of the mode                                                   
     /// \param omega Angular frequency of the chosen wave                                      
     /// \Returns The impedance of the mode (in Ohms)                                                  
     virtual double GetModeImpedance(Mode_t modeType, int n, int m, double omega) = 0;
+
+    /// Gets the cutoff frequency for a particular waveguide mode
+    /// \param modeType The mode type to get (TE, TM, TEM)
+    /// \param n The first mode index to get
+    /// \param m The second mode index to get
+    /// \Returns The cutoff frequency in Hertz
+    virtual double GetCutoffFrequency(Mode_t modeType, int n, int m) = 0;
   };
 }
 

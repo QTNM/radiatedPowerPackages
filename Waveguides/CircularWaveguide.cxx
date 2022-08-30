@@ -129,3 +129,22 @@ double rad::CircularWaveguide::GetModeImpedance(Mode_t modeType, int n, int m, d
     return -1;
   }
 }
+
+double rad::CircularWaveguide::GetCutoffFrequency(Mode_t modeType, int n, int m)
+{
+  if (modeType == kTE) {
+    double pnmPrime{ GetBesselPrimeZero(n, m) };
+    double k_c{ pnmPrime / a };
+    double f_c{ k_c * TMath::C() / (2 * TMath::Pi()) };
+    return f_c;
+  }
+  else if (modeType == kTM) {
+    double pnm{ boost::math::cyl_bessel_j_zero(double(n), m) };
+    double k_c{ pnm / a };
+    double f_c{ k_c * TMath::C() / (2 * TMath::Pi()) };
+    return f_c;
+  }
+  else {
+    return -1;
+  }
+}

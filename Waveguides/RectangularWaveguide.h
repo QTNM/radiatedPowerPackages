@@ -65,6 +65,13 @@ namespace rad {
     /// \param omega Angular frequency of the chosen wave
     /// \Returns The impedance of the mode (in Ohms)
     double GetModeImpedance(Mode_t modeType, unsigned int m, unsigned int n, double omega);
+    
+    /// Gets the cutoff frequency for a particular mode
+    /// \param modeType The mode type to use (either TE or TM)
+    /// \param m The mode number in the x direction of the waveguide
+    /// \param n The mode number in the y direction of the waveguide
+    /// \Returns The cutoff frequency of the mode in Hertz
+    double GetCutoffFrequency(Mode_t modeType, unsigned int m, unsigned int n);
   };
 }
 

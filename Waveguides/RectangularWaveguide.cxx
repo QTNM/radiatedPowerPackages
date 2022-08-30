@@ -112,3 +112,9 @@ double rad::RectangularWaveguide::GetModeImpedance(Mode_t modeType, unsigned int
     return 0;
   }
 }
+
+double rad::RectangularWaveguide::GetCutoffFrequency(Mode_t modeType, unsigned int m, unsigned int n)
+{
+  double k_c{ GetCutoffWavenumber(m, n) };
+  return k_c*TMath::C() / (2*TMath::Pi());
+}
