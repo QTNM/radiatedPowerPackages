@@ -28,7 +28,7 @@ double rad::RectangularWaveguide::GetCutoffWavenumber(unsigned int m, unsigned i
   return k_c;
 }
 
-TVector3 rad::RectangularWaveguide::GetModeEField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A)
+TVector3 rad::RectangularWaveguide::GetModeEField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A, double B)
 {
   double x{ pos.X() };
   double y{ pos.Y() };
@@ -61,7 +61,7 @@ TVector3 rad::RectangularWaveguide::GetModeEField(Mode_t modeType, int m, int n,
   }
 }
 
-TVector3 rad::RectangularWaveguide::GetModeHField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A)
+TVector3 rad::RectangularWaveguide::GetModeHField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A, double B)
 {
   double x{ pos.X() };
   double y{ pos.Y() };
@@ -94,7 +94,7 @@ TVector3 rad::RectangularWaveguide::GetModeHField(Mode_t modeType, int m, int n,
   }
 }
 
-double rad::RectangularWaveguide::GetModeImpedance(Mode_t modeType, unsigned int m, unsigned int n, double omega)
+double rad::RectangularWaveguide::GetModeImpedance(Mode_t modeType, int m, int n, double omega)
 {
   double k_c{ GetCutoffWavenumber(m, n) };
   double k{ omega / TMath::C() };
@@ -113,7 +113,7 @@ double rad::RectangularWaveguide::GetModeImpedance(Mode_t modeType, unsigned int
   }
 }
 
-double rad::RectangularWaveguide::GetCutoffFrequency(Mode_t modeType, unsigned int m, unsigned int n)
+double rad::RectangularWaveguide::GetCutoffFrequency(Mode_t modeType, int m, int n)
 {
   double k_c{ GetCutoffWavenumber(m, n) };
   return k_c*TMath::C() / (2*TMath::Pi());
