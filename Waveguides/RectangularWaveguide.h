@@ -37,8 +37,19 @@ namespace rad {
     /// Gets the short dimension of the waveguide
     /// \Returns The short (y) dimension of the waveguide (in metres)
     double GetShortDimension() { return b; }
+
+    /// Gets the complex electric field vector for a given mode at a point
+    /// \param modeType The mode type to get (either TE or TM)
+    /// \param m The mode number in the x direction of the waveguide 
+    /// \param n The mode number in the y direction of the waveguide 
+    /// \param pos The position vector (in metres)
+    /// \param omega Angular frequency of the chosen wave
+    /// \param A Arbitrary amplitude for solution (default = 1)
+    /// \param B Arbitrary amplitude for solution has no effect
+    /// \Returns The mode electric field vector at the supplied point
+    ComplexVector3 GetModeEFieldComplex(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A=1, double B=0);
     
-    /// Gets the electric field vector for a given mode at a point
+    /// Gets the real electric field vector for a given mode at a point
     /// \param modeType The mode type to get (either TE or TM)
     /// \param m The mode number in the x direction of the waveguide 
     /// \param n The mode number in the y direction of the waveguide 
@@ -49,6 +60,16 @@ namespace rad {
     /// \Returns The mode electric field vector at the supplied point
     TVector3 GetModeEField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A=1, double B=0);
 
+    /// Gets the complex magnetic field strength vector for a given mode at a point
+    /// \param modeType The mode type to get (either TE or TM)
+    /// \param m The mode number in the x direction of the waveguide 
+    /// \param n The mode number in the y direction of the waveguide 
+    /// \param pos The position vector (in metres)
+    /// \param omega Angular frequency of the chosen wave
+    /// \param A Arbitrary amplitude for solution (default = 1)
+    /// \Returns The mode H field vector at the supplied point
+    ComplexVector3 GetModeHFieldComplex(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A=1, double B=0);
+    
     /// Gets the H field vector for a given mode at a point
     /// \param modeType The mode type to get (either TE or TM)
     /// \param m The mode number in the x direction of the waveguide 

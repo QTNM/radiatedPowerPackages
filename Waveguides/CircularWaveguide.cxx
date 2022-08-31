@@ -13,9 +13,13 @@
 #include "TVector3.h"
 #include "TMath.h"
 
-TVector3 rad::CircularWaveguide::GetModeEField(Mode_t modeType, int n, int m, double rho, double phi, double z, double omega, double A, double B)
+rad::ComplexVector3 rad::CircularWaveguide::GetModeEFieldComplex(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A, double B)
 {
+  double rho{ pos.Perp() };
+  double phi{ pos.Phi() };
+  double z{ pos.Z() };
   std::complex<double> i{ 0.0, 1.0 };
+  
   if (modeType == kTE) {
     // We have a TE mode
     double pnmPrime{ GetBesselPrimeZero(n, m) }; 
@@ -29,7 +33,7 @@ TVector3 rad::CircularWaveguide::GetModeEField(Mode_t modeType, int n, int m, do
     std::complex<double> Ephi{ (omega*MU0/k_c)*( A*sin(double(n)*phi) + B*cos(double(n)*phi) ) * boost::math::cyl_bessel_j_prime(n, k_c*rho) };
     Ephi *= i * exp( -1.0*i*beta*z );
     
-    TVector3 eField{ Erho.real()*cos(phi) - Ephi.real()*sin(phi), Erho.real()*sin(phi) + Ephi.real()*cos(phi), Ez.real() };
+    ComplexVector3 eField{ Erho*cos(phi) - Ephi*sin(phi), Erho*sin(phi) + Ephi*cos(phi), Ez };
     return eField;
   }
   else if (modeType == kTM) {
@@ -46,25 +50,30 @@ TVector3 rad::CircularWaveguide::GetModeEField(Mode_t modeType, int n, int m, do
     std::complex<double> Ephi{ (-1.0*beta*double(n)/(k_c*k_c*rho)) * (A*cos(double(n)*phi) - B*sin(double(n)*phi)) * boost::math::cyl_bessel_j(n, k_c*rho) };
     Ephi *= i * exp( -1.0*i*beta*z );
 
-    TVector3 eField{ Erho.real()*cos(phi) - Ephi.real()*sin(phi), Erho.real()*sin(phi) + Ephi.real()*cos(phi), Ez.real() };
+    ComplexVector3 eField{ Erho*cos(phi) - Ephi*sin(phi), Erho*sin(phi) + Ephi*cos(phi), Ez };
     return eField;    
   }
   else {
     // This is a TEM mode that which is not supported by this waveguide
     std::cout<<"TEM modes are not supported by circular waveguides."<<std::endl;
-    TVector3 eField{ 0, 0, 0 };
+    ComplexVector3 eField{ std::complex<double>{0}, std::complex<double>{0}, std::complex<double>{0} };
     return eField;
   }
 }
 
 TVector3 rad::CircularWaveguide::GetModeEField(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A, double B)
 {
-  return GetModeEField(modeType, n, m, pos.Perp(), pos.Phi(), pos.Z(), omega, A, B);
+  ComplexVector3 field{ GetModeEFieldComplex(modeType, n, m, pos, omega, A, B) };
+  return field.Real();
 }
 
-TVector3 rad::CircularWaveguide::GetModeHField(Mode_t modeType, int n, int m, double rho, double phi, double z, double omega, double A, double B)
+rad::ComplexVector3 rad::CircularWaveguide::GetModeHFieldComplex(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A, double B)
 {
+  double rho{ pos.Perp() };
+  double phi{ pos.Phi() };
+  double z{ pos.Z() };
   std::complex<double> i{ 0.0, 1.0 };
+  
   if (modeType == kTE) {
     // We have a TE mode
     double pnmPrime{ GetBesselPrimeZero(n, m) }; 
@@ -79,7 +88,7 @@ TVector3 rad::CircularWaveguide::GetModeHField(Mode_t modeType, int n, int m, do
     std::complex<double> Hphi{ (-1.0*beta*double(n)/(k_c*k_c*rho)) * (A*cos(double(n)*phi) - B*sin(double(n)*phi)) * boost::math::cyl_bessel_j(n, k_c*rho) };
     Hphi *= i * exp( -1.0*i*beta*z );
 
-    TVector3 hField{ Hrho.real()*cos(phi) - Hphi.real()*sin(phi), Hrho.real()*sin(phi) + Hphi.real()*cos(phi), Hz.real() };
+    ComplexVector3 hField{ Hrho*cos(phi) - Hphi*sin(phi), Hrho*sin(phi) + Hphi*cos(phi), Hz };
     return hField; 
   }
   else if (modeType == kTM) {
@@ -95,20 +104,21 @@ TVector3 rad::CircularWaveguide::GetModeHField(Mode_t modeType, int n, int m, do
     std::complex<double> Hphi{ (-1.0*omega*EPSILON0/k_c) * (A*sin(double(n)*phi) + B*cos(double(n)*phi)) * boost::math::cyl_bessel_j_prime(n, k_c*rho) };
     Hphi *= i * exp( -1.0*i*beta*z );
 
-    TVector3 hField{ Hrho.real()*cos(phi) - Hphi.real()*sin(phi), Hrho.real()*sin(phi) + Hphi.real()*cos(phi), Hz.real() };
+    ComplexVector3 hField{ Hrho*cos(phi) - Hphi*sin(phi), Hrho*sin(phi) + Hphi*cos(phi), Hz };
     return hField; 
   }
   else {
     // This is a TEM mode that which is not supported by this waveguide
     std::cout<<"TEM modes are not supported by circular waveguides."<<std::endl;
-    TVector3 eField{ 0, 0, 0 };
+    ComplexVector3 eField{ std::complex<double>{0}, std::complex<double>{0}, std::complex<double>{0} };
     return eField;
   }
 }
 
 TVector3 rad::CircularWaveguide::GetModeHField(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A, double B)
 {
-  return GetModeHField(modeType, n, m, pos.Perp(), pos.Phi(), pos.Z(), omega, A, B);
+  ComplexVector3 field{ GetModeHFieldComplex(modeType, n, m, pos, omega, A, B) };
+  return field.Real();
 }
 
 double rad::CircularWaveguide::GetModeImpedance(Mode_t modeType, int n, int m, double omega)
