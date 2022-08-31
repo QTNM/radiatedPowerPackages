@@ -20,8 +20,9 @@ TVector3 rad::CircularWaveguide::GetModeEField(Mode_t modeType, int n, int m, do
     // We have a TE mode
     double pnmPrime{ GetBesselPrimeZero(n, m) }; 
     double k_c{ pnmPrime / a };
-    std::complex<double> beta{ sqrt(pow(omega/TMath::C(), 2) - k_c*k_c) };
-
+    std::complex<double> betaSq{ pow(omega/TMath::C(), 2) - k_c*k_c };
+    std::complex<double> beta{ sqrt(betaSq) };
+    
     std::complex<double> Ez{ 0.0, 0.0 };
     std::complex<double> Erho{ (-1.0*omega*MU0*double(n)/(k_c*k_c*rho)) * ( A*cos(double(n)*phi) - B*sin(double(n)*phi) ) * boost::math::cyl_bessel_j(n, k_c*rho) };
     Erho *= i * exp( -1.0*i*beta*z );
@@ -35,8 +36,9 @@ TVector3 rad::CircularWaveguide::GetModeEField(Mode_t modeType, int n, int m, do
     // We have a TM mode
     double pnm{ boost::math::cyl_bessel_j_zero(double(n), m) };
     double k_c{ pnm / a };
-    std::complex<double> beta{ sqrt(pow(omega/TMath::C(), 2) - k_c*k_c) };
-
+    std::complex<double> betaSq{ pow(omega/TMath::C(), 2) - k_c*k_c };
+    std::complex<double> beta{ sqrt(betaSq) };
+      
     std::complex<double> Ez{ (A*sin(double(n)*phi) + B*cos(double(n)*phi)) * boost::math::cyl_bessel_j(n, k_c*rho), 0.0 };
     Ez *= exp( -1.0*i*beta*z );
     std::complex<double> Erho{ (-1.0*beta/k_c) * (A*sin(double(n)*phi) + B*cos(double(n)*phi)) * boost::math::cyl_bessel_j_prime(n, k_c*rho) };
@@ -67,8 +69,9 @@ TVector3 rad::CircularWaveguide::GetModeHField(Mode_t modeType, int n, int m, do
     // We have a TE mode
     double pnmPrime{ GetBesselPrimeZero(n, m) }; 
     double k_c{ pnmPrime / a };
-    std::complex<double> beta{ sqrt(pow(omega/TMath::C(), 2) - k_c*k_c) };
-
+    std::complex<double> betaSq{ pow(omega/TMath::C(), 2) - k_c*k_c };
+    std::complex<double> beta{ sqrt(betaSq) };
+    
     std::complex<double> Hz{ (A*sin(double(n)*phi) + B*cos(double(n)*phi)) * boost::math::cyl_bessel_j(n, k_c*rho), 0.0 };
     Hz *= exp( -1.0*i*beta*z );
     std::complex<double> Hrho{ (-1.0*beta/k_c) * (A*sin(double(n)*phi) + B*cos(double(n)*phi)) * boost::math::cyl_bessel_j_prime(n, k_c*rho) };
@@ -83,8 +86,9 @@ TVector3 rad::CircularWaveguide::GetModeHField(Mode_t modeType, int n, int m, do
     // We have a TM mode
     double pnm{ boost::math::cyl_bessel_j_zero(double(n), m) };
     double k_c{ pnm / a };
-    std::complex<double> beta{ sqrt(pow(omega/TMath::C(), 2) - k_c*k_c) };
-
+    std::complex<double> betaSq{ pow(omega/TMath::C(), 2) - k_c*k_c };
+    std::complex<double> beta{ sqrt(betaSq) };
+    
     std::complex<double> Hz{ 0.0, 0.0 };
     std::complex<double> Hrho{ (omega*EPSILON0*double(n)/(k_c*k_c*rho)) * (A*cos(double(n)*phi) - B*sin(double(n)*phi)) * boost::math::cyl_bessel_j(n, k_c*rho) };
     Hrho *= i * exp( -1.0*i*beta*z );
