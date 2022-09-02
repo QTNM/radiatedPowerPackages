@@ -10,8 +10,9 @@
 #include "TMath.h"
 #include "TVector3.h"
 
-rad::RectangularWaveguide::RectangularWaveguide(double longSide, double shortSide)
+rad::RectangularWaveguide::RectangularWaveguide(double longSide, double shortSide, double length)
 {
+  d = length;
   if (longSide >= shortSide) {
     a = longSide;
     b = shortSide;
@@ -30,9 +31,9 @@ double rad::RectangularWaveguide::GetCutoffWavenumber(unsigned int m, unsigned i
 
 rad::ComplexVector3 rad::RectangularWaveguide::GetModeEFieldComplex(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A, double B)
 {
-  double x{ pos.X() };
-  double y{ pos.Y() };
-  double z{ pos.Z() };
+  double x{ pos.X() + a/2.0 };
+  double y{ pos.Y() + b/2.0 };
+  double z{ pos.Z() + d/2.0 };
   std::complex<double> i{ 0.0, 1.0 };
   double k_c{ GetCutoffWavenumber(m, n) };
   std::complex<double> betaSq{ pow(omega/TMath::C(), 2) - k_c*k_c };

@@ -13,6 +13,9 @@
 
 namespace rad {
 
+  /// Class describing a circular cylindrical waveguide
+  /// The centre of the waveguide (in the axial direction) is located at z=0
+  /// Centre of the circular cross-section located at x = y = 0;
   class CircularWaveguide : public IWaveguide {
 
   private:

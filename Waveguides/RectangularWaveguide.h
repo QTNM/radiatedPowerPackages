@@ -11,12 +11,15 @@
 
 namespace rad {
 
+  /// Class describing a rectangular waveguide
+  /// Centre of waveguide located at x = y = z = 0
   class RectangularWaveguide : public IWaveguide {
 
   private:
     // Convention is that a > b and that longest side of waveguide is x-axis
-    double a;
-    double b;
+    double a; // Side length in metres
+    double b; // Side length in metres
+    double d; // Axial length in metres
 
     /// Gets the cutoff wavenumber for a given mode
     /// \param m Mode order in the x direction of the waveguide 
@@ -26,9 +29,10 @@ namespace rad {
     
   public:
     /// Parametrised constructor
-    /// longSide The longer side of the waveguide (in metres)
-    /// shortSide The shorter side of the waveguide (in metres)
-    RectangularWaveguide(double longSide, double shortSide);
+    /// \param longSide The longer side of the waveguide (in metres)
+    /// \param shortSide The shorter side of the waveguide (in metres)
+    /// \param length The axial length of the waveguide (in metres);
+    RectangularWaveguide(double longSide, double shortSide, double length);
 
     /// Gets the long dimension of the waveguide
     /// \Returns The long (x) dimension of the waveguide (in metres)
