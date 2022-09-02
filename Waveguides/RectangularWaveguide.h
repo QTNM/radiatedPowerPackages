@@ -98,6 +98,14 @@ namespace rad {
     /// \param n The mode number in the y direction of the waveguide
     /// \Returns The cutoff frequency of the mode in Hertz
     double GetCutoffFrequency(Mode_t modeType, int m, int n);
+
+    /// Gets the resonant frequency for a particle mode
+    /// \param modeType The type of mode (TE or TM)
+    /// \param m The mode number in the x direction of the waveguide
+    /// \param n The mode number in the y direction of the waveguide
+    /// \param l The mode number in the z direction of the waveguide
+    /// \Returns The resonant frequency of the chosen mode (in Hertz)
+    double GetResonantModeFrequency(Mode_t modeType, int m, int n, int l);
   };
 }
 

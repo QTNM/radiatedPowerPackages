@@ -77,6 +77,10 @@ namespace rad {
     /// \param m The second mode index to get
     /// \Returns The cutoff frequency in Hertz
     virtual double GetCutoffFrequency(Mode_t modeType, int n, int m) = 0;
+
+    /// Gets the frequency of a particular resonant mode
+    /// \Returns The resonant frequency of the chosen mode (in Hertz)
+    virtual double GetResonantModeFrequency(Mode_t modeType, int n, int m, int l) = 0;
   };
 }
 
