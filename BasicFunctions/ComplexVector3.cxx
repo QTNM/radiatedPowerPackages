@@ -6,6 +6,13 @@
 
 #include "TVector3.h"
 
+rad::ComplexVector3::ComplexVector3(TVector3 vec)
+{
+  mX = std::complex<double>{vec.X(), 0};
+  mY = std::complex<double>{vec.Y(), 0};
+  mZ = std::complex<double>{vec.Z(), 0};
+}
+
 std::complex<double> rad::ComplexVector3::Dot(ComplexVector3 vec)
 {
   std::complex<double> sum{ mX*vec.X() + mY*vec.Y() + mZ*vec.Z() };

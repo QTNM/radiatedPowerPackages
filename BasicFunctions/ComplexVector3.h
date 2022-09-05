@@ -23,6 +23,9 @@ namespace rad {
     /// Parametrised constructor taking three complex numbers
     ComplexVector3(std::complex<double> x, std::complex<double> y, std::complex<double> z) : mX{x}, mY{y}, mZ{z} {}
 
+    /// Parametrised constructor from a real three vector
+    ComplexVector3(TVector3 vec);
+    
     /// Functions to return individual components
     std::complex<double> X() { return mX; }
     std::complex<double> Y() { return mY; }
