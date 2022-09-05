@@ -20,12 +20,6 @@ namespace rad {
     double a; // Side length in metres
     double b; // Side length in metres
     double d; // Axial length in metres
-
-    /// Gets the cutoff wavenumber for a given mode
-    /// \param m Mode order in the x direction of the waveguide 
-    /// \param n Mode order in the y direction of the waveguide
-    /// \Returns The cutoff wavenumber in units of m^{-1}
-    double GetCutoffWavenumber(unsigned int m, unsigned int n);
     
   public:
     /// Parametrised constructor
@@ -64,6 +58,8 @@ namespace rad {
     /// \Returns The mode electric field vector at the supplied point
     TVector3 GetModeEField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A=1, double B=0);
 
+    TVector3 GetModalEField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A=1);
+    
     /// Gets the complex magnetic field strength vector for a given mode at a point
     /// \param modeType The mode type to get (either TE or TM)
     /// \param m The mode number in the x direction of the waveguide 
@@ -84,6 +80,8 @@ namespace rad {
     /// \Returns The mode H field vector at the supplied point
     TVector3 GetModeHField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A=1, double B=0);
 
+    TVector3 GetModalHField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A=1);
+
     /// Gets the characteristic impedance for a particular mode
     /// \param modeType The mode type to use (either TE or TM)
     /// \param m The mode number in the x direction of the waveguide
@@ -99,6 +97,12 @@ namespace rad {
     /// \Returns The cutoff frequency of the mode in Hertz
     double GetCutoffFrequency(Mode_t modeType, int m, int n);
 
+    /// Gets the cutoff wavenumber for a given mode
+    /// \param m Mode order in the x direction of the waveguide 
+    /// \param n Mode order in the y direction of the waveguide
+    /// \Returns The cutoff wavenumber in units of m^{-1}
+    double GetCutoffWavenumber(unsigned int m, unsigned int n);
+    
     /// Gets the resonant frequency for a particle mode
     /// \param modeType The type of mode (TE or TM)
     /// \param m The mode number in the x direction of the waveguide
