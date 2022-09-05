@@ -66,6 +66,16 @@ namespace rad {
 
     /// Multiplication with a real number
     ComplexVector3 operator * (double a);
+
+    /// Multiplication with a complex number
+    ComplexVector3 operator * (std::complex<double> a);
+    
+    /// Multiplication with a real number
+    ComplexVector3 operator *= (double a);
+
+    /// Multiplication with a complex number
+    ComplexVector3 operator *= (std::complex<double> a);
+
   };
 }
 

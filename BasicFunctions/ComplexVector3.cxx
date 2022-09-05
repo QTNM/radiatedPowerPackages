@@ -60,3 +60,17 @@ rad::ComplexVector3 rad::ComplexVector3::operator * (double a)
   return ComplexVector3{ a*mX, a*mY, a*mZ };
 }
 
+rad::ComplexVector3 rad::ComplexVector3::operator * (std::complex<double> a)
+{
+  return ComplexVector3{ a*mX, a*mY, a*mZ };
+}
+
+rad::ComplexVector3 rad::ComplexVector3::operator *= (double a)
+{
+  return ComplexVector3{ a*mX, a*mY, a*mZ };
+}
+
+rad::ComplexVector3 rad::ComplexVector3::operator *= (std::complex<double> a)
+{
+  return ComplexVector3{ a*mX, a*mY, a*mZ };
+}
