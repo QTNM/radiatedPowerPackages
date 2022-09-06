@@ -80,3 +80,20 @@ rad::ComplexVector3& rad::ComplexVector3::operator *= (std::complex<double> a)
   mZ = mZ * a;
   return *this;
 }
+
+rad::ComplexVector3& rad::ComplexVector3::operator += (const ComplexVector3 &vec)
+{
+  mX = mX + vec.mX;
+  mY = mY + vec.mY;
+  mZ = mZ + vec.mZ;
+  return *this;
+}
+
+rad::ComplexVector3& rad::ComplexVector3::operator -= (const ComplexVector3 &vec)
+{
+  mX = mX - vec.mX;
+  mY = mY - vec.mY;
+  mZ = mZ - vec.mZ;
+  return *this;
+}
+
