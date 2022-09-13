@@ -59,6 +59,8 @@ namespace rad {
     TVector3 GetModeEField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A=1, double B=0);
 
     TVector3 GetModalEField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A=1);
+
+    ComplexVector3 GetNormalisedEField(Mode_t modeType, int m, int n, TVector3 pos, double omega);
     
     /// Gets the complex magnetic field strength vector for a given mode at a point
     /// \param modeType The mode type to get (either TE or TM)
@@ -82,6 +84,8 @@ namespace rad {
 
     TVector3 GetModalHField(Mode_t modeType, int m, int n, TVector3 pos, double omega, double A=1);
 
+    ComplexVector3 GetNormalisedHField(Mode_t modeType, int m, int n, TVector3 pos, double omega);
+    
     /// Gets the characteristic impedance for a particular mode
     /// \param modeType The mode type to use (either TE or TM)
     /// \param m The mode number in the x direction of the waveguide
