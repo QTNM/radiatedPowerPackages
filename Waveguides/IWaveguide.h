@@ -78,6 +78,13 @@ namespace rad {
     /// \Returns The cutoff frequency in Hertz
     virtual double GetCutoffFrequency(Mode_t modeType, int n, int m) = 0;
 
+    /// Gets the cutoff wavenumber for a particular waveguide mode
+    /// \param modeType The mode type to get (TE, TM, TEM)
+    /// \param n The first mode index to get
+    /// \param m The second mode index to get
+    /// \Returns The cutoff wavenumber in m^-1
+    virtual double GetCutoffWavenumber(Mode_t modeType, unsigned int n, unsigned int m) = 0;
+    
     /// Gets the frequency of a particular resonant mode
     /// \Returns The resonant frequency of the chosen mode (in Hertz)
     virtual double GetResonantModeFrequency(Mode_t modeType, int n, int m, int l) = 0;

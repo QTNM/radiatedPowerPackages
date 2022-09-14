@@ -100,6 +100,13 @@ namespace rad {
     /// \Returns The cutoff frequency in Hertz      
     double GetCutoffFrequency(Mode_t modeType, int n, int m);
 
+    /// Gets the cutoff wavenumber for a particular waveguide mode
+    /// \param modeType The mode type to get (TE, TM, TEM)
+    /// \param n The angular number of the mode
+    /// \param m The radial number of the mode
+    /// \Returns The cutoff wavenumber in m^-1
+    double GetCutoffWavenumber(Mode_t modeType, unsigned int n, unsigned int m);
+    
     /// Gets the resonant frequency for a particle mode                        
     /// \param modeType The type of mode (TE or TM)                                              
     /// \param n The angular number of the mode

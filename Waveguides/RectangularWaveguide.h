@@ -102,10 +102,11 @@ namespace rad {
     double GetCutoffFrequency(Mode_t modeType, int m, int n);
 
     /// Gets the cutoff wavenumber for a given mode
+    /// \param modeType The mode type to use (this doesn't matter for rectangular guides)
     /// \param m Mode order in the x direction of the waveguide 
     /// \param n Mode order in the y direction of the waveguide
     /// \Returns The cutoff wavenumber in units of m^{-1}
-    double GetCutoffWavenumber(unsigned int m, unsigned int n);
+    double GetCutoffWavenumber(Mode_t modeType, unsigned int m, unsigned int n);
     
     /// Gets the resonant frequency for a particle mode
     /// \param modeType The type of mode (TE or TM)

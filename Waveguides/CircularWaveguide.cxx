@@ -247,6 +247,25 @@ double rad::CircularWaveguide::GetCutoffFrequency(Mode_t modeType, int n, int m)
   }
 }
 
+double rad::CircularWaveguide::GetCutoffWavenumber(Mode_t modeType, unsigned int n, unsigned int m)
+{
+  if (modeType == kTE) {
+    double pnmPrime{ GetBesselPrimeZero(n, m) }; 
+    double k_c{ pnmPrime / a };
+    return k_c;
+  }
+  else if (modeType == kTM) {
+    double pnm{ boost::math::cyl_bessel_j_zero(double(n), m) };
+    double k_c{ pnm / a };
+    return k_c;
+  }
+  else {
+    // This is a TEM mode that which is not supported by this waveguide
+    std::cout<<"TEM modes are not supported by circular waveguides."<<std::endl;
+    return -1;
+  }
+}
+
 double rad::CircularWaveguide::GetResonantModeFrequency(Mode_t modeType, int n, int m, int l)
 {
   double premult{ TMath::C()/(2*TMath::C()) };

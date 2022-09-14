@@ -23,7 +23,7 @@ rad::RectangularWaveguide::RectangularWaveguide(double longSide, double shortSid
   }
 }
 
-double rad::RectangularWaveguide::GetCutoffWavenumber(unsigned int m, unsigned int n)
+double rad::RectangularWaveguide::GetCutoffWavenumber(Mode_t modeType, unsigned int m, unsigned int n)
 {
   double k_c{ sqrt( pow(double(m)*TMath::Pi()/a, 2) + pow(double(n)*TMath::Pi()/b, 2) ) };
   return k_c;
@@ -35,7 +35,7 @@ rad::ComplexVector3 rad::RectangularWaveguide::GetModeEFieldComplex(Mode_t modeT
   double y{ pos.Y() + b/2.0 };
   double z{ pos.Z() + d/2.0 };
   std::complex<double> i{ 0.0, 1.0 };
-  double k_c{ GetCutoffWavenumber(m, n) };
+  double k_c{ GetCutoffWavenumber(modeType, m, n) };
   std::complex<double> betaSq{ pow(omega/TMath::C(), 2) - k_c*k_c };
   std::complex<double> beta{ sqrt(betaSq) };
   
@@ -74,7 +74,7 @@ TVector3 rad::RectangularWaveguide::GetModalEField(Mode_t modeType, int m, int n
   double x{ pos.X() + a/2.0 };
   double y{ pos.Y() + b/2.0 };
   double z{ pos.Z() + d/2.0 };
-  double k_c{ GetCutoffWavenumber(m, n) };
+  double k_c{ GetCutoffWavenumber(modeType, m, n) };
   double betaSq{ pow(omega/TMath::C(), 2) - k_c*k_c };
   double beta{ sqrt(betaSq) };
   
@@ -107,7 +107,7 @@ rad::ComplexVector3 rad::RectangularWaveguide::GetNormalisedEField(Mode_t modeTy
   double x{ pos.X() + a/2.0 };
   double y{ pos.Y() + b/2.0 };
   double z{ pos.Z() + d/2.0 };
-  double k_c{ GetCutoffWavenumber(m, n) };
+  double k_c{ GetCutoffWavenumber(modeType, m, n) };
   double betaSq{ pow(omega/TMath::C(), 2) - k_c*k_c };
   double beta{ sqrt(betaSq) };
 
@@ -141,7 +141,7 @@ rad::ComplexVector3 rad::RectangularWaveguide::GetModeHFieldComplex(Mode_t modeT
   double y{ pos.Y() + b/2.0 };
   double z{ pos.Z() + d/2.0 };
   std::complex<double> i{ 0.0, 1.0 };
-  double k_c{ GetCutoffWavenumber(m, n) };
+  double k_c{ GetCutoffWavenumber(modeType, m, n) };
   std::complex<double> betaSq{ pow(omega/TMath::C(), 2) - k_c*k_c };
   std::complex<double> beta{ sqrt(betaSq) };
 
@@ -180,7 +180,7 @@ TVector3 rad::RectangularWaveguide::GetModalHField(Mode_t modeType, int m, int n
   double x{ pos.X() + a/2.0 };
   double y{ pos.Y() + b/2.0 };
   double z{ pos.Z() + d/2.0 };
-  double k_c{ GetCutoffWavenumber(m, n) };
+  double k_c{ GetCutoffWavenumber(modeType, m, n) };
   double betaSq{ pow(omega/TMath::C(), 2) - k_c*k_c };
   double beta{ sqrt(betaSq) };
 
@@ -213,7 +213,7 @@ rad::ComplexVector3 rad::RectangularWaveguide::GetNormalisedHField(Mode_t modeTy
   double x{ pos.X() + a/2.0 };
   double y{ pos.Y() + b/2.0 };
   double z{ pos.Z() + d/2.0 };
-  double k_c{ GetCutoffWavenumber(m, n) };
+  double k_c{ GetCutoffWavenumber(modeType, m, n) };
   double betaSq{ pow(omega/TMath::C(), 2) - k_c*k_c };
   double beta{ sqrt(betaSq) };
   std::complex<double> i{ 0, 1 };
@@ -247,7 +247,7 @@ rad::ComplexVector3 rad::RectangularWaveguide::GetNormalisedHField(Mode_t modeTy
   
 double rad::RectangularWaveguide::GetModeImpedance(Mode_t modeType, int m, int n, double omega)
 {
-  double k_c{ GetCutoffWavenumber(m, n) };
+  double k_c{ GetCutoffWavenumber(modeType, m, n) };
   double k{ omega / TMath::C() };
   double beta{ sqrt(k*k - k_c*k_c) };
 
@@ -266,7 +266,7 @@ double rad::RectangularWaveguide::GetModeImpedance(Mode_t modeType, int m, int n
 
 double rad::RectangularWaveguide::GetCutoffFrequency(Mode_t modeType, int m, int n)
 {
-  double k_c{ GetCutoffWavenumber(m, n) };
+  double k_c{ GetCutoffWavenumber(modeType, m, n) };
   return k_c*TMath::C() / (2*TMath::Pi());
 }
 
