@@ -10,7 +10,7 @@ double rad::IWaveguide::GetModeImpedance(Mode_t modeType, unsigned int n, unsign
   double Z{ -1.0 };
   double k_c{ GetCutoffWavenumber(modeType, n, m) };
   double k{ omega/TMath::C() };
-  double beta{ sqrt(pow(k*k, 2) - k_c*k_c) };
+  double beta{ sqrt(k*k - k_c*k_c) };
   
   if (modeType == kTE) {
     Z = k * sqrt(MU0/EPSILON0) / beta;
