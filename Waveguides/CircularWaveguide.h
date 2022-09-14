@@ -59,6 +59,8 @@ namespace rad {
     /// \Returns The mode electric field vector at the supplied point
     TVector3 GetModeEField(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A=1, double B=0);
 
+    ComplexVector3 GetModalEField(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A=1, double B=0);
+    
     /// Gets the complex magnetic field strength vector for a given mode at a point
     /// \param modeType The mode type to get (either TE or TM)
     /// \param n The angular number of the mode
@@ -80,6 +82,8 @@ namespace rad {
     /// \param B Arbitrary amplitude for part of solution (default = 0)
     /// \Returns The mode H field vector at the supplied point
     TVector3 GetModeHField(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A=1, double B=0);
+
+    ComplexVector3 GetModalHField(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A=1, double B=0);
 
     /// Gets the characteristic mode impedance for a given mode
     /// \param modeType The mode type to get (either TE or TM)
