@@ -97,3 +97,12 @@ rad::ComplexVector3& rad::ComplexVector3::operator -= (const ComplexVector3 &vec
   return *this;
 }
 
+rad::ComplexVector3 rad::operator * (double& a, ComplexVector3& vec)
+{
+  return ComplexVector3{ a*vec.X(), a*vec.Y(), a*vec.Z() };
+}
+
+rad::ComplexVector3 rad::operator * (std::complex<double>& a, ComplexVector3& vec)
+{
+  return ComplexVector3{ a*vec.X(), a*vec.Y(), a*vec.Z() };
+}

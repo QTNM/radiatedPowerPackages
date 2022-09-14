@@ -82,6 +82,12 @@ namespace rad {
     /// Compound assignment subtraction
     ComplexVector3& operator -= (const ComplexVector3 &vec);
   };
+
+  /// Multiplication by a double
+  ComplexVector3 operator * (double& a, ComplexVector3& vec);
+
+  /// Multiplication by a complex double
+  ComplexVector3 operator * (std::complex<double>& a, ComplexVector3& vec);
 }
 
 #endif
