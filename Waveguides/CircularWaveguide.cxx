@@ -71,7 +71,7 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModeHFieldComplex(Mode_t modeType
 {
   double rho{ pos.Perp() };
   double phi{ pos.Phi() };
-  double z{ pos.Z() };
+  double z{ pos.Z() + d/2.0 };
   std::complex<double> i{ 0.0, 1.0 };
   
   if (modeType == kTE) {
