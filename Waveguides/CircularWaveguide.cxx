@@ -205,29 +205,6 @@ TVector3 rad::CircularWaveguide::GetModeHField(Mode_t modeType, int n, int m, TV
   return field.Real();
 }
 
-double rad::CircularWaveguide::GetModeImpedance(Mode_t modeType, int n, int m, double omega)
-{
-  if (modeType == kTE) {
-    double pnmPrime{ GetBesselPrimeZero(n, m) }; 
-    double k_c{ pnmPrime / a };
-    double k{ omega/TMath::C() };
-    double beta{ sqrt(pow(k*k, 2) - k_c*k_c) };
-    return k * sqrt(MU0/EPSILON0) / beta;
-  }
-  else if (modeType == kTM) {
-    double pnm{ boost::math::cyl_bessel_j_zero(double(n), m) };
-    double k_c{ pnm / a };
-    double k{ omega/TMath::C() };
-    double beta{ sqrt(pow(k*k, 2) - k_c*k_c) };
-    return beta * sqrt(MU0/EPSILON0) / k;
-  }
-  else {
-    // This is a TEM mode that which is not supported by this waveguide
-    std::cout<<"TEM modes are not supported by circular waveguides."<<std::endl;
-    return -1;
-  }
-}
-
 double rad::CircularWaveguide::GetCutoffFrequency(Mode_t modeType, int n, int m)
 {
   if (modeType == kTE) {

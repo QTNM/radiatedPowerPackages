@@ -243,26 +243,7 @@ rad::ComplexVector3 rad::RectangularWaveguide::GetNormalisedHField(Mode_t modeTy
     ComplexVector3 hField{ std::complex<double>{0, 0}, std::complex<double>{0, 0}, std::complex<double>{0, 0} };
     return hField;
   }
-}
-  
-double rad::RectangularWaveguide::GetModeImpedance(Mode_t modeType, int m, int n, double omega)
-{
-  double k_c{ GetCutoffWavenumber(modeType, m, n) };
-  double k{ omega / TMath::C() };
-  double beta{ sqrt(k*k - k_c*k_c) };
-
-  if (modeType == kTE) {
-    return k * sqrt(MU0/EPSILON0) / beta;
-  }
-  else if (modeType == kTM) {
-    return beta * sqrt(MU0/EPSILON0) / k;
-  }
-  else {
-    // We have a TEM mode
-    std::cout<<"TEM modes are not supported by circular waveguides."<<std::endl;
-    return 0;
-  }
-}
+}  
 
 double rad::RectangularWaveguide::GetCutoffFrequency(Mode_t modeType, int m, int n)
 {

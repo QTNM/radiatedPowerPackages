@@ -85,14 +85,6 @@ namespace rad {
 
     ComplexVector3 GetModalHField(Mode_t modeType, int n, int m, TVector3 pos, double omega, double A=1, double B=0);
 
-    /// Gets the characteristic mode impedance for a given mode
-    /// \param modeType The mode type to get (either TE or TM)
-    /// \param n The angular number of the mode
-    /// \param m The radial number of the mode
-    /// \param omega Angular frequency of the chosen wave
-    /// \Returns The impedance of the mode (in Ohms)
-    double GetModeImpedance(Mode_t modeType, int n, int m, double omega);
-
     /// Gets the cutoff frequency for a particular waveguide mode          
     /// \param modeType The mode type to get (TE, TM, TEM)   
     /// \param n The angular number of the mode

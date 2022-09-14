@@ -65,11 +65,11 @@ namespace rad {
 
     /// Gets the characteristic mode impedance for a given mode                             
     /// \param modeType The mode type to get (TE, TM, TEM)                                   
-    /// \param n The angular number of the mode                                                   
-    /// \param m The radial number of the mode                                                   
+    /// \param n The first mode index
+    /// \param m The second mode index
     /// \param omega Angular frequency of the chosen wave                                      
     /// \Returns The impedance of the mode (in Ohms)                                                  
-    virtual double GetModeImpedance(Mode_t modeType, int n, int m, double omega) = 0;
+    double GetModeImpedance(Mode_t modeType, unsigned int n, unsigned int m, double omega);
 
     /// Gets the cutoff frequency for a particular waveguide mode
     /// \param modeType The mode type to get (TE, TM, TEM)
