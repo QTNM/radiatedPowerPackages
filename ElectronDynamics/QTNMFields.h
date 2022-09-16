@@ -213,6 +213,20 @@ namespace rad
 
     TVector3 evaluate_field_at_point(const TVector3 vec);    
   };
+
+  /// Class simulating a bathtub trap together with the HTS magnet            
+  class HTSMagnetBathtub : public BaseField {
+  private:
+    CoilField coil1;
+    CoilField coil2;
+    HTSMagnetUCL bkg;
+
+  public:
+    HTSMagnetBathtub(double radius, double current, double length);
+
+    TVector3 evaluate_field_at_point(const TVector3 vec);
+  };
+
 }
 
 #endif

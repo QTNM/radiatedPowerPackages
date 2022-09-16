@@ -219,3 +219,18 @@ TVector3 rad::HTSMagnetTrap::evaluate_field_at_point(const TVector3 vec)
   TVector3 totalField = bkgField - coilField;
   return totalField;
 }
+
+rad::HTSMagnetBathtub::HTSMagnetBathtub(double radius, double current, double length)
+{
+  coil1 = CoilField(radius, current, -length/2.0, MU0);
+  coil2 = CoilField(radius, current, length/2.0, MU0);
+}
+
+TVector3 rad::HTSMagnetBathtub::evaluate_field_at_point(const TVector3 vec)
+{
+  TVector3 coil1Field = coil1.evaluate_field_at_point(vec);
+  TVector3 coil2Field = coil2.evaluate_field_at_point(vec);
+  TVector3 bkgField   = bkg.evaluate_field_at_point(vec);
+  TVector3 totalField = bkgField + coil1Field + coil2Field;
+  return totalField;
+}
