@@ -34,3 +34,7 @@ target_link_libraries(crudeEnergyResolution PUBLIC ElectronDynamics SignalProces
 
 add_executable(harmonicTrapDetectability harmonicTrapDetectability.cxx)
 target_link_libraries(harmonicTrapDetectability PUBLIC Antennas SignalProcessing ElectronDynamics BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(WR42Jackson WR42Jackson.cxx)
+target_link_libraries(WR42Jackson PUBLIC BasicFunctions ElectronDynamics Waveguides ${ROOT_LIBRARIES})
+
