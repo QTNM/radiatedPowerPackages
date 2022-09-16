@@ -260,3 +260,68 @@ double rad::CircularWaveguide::GetResonantModeFrequency(Mode_t modeType, int n, 
     return -1;
   }
 }
+
+double rad::CircularWaveguide::GetEFieldNormalisation(Mode_t modeType, int n, int m, double omega, double A, double B, int nSurfPnts)
+{
+  double area{ pow(a/double(nSurfPnts), 2) };
+  double integral{ 0 };
+  for (int ix = 0; ix < nSurfPnts; ix++) {
+    double thisx{ -a/2.0 + a/(2.0*double(nSurfPnts)) + a*double(ix)/double(nSurfPnts) };
+    for (int iy = 0; iy < nSurfPnts; iy++) {
+      double thisy{ -a/2.0 + a/(2.0*double(nSurfPnts)) + a*double(iy)/double(nSurfPnts) };
+
+      if (sqrt(thisx*thisx + thisy*thisy) > a) continue;
+
+      TVector3 surfacePos{ thisx, thisy, 0.0 };
+      ComplexVector3 eTrans{ GetModalEField(modeType, n, m, surfacePos, omega, A, B) };
+      eTrans.SetZ(std::complex<double>{0, 0});
+      integral += (eTrans.Dot(eTrans)).real() * area;
+    }
+  }
+  std::cout<<"integral = "<<integral<<std::endl;
+
+  if (integral == 0) {
+    return 0;
+  }
+  else {
+    return sqrt(1.0/integral);
+  }
+}
+
+double rad::CircularWaveguide::GetHFieldIntegral(Mode_t modeType, int n, int m, double omega, double A, double B, int nSurfPnts)
+{
+  double area{ pow(a/double(nSurfPnts), 2) };
+  double integral{ 0 };
+  for (int ix = 0; ix < nSurfPnts; ix++) {
+    double thisx{ -a/2.0 + a/(2.0*double(nSurfPnts)) + a*double(ix)/double(nSurfPnts) };
+    for (int iy = 0; iy < nSurfPnts; iy++) {
+      double thisy{ -a/2.0 + a/(2.0*double(nSurfPnts)) + a*double(iy)/double(nSurfPnts) };
+
+      if (sqrt(thisx*thisx + thisy*thisy) > a) continue;
+
+      TVector3 surfacePos{ thisx, thisy, 0.0 };
+      ComplexVector3 hTrans{ GetModalHField(modeType, n, m, surfacePos, omega, A, B) };
+      hTrans.SetZ(std::complex<double>{0, 0});
+      integral += (hTrans.Dot(hTrans)).real() * area;
+    }
+  }
+  
+  return integral;
+}
+
+std::complex<double> rad::CircularWaveguide::GetPositiveFieldAmp(Mode_t modeType, unsigned int n, unsigned int m, double omega, TVector3 ePos, TVector3 eVel, double normA, double normB)
+{
+  double waveImp{ GetModeImpedance(modeType, n, m, omega) };
+  TVector3 j{ -TMath::Qe()*eVel };
+  ComplexVector3 jComplex{ j };
+
+  ComplexVector3 eTrans{ GetModalEField(modeType, n, m, ePos, omega, normA, normB) };
+  eTrans.SetZ(std::complex<double>{0.0, 0.0});
+  ComplexVector3 eAxial{ GetModalEField(modeType, n, m, ePos, omega, normA, normB) };
+  eAxial.SetX(std::complex<double>{0.0, 0.0});
+  eAxial.SetY(std::complex<double>{0.0, 0.0});
+  ComplexVector3 subVec{ eTrans - eAxial };
+
+  std::complex<double> APlus = (subVec).Dot(jComplex) * (-waveImp/2.0);
+  return APlus;
+}

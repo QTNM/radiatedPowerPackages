@@ -88,6 +88,20 @@ namespace rad {
     /// Gets the frequency of a particular resonant mode
     /// \Returns The resonant frequency of the chosen mode (in Hertz)
     virtual double GetResonantModeFrequency(Mode_t modeType, int n, int m, int l) = 0;
+
+    /// Gets the field amplitude from a moving electron in the guide
+    /// \param modeType The mode type to get (TE, TM, TEM)
+    /// \param n The first mode index to get
+    /// \param m The second mode index to get
+    /// \param omega Angular frequency of the chosen wave
+    /// \param ePos The electron position vector
+    /// \param eVel The electron velocity vector
+    /// \param normA Normalisation of one polarisation (circular guide only)
+    /// \param normB Normalisation of one polarisation (circular guide only)
+    /// \Returns The field amplitude at a given time
+    virtual std::complex<double> GetPositiveFieldAmp(Mode_t modeType, unsigned int n, unsigned int m,
+						     double omega, TVector3 ePos, TVector3 eVel,
+						     double normA, double normB) = 0;
   };
 }
 
