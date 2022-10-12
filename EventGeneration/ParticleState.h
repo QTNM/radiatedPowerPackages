@@ -45,6 +45,10 @@ namespace rad
     /// \returns The energy of the particle in Joules
     double GetE();
     
+    /// Gets the relativistic kinetic energy of the particle
+    /// \returns The kinetic energy of the particle in Joules
+    double GetKE();
+
   private:
     double startTime;        // Time in seconds for the particle to start propagating
     double currentTime;      // Time in seconds at which the particle has this state

@@ -20,3 +20,8 @@ double rad::ParticleState::GetE()
   double betaSq{pow(velocityVector.Mag() / TMath::C(), 2)};
   return {(1.0 / sqrt(1.0 - betaSq)) * particleMass * pow(TMath::C(), 2)};
 }
+
+double rad::ParticleState::GetKE()
+{
+  return GetE() - particleMass * pow(TMath::C(), 2);
+}
