@@ -12,15 +12,9 @@ namespace rad
 {
     enum OutputVar
     {
-        kXPos,
-        kYPos,
-        kZPos,
-        kXVel,
-        kYVel,
-        kZVel,
-        kXAcc,
-        kYAcc,
-        kZAcc,
+        kPos,
+        kVel,
+        kAcc,
         kBField
     };
 }
