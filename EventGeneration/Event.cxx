@@ -84,8 +84,8 @@ void rad::Event::PropagateParticles()
     for (int iPart = 0; iPart < particleList.size(); iPart++) {
       // Check if this particle is meant to be active yet
       if (ParticleStartCheck(particleList[iPart])) {
-	particleList[iPart].currentTime = clockTime;
-	AdvanceParticleStep(iPart);
+	      particleList[iPart].currentTime = clockTime;
+	      AdvanceParticleStep(iPart);
       }
     }
   }
@@ -98,7 +98,7 @@ rad::ParticleState rad::Event::GetParticle(int particleIndex)
   }
   else {
     // Return a placeholder state so the application doesn't just crash
-    std::cout<<"Requested a particle that does not exist"<<std::endl;
+    std::cout<<"Requested a particle that does not exist!"<<std::endl;
     ParticleState placeholder(clockTime, 0.0, 0.0, TVector3(9999.9, 9999.9, 9999.9), TVector3(0.0, 0.0, 0.0));
     return placeholder;
   }
@@ -108,4 +108,9 @@ double rad::Event::GetPropagationTime(ParticleState particle, IAntenna* antenna)
 {
   TVector3 disp = particle.GetPositionVector() - antenna->GetAntennaPosition();
   return (disp.Mag() / TMath::C());
+}
+
+unsigned int rad::Event::GetNParticles()
+{
+  return particleList.size(); 
 }

@@ -47,6 +47,10 @@ namespace rad
     /// \param particleIndex Index of particle we wish to return
     /// \Returns A copy of the selected ParticleState
     ParticleState GetParticle(int particleIndex);
+
+    /// @brief Gets the number of particles in a given event, active or inactive
+    /// @return  Number of particles in event
+    unsigned int GetNParticles();
     
   private:
     /// Vector of particles
