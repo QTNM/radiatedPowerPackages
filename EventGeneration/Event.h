@@ -18,29 +18,30 @@
 
 namespace rad
 {
-  class Event {
+  class Event
+  {
   public:
-
     /// Parametrised constructor
     /// \param particles A vector of the various particle states one wishes to propagate
     /// \param antennas A vector of the antennas at which signals are generated
     /// \param field The magnetic field in which the particles are propagated
     /// \param simStepSize The time step size to use in the simulation (in seconds)
     /// \param simTime Total time for particles to be simulated for (in seconds)
-    Event(std::vector<ParticleState> particles, std::vector<IAntenna*> antennas,
-	  BaseField* field, double simStepSize, double simTime);
+    Event(std::vector<ParticleState> particles, std::vector<IAntenna *> antennas,
+          BaseField *field, double simStepSize, double simTime);
 
     /// Parametrised constructor
     /// \param particles A vector of the various particle states one wishes to propagate
     /// \param field The magnetic field in which the particles are propagated
     /// \param simStepSize The time step size to use in the simulation (in seconds)
     /// \param simTime Total time for particles to be simulated for (in seconds)
-    Event(std::vector<ParticleState> particles, BaseField* field, double simStepSize, double simTime);
-    
+    Event(std::vector<ParticleState> particles, BaseField *field,
+          double simStepSize, double simTime);
+
     /// Propagates the particles for the time specified at construction
     /// \param outputFile The output file directory. Leave as default to write no ouput
     /// \param vars A vector containing the variables to be written to file
-    void PropagateParticles(const char *outputFile=" ", std::vector<OutputVar> vars={});
+    void PropagateParticles(const char *outputFile = " ", std::vector<OutputVar> vars = {});
 
     /// Gives the clock time of the event
     /// \Returns The Event clock time (in seconds)
@@ -54,7 +55,7 @@ namespace rad
     /// Gets the number of particles in a given event, active or inactive
     /// \return  Number of particles in event
     unsigned int GetNParticles();
-    
+
   private:
     /// Vector of particles
     std::vector<ParticleState> particleList;
@@ -63,12 +64,12 @@ namespace rad
     std::vector<BorisSolver> solverList;
 
     /// Vector of antennas for signals to be generated on
-    std::vector<IAntenna*> antennaList;
-    
+    std::vector<IAntenna *> antennaList;
+
     double clockTime;
     double simulationStepSize;
     double maximumSimulationTime;
-    BaseField* magneticField;
+    BaseField *magneticField;
 
     /// Checks if a particle has started relative to the Event clock time
     /// \param part The particle which we are checking if it has started
@@ -83,7 +84,7 @@ namespace rad
     /// \param particle The particle in question
     /// \param antenna The selected antenna
     /// \Return The light propagation time in seconds
-    double GetPropagationTime(ParticleState particle, IAntenna* antenna);
+    double GetPropagationTime(ParticleState particle, IAntenna *antenna);
   };
 }
 
