@@ -91,10 +91,14 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   // Check if we have chosen to write output to file
   bool writeToFile{outputFile != NULL};
   TFile *fout = 0;
+  TTree *tree = 0;
   // If we have then create the output file
-  if (writeToFile) {
+  if (writeToFile)
+  {
     std::cout << "We are writing to file.\n";
-    fout = new TFile(outputFile, "RECREATE"); 
+    fout = new TFile(outputFile, "RECREATE");
+    // Create the TTree with the correct variables
+    tree = CreateOutputTree(vars);
   }
 
   // Move forward through time
@@ -111,12 +115,18 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
     }
   }
 
-  // If we opened the file, then close it 
-  if (writeToFile) {
+  // If we opened the file, then close it
+  if (writeToFile)
+  {
+    fout->cd();
+    tree->Write();
     fout->Close();
-  }  
-
-  delete fout;
+    delete fout;
+  }
+  else {
+    delete tree;
+    delete fout;
+  }
 }
 
 rad::ParticleState rad::Event::GetParticle(int particleIndex)
@@ -145,4 +155,38 @@ double rad::Event::GetPropagationTime(ParticleState particle, IAntenna *antenna)
 unsigned int rad::Event::GetNParticles()
 {
   return particleList.size();
+}
+
+TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
+{
+  auto *tree = new TTree("output", "output");
+  // Loop through the variables and create the appropriate branches
+  for (auto &quantity : vars)
+  {
+    if (quantity == OutputVar::kPos)
+    {
+      double pos[3];
+      tree->Branch("pos", pos, "pos[3]/D");
+    }
+    else if (quantity == OutputVar::kVel)
+    {
+      double vel[3];
+      tree->Branch("vel", vel, "vel[3]/D");
+    }
+    else if (quantity == OutputVar::kAcc)
+    {
+      double acc[3];
+      tree->Branch("acc", acc, "acc[3]/D");
+    }
+    else if (quantity == OutputVar::kBField)
+    {
+      double bField[3];
+      tree->Branch("bField", bField, "bField[3]/D");
+    }
+    else
+    {
+      std::cout << "Unsupported option. This will not do what you think.\n";
+    }
+  }
+  return tree;
 }

@@ -14,6 +14,8 @@
 #include "Antennas/IAntenna.h"
 #include "EventGeneration/OutputVars.h"
 
+#include "TTree.h"
+
 #include <vector>
 
 namespace rad
@@ -85,6 +87,11 @@ namespace rad
     /// \param antenna The selected antenna
     /// \Return The light propagation time in seconds
     double GetPropagationTime(ParticleState particle, IAntenna *antenna);
+
+    /// Creates an output tree with the desired variables in it 
+    /// \param vars Vector containing the desired output variables
+    /// \return A TTree with the desired variables as branches
+    TTree *CreateOutputTree(std::vector<OutputVar> vars);
   };
 }
 
