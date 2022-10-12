@@ -41,7 +41,7 @@ namespace rad
     /// Propagates the particles for the time specified at construction
     /// \param outputFile The output file directory. Leave as default to write no ouput
     /// \param vars A vector containing the variables to be written to file
-    void PropagateParticles(const char *outputFile = " ", std::vector<OutputVar> vars = {});
+    void PropagateParticles(const char *outputFile=NULL, std::vector<OutputVar> vars = {});
 
     /// Gives the clock time of the event
     /// \Returns The Event clock time (in seconds)

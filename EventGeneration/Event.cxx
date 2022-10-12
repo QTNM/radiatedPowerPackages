@@ -7,6 +7,7 @@
 #include "ElectronDynamics/BorisSolver.h"
 #include "Antennas/IAntenna.h"
 
+#include "TFile.h"
 #include "TMath.h"
 #include "TVector3.h"
 
@@ -87,6 +88,15 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   int nTimeSteps = maximumSimulationTime / simulationStepSize;
   std::cout << "Time steps = " << nTimeSteps << std::endl;
 
+  // Check if we have chosen to write output to file
+  bool writeToFile{outputFile != NULL};
+  TFile *fout = 0;
+  // If we have then create the output file
+  if (writeToFile) {
+    std::cout << "We are writing to file.\n";
+    fout = new TFile(outputFile, "RECREATE"); 
+  }
+
   // Move forward through time
   for (int iStep = 0; iStep < nTimeSteps; iStep++)
   {
@@ -100,6 +110,13 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
       }
     }
   }
+
+  // If we opened the file, then close it 
+  if (writeToFile) {
+    fout->Close();
+  }  
+
+  delete fout;
 }
 
 rad::ParticleState rad::Event::GetParticle(int particleIndex)
