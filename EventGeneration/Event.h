@@ -12,6 +12,7 @@
 #include "ElectronDynamics/BaseField.h"
 #include "ElectronDynamics/BorisSolver.h"
 #include "Antennas/IAntenna.h"
+#include "EventGeneration/OutputVars.h"
 
 #include <vector>
 
@@ -37,7 +38,9 @@ namespace rad
     Event(std::vector<ParticleState> particles, BaseField* field, double simStepSize, double simTime);
     
     /// Propagates the particles for the time specified at construction
-    void PropagateParticles();
+    /// \param outputFile The output file directory. Leave as default to write no ouput
+    /// \param vars A vector containing the variables to be written to file
+    void PropagateParticles(const char *outputFile=" ", std::vector<OutputVar> vars={});
 
     /// Gives the clock time of the event
     /// \Returns The Event clock time (in seconds)
@@ -45,11 +48,11 @@ namespace rad
 
     /// Get the state for one of the particles in the Event
     /// \param particleIndex Index of particle we wish to return
-    /// \Returns A copy of the selected ParticleState
+    /// \return A copy of the selected ParticleState
     ParticleState GetParticle(int particleIndex);
 
-    /// @brief Gets the number of particles in a given event, active or inactive
-    /// @return  Number of particles in event
+    /// Gets the number of particles in a given event, active or inactive
+    /// \return  Number of particles in event
     unsigned int GetNParticles();
     
   private:
