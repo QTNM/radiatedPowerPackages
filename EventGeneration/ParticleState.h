@@ -40,6 +40,10 @@ namespace rad
     /// Access the current particle time
     /// \Returns The current simulation time of the particle (in seconds)
     double GetCurrentTime() { return currentTime; }
+
+    /// Gets the relativistic energy of the particle
+    /// \returns The energy of the particle in Joules
+    double GetE();
     
   private:
     double startTime;        // Time in seconds for the particle to start propagating
