@@ -165,6 +165,10 @@ unsigned int rad::Event::GetNParticles()
 TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
 {
   auto *tree = new TTree("output", "output");
+
+  // It's hard to imagine why we would want to create a tree without the time info
+  tree->Branch("time", &particleTime, "time/D");
+
   // Loop through the variables and create the appropriate branches
   for (auto &quantity : vars)
   {
@@ -195,6 +199,7 @@ TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
 void rad::Event::AddParticleData(TTree *outputTree, std::vector<OutputVar> vars)
 {
   // Get the particle state so we can extract kinematic info
+  particleTime = clockTime;
   ParticleState part{GetParticle(0)};
   TVector3 particlePos{part.GetPositionVector()};
   TVector3 particleVel{part.GetVelocityVector()};
@@ -203,7 +208,7 @@ void rad::Event::AddParticleData(TTree *outputTree, std::vector<OutputVar> vars)
   for (auto &quantity : vars)
   {
     if (quantity == OutputVar::kPos)
-    { 
+    {
       pos[0] = particlePos.X();
       pos[1] = particlePos.Y();
       pos[2] = particlePos.Z();
@@ -234,6 +239,6 @@ void rad::Event::AddParticleData(TTree *outputTree, std::vector<OutputVar> vars)
     }
   }
 
-  // Actually fill the tree  
+  // Actually fill the tree
   outputTree->Fill();
 }

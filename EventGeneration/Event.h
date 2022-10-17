@@ -74,6 +74,7 @@ namespace rad
     BaseField *magneticField;
 
     // These arrays are only used for writing outputs
+    double particleTime;
     double pos[3];
     double vel[3];
     double acc[3];
