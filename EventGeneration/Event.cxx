@@ -92,13 +92,15 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   bool writeToFile{outputFile != NULL};
   TFile *fout = 0;
   TTree *tree = 0;
-  // If we have then create the output file
+
+  // Create the output file
   if (writeToFile)
   {
     std::cout << "We are writing to file.\n";
     fout = new TFile(outputFile, "RECREATE");
     // Create the TTree with the correct variables
     tree = CreateOutputTree(vars);
+    AddParticleData(tree, vars);
   }
 
   // Move forward through time
@@ -111,6 +113,7 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
       if (ParticleStartCheck(particleList[iPart]))
       {
         AdvanceParticleStep(iPart);
+        AddParticleData(tree, vars);
       }
     }
   }
@@ -120,10 +123,12 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   {
     fout->cd();
     tree->Write();
+    delete tree;
     fout->Close();
     delete fout;
   }
-  else {
+  else
+  {
     delete tree;
     delete fout;
   }
@@ -165,22 +170,18 @@ TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
   {
     if (quantity == OutputVar::kPos)
     {
-      double pos[3];
       tree->Branch("pos", pos, "pos[3]/D");
     }
     else if (quantity == OutputVar::kVel)
     {
-      double vel[3];
       tree->Branch("vel", vel, "vel[3]/D");
     }
     else if (quantity == OutputVar::kAcc)
     {
-      double acc[3];
       tree->Branch("acc", acc, "acc[3]/D");
     }
     else if (quantity == OutputVar::kBField)
     {
-      double bField[3];
       tree->Branch("bField", bField, "bField[3]/D");
     }
     else
@@ -189,4 +190,50 @@ TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
     }
   }
   return tree;
+}
+
+void rad::Event::AddParticleData(TTree *outputTree, std::vector<OutputVar> vars)
+{
+  // Get the particle state so we can extract kinematic info
+  ParticleState part{GetParticle(0)};
+  TVector3 particlePos{part.GetPositionVector()};
+  TVector3 particleVel{part.GetVelocityVector()};
+
+  // Branch addresses should be set already so just add the appropriate data
+  for (auto &quantity : vars)
+  {
+    if (quantity == OutputVar::kPos)
+    { 
+      pos[0] = particlePos.X();
+      pos[1] = particlePos.Y();
+      pos[2] = particlePos.Z();
+    }
+    else if (quantity == OutputVar::kVel)
+    {
+      vel[0] = particleVel.X();
+      vel[1] = particleVel.Y();
+      vel[2] = particleVel.Z();
+    }
+    else if (quantity == OutputVar::kAcc)
+    {
+      TVector3 particleAcc{solverList.at(0).acc(particlePos, particleVel)};
+      acc[0] = particleAcc.X();
+      acc[1] = particleAcc.Y();
+      acc[2] = particleAcc.Z();
+    }
+    else if (quantity == OutputVar::kBField)
+    {
+      TVector3 fieldAtPoint{magneticField->evaluate_field_at_point(particlePos)};
+      bField[0] = fieldAtPoint.X();
+      bField[1] = fieldAtPoint.Y();
+      bField[2] = fieldAtPoint.Z();
+    }
+    else
+    {
+      std::cout << "Unsupported option. This will not do what you think.\n";
+    }
+  }
+
+  // Actually fill the tree  
+  outputTree->Fill();
 }

@@ -43,7 +43,7 @@ namespace rad
     /// Propagates the particles for the time specified at construction
     /// \param outputFile The output file directory. Leave as default to write no ouput
     /// \param vars A vector containing the variables to be written to file
-    void PropagateParticles(const char *outputFile=NULL, std::vector<OutputVar> vars = {});
+    void PropagateParticles(const char *outputFile = NULL, std::vector<OutputVar> vars = {});
 
     /// Gives the clock time of the event
     /// \Returns The Event clock time (in seconds)
@@ -73,6 +73,12 @@ namespace rad
     double maximumSimulationTime;
     BaseField *magneticField;
 
+    // These arrays are only used for writing outputs
+    double pos[3];
+    double vel[3];
+    double acc[3];
+    double bField[3];
+
     /// Checks if a particle has started relative to the Event clock time
     /// \param part The particle which we are checking if it has started
     /// \Returns True if the particle should be being propagated
@@ -88,10 +94,15 @@ namespace rad
     /// \Return The light propagation time in seconds
     double GetPropagationTime(ParticleState particle, IAntenna *antenna);
 
-    /// Creates an output tree with the desired variables in it 
+    /// Creates an output tree with the desired variables in it
     /// \param vars Vector containing the desired output variables
     /// \return A TTree with the desired variables as branches
     TTree *CreateOutputTree(std::vector<OutputVar> vars);
+
+    /// Adds the data from the particle state to the TTree
+    /// \param outputTree The tree to add the data to
+    /// \param vars The variables to write to the TTree
+    void AddParticleData(TTree *outputTree, std::vector<OutputVar> vars);
   };
 }
 
