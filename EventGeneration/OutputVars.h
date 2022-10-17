@@ -16,7 +16,11 @@ namespace rad
         kVel,
         kAcc,
         kBField,
-        kParticleTime
+        kParticleTime,
+
+        // E and B fields at the antenna
+        kAntEField,
+        kAntBField
     };
 }
 
