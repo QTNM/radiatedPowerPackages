@@ -79,6 +79,8 @@ namespace rad
     double vel[3];
     double acc[3];
     double bField[3];
+    double antEField[3];
+    double antBField[3];
 
     /// Checks if a particle has started relative to the Event clock time
     /// \param part The particle which we are checking if it has started
@@ -101,9 +103,20 @@ namespace rad
     TTree *CreateOutputTree(std::vector<OutputVar> vars);
 
     /// Adds the data from the particle state to the TTree
+    /// Specifically, data doesn't involve any kind of propagation time
     /// \param outputTree The tree to add the data to
     /// \param vars The variables to write to the TTree
-    void AddParticleData(TTree *outputTree, std::vector<OutputVar> vars);
+    void AddLocalParticleData(TTree *outputTree, std::vector<OutputVar> vars);
+
+    /// Calculates the electric field from a particle at a specific position 
+    /// \param particleIndex The index of the particle to calculate
+    /// \param antennaIndex The index of the antenna point to calculate
+    /// \return The electric field vector with units of V/m 
+    TVector3 GetEFieldAtAntenna(unsigned int particleIndex,
+                                unsigned int antennaIndex);
+
+    TVector3 GetBFieldAtAntenna(unsigned int particleIndex,
+                                unsigned int antennaIndex);                          
   };
 }
 

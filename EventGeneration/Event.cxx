@@ -13,6 +13,7 @@
 
 #include <cassert>
 #include <tuple>
+#include <algorithm>
 
 rad::Event::Event(std::vector<ParticleState> particles, BaseField *field,
                   double simStepSize, double simTime)
@@ -85,7 +86,7 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
 {
   std::cout << "Simulation time is " << maximumSimulationTime << " s" << std::endl;
   std::cout << "Simulation step size is " << simulationStepSize << " s" << std::endl;
-  int nTimeSteps = maximumSimulationTime / simulationStepSize;
+  const int nTimeSteps = maximumSimulationTime / simulationStepSize;
   std::cout << "Time steps = " << nTimeSteps << std::endl;
 
   // Check if we have chosen to write output to file
@@ -93,6 +94,9 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   TFile *fout = 0;
   TTree *tree = 0;
 
+  double advancedTimes[nTimeSteps];
+  double advancedEFields[nTimeSteps][3];
+  double advancedBFields[nTimeSteps][3];
   // Create the output file
   if (writeToFile)
   {
@@ -100,11 +104,26 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
     fout = new TFile(outputFile, "RECREATE");
     // Create the TTree with the correct variables
     tree = CreateOutputTree(vars);
-    AddParticleData(tree, vars);
+    AddLocalParticleData(tree, vars);
+
+    if (antennaList.size() > 0 &&
+        (std::find(vars.begin(), vars.end(), OutputVar::kAntEField) != vars.end() ||
+         std::find(vars.begin(), vars.end(), OutputVar::kAntBField) != vars.end()))
+    {
+      advancedTimes[0] = GetPropagationTime(particleList.at(0), antennaList.at(0));
+      TVector3 eField{GetEFieldAtAntenna(0, 0)};
+      TVector3 bField{GetBFieldAtAntenna(0, 0)};
+      advancedEFields[0][0] = eField.X();
+      advancedEFields[0][1] = eField.Y();
+      advancedEFields[0][2] = eField.Z();
+      advancedBFields[0][0] = bField.X();
+      advancedBFields[0][1] = bField.Y();
+      advancedBFields[0][2] = bField.Z();
+    }
   }
 
   // Move forward through time
-  for (int iStep = 0; iStep < nTimeSteps; iStep++)
+  for (int iStep = 1; iStep < nTimeSteps; iStep++)
   {
     clockTime += simulationStepSize;
     for (int iPart = 0; iPart < particleList.size(); iPart++)
@@ -113,7 +132,14 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
       if (ParticleStartCheck(particleList[iPart]))
       {
         AdvanceParticleStep(iPart);
-        AddParticleData(tree, vars);
+        AddLocalParticleData(tree, vars);
+
+        // Check if we are saving antenna data (and have antenna data to save)
+        if (antennaList.size() > 0 &&
+            (std::find(vars.begin(), vars.end(), OutputVar::kAntEField) != vars.end() ||
+             std::find(vars.begin(), vars.end(), OutputVar::kAntBField) != vars.end()))
+        {
+        }
       }
     }
   }
@@ -196,7 +222,7 @@ TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
   return tree;
 }
 
-void rad::Event::AddParticleData(TTree *outputTree, std::vector<OutputVar> vars)
+void rad::Event::AddLocalParticleData(TTree *outputTree, std::vector<OutputVar> vars)
 {
   // Get the particle state so we can extract kinematic info
   particleTime = clockTime;
@@ -241,4 +267,35 @@ void rad::Event::AddParticleData(TTree *outputTree, std::vector<OutputVar> vars)
 
   // Actually fill the tree
   outputTree->Fill();
+}
+
+TVector3 rad::Event::GetEFieldAtAntenna(unsigned int particleIndex,
+                                        unsigned int antennaIndex)
+{
+  TVector3 antennaPos{antennaList.at(antennaIndex)->GetAntennaPosition()};
+  TVector3 particlePos{particleList.at(particleIndex).GetPositionVector()};
+  TVector3 particleVel{particleList.at(particleIndex).GetVelocityVector()};
+  double q{particleList.at(particleIndex).GetParticleCharge()};
+  TVector3 particleAcc{solverList.at(0).acc(particlePos, particleVel)};
+  TVector3 beta{particleVel * (1.0 / TMath::C())};
+  TVector3 betaDot{particleAcc * (1.0 / TMath::C())};
+  double premult{q / (4 * TMath::Pi() * EPSILON0)};
+  double r{(antennaPos - particlePos).Mag()};
+  TVector3 rHat{(antennaPos - particlePos).Unit()};
+
+  TVector3 term1{(rHat - beta) * (1 - beta.Dot(beta)) *
+                 (1.0 / (pow(1 - beta.Dot(rHat), 3) * r * r))};
+  TVector3 term2{rHat.Cross((rHat - beta).Cross(betaDot)) *
+                 (1.0 / (TMath::C() * r * pow(1 - beta.Dot(rHat), 3)))};
+  return (term1 + term2) * premult;
+}
+
+TVector3 rad::Event::GetBFieldAtAntenna(unsigned int particleIndex,
+                                        unsigned int antennaIndex)
+{
+  TVector3 eField{GetEFieldAtAntenna(particleIndex, antennaIndex)};
+  TVector3 antennaPos{antennaList.at(antennaIndex)->GetAntennaPosition()};
+  TVector3 particlePos{particleList.at(particleIndex).GetPositionVector()};
+  TVector3 rHat{(antennaPos - particlePos).Unit()};
+  return rHat.Cross(eField) * (1.0 / TMath::C());
 }
