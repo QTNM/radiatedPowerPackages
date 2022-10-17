@@ -15,7 +15,8 @@ namespace rad
         kPos,
         kVel,
         kAcc,
-        kBField
+        kBField,
+        kParticleTime
     };
 }
 
