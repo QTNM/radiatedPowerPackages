@@ -63,6 +63,13 @@ TVector3 rad::FieldStorer::GetInterpolatedEField(double timeInterp)
     std::vector<double> eXVals(4);
     std::vector<double> eYVals(4);
     std::vector<double> eZVals(4);
+
+    // Signal has not yet reached the antenna
+    if (timeInterp < tA.at(0))
+    {
+        return TVector3(0, 0, 0);
+    }
+
     // Loop through the times and find the points which our
     // data point lies between
     for (int i = 0; i < tA.size(); i++)
@@ -73,17 +80,17 @@ TVector3 rad::FieldStorer::GetInterpolatedEField(double timeInterp)
             timeVals.at(1) = tA.at(i);
             timeVals.at(2) = tA.at(i + 1);
             timeVals.at(3) = tA.at(i + 2);
-            eXVals.at(0) = eField.at(i - 1).X(); 
-            eYVals.at(0) = eField.at(i - 1).Y();    
+            eXVals.at(0) = eField.at(i - 1).X();
+            eYVals.at(0) = eField.at(i - 1).Y();
             eZVals.at(0) = eField.at(i - 1).Z();
-            eXVals.at(1) = eField.at(i).X(); 
-            eYVals.at(1) = eField.at(i).Y();    
+            eXVals.at(1) = eField.at(i).X();
+            eYVals.at(1) = eField.at(i).Y();
             eZVals.at(1) = eField.at(i).Z();
-            eXVals.at(2) = eField.at(i + 1).X(); 
-            eYVals.at(2) = eField.at(i + 1).Y();    
+            eXVals.at(2) = eField.at(i + 1).X();
+            eYVals.at(2) = eField.at(i + 1).Y();
             eZVals.at(2) = eField.at(i + 1).Z();
-            eXVals.at(3) = eField.at(i + 2).X(); 
-            eYVals.at(3) = eField.at(i + 2).Y();    
+            eXVals.at(3) = eField.at(i + 2).X();
+            eYVals.at(3) = eField.at(i + 2).Y();
             eZVals.at(3) = eField.at(i + 2).Z();
             break;
         }
@@ -102,6 +109,12 @@ TVector3 rad::FieldStorer::GetInterpolatedBField(double timeInterp)
     std::vector<double> bXVals(4);
     std::vector<double> bYVals(4);
     std::vector<double> bZVals(4);
+
+    if (timeInterp < tA.at(0))
+    {
+        return TVector3(0, 0, 0);
+    }
+
     // Loop through the times and find the points which our
     // data point lies between
     for (int i = 0; i < tA.size(); i++)
@@ -112,17 +125,17 @@ TVector3 rad::FieldStorer::GetInterpolatedBField(double timeInterp)
             timeVals.at(1) = tA.at(i);
             timeVals.at(2) = tA.at(i + 1);
             timeVals.at(3) = tA.at(i + 2);
-            bXVals.at(0) = bField.at(i - 1).X(); 
-            bYVals.at(0) = bField.at(i - 1).Y();    
+            bXVals.at(0) = bField.at(i - 1).X();
+            bYVals.at(0) = bField.at(i - 1).Y();
             bZVals.at(0) = bField.at(i - 1).Z();
-            bXVals.at(1) = bField.at(i).X(); 
-            bYVals.at(1) = bField.at(i).Y();    
+            bXVals.at(1) = bField.at(i).X();
+            bYVals.at(1) = bField.at(i).Y();
             bZVals.at(1) = bField.at(i).Z();
-            bXVals.at(2) = bField.at(i + 1).X(); 
-            bYVals.at(2) = bField.at(i + 1).Y();    
+            bXVals.at(2) = bField.at(i + 1).X();
+            bYVals.at(2) = bField.at(i + 1).Y();
             bZVals.at(2) = bField.at(i + 1).Z();
-            bXVals.at(3) = bField.at(i + 2).X(); 
-            bYVals.at(3) = bField.at(i + 2).Y();    
+            bXVals.at(3) = bField.at(i + 2).X();
+            bYVals.at(3) = bField.at(i + 2).Y();
             bZVals.at(3) = bField.at(i + 2).Z();
             break;
         }
