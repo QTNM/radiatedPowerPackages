@@ -38,5 +38,15 @@ namespace rad
         /// \param newBField Magnetic field vector to be added
         /// \param tANew Advanced time to be added (in seconds)
         void AddNewFields(TVector3 newEField, TVector3 newBField, double tANew);
+
+        /// Gets an interpolated electric field at the desired time 
+        /// \param timeInterp The time at which to interpolate the value
+        /// \return The interpolated field value (in units of V/m)
+        TVector3 GetInterpolatedEField(double timeInterp);
+
+        /// Gets an interpolated magnetic field at the desired time 
+        /// \param timeInterp The time at which to interpolate the value
+        /// \return The interpolated field value (in units of T
+        TVector3 GetInterpolatedBField(double timeInterp);
     };
 }
