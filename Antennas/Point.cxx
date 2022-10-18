@@ -13,12 +13,12 @@ rad::Point::Point(TVector3 antennaPos)
     SetBandwidth();
 }
 
-TVector3 rad::Point::GetETheta(TVector3 electronPosition)
+TVector3 rad::Point::GetETheta(const TVector3 electronPosition)
 {
     return TVector3(0, 0, 0);
 }
 
-TVector3 rad::Point::GetEPhi(TVector3 electronPosition)
+TVector3 rad::Point::GetEPhi(const TVector3 electronPosition)
 {
     return TVector3(0, 0, 0);
 }

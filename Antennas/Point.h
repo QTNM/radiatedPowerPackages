@@ -26,6 +26,9 @@ namespace rad
         // Used for radiation pattern usually - returns 0 here 
         TVector3 GetETheta(const TVector3 electronPosition);
         TVector3 GetEPhi(const TVector3 electronPosition);
+        
+        // Effective height function also returns 0
+        double GetHEff() {return 0;}
     };
 }
 
