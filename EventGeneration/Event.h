@@ -114,7 +114,11 @@ namespace rad
     /// \return The electric field vector with units of V/m 
     TVector3 GetEFieldAtAntenna(unsigned int particleIndex,
                                 unsigned int antennaIndex);
-
+    
+    /// Calculate the magnetic field from a particle at a specific position
+    /// \param particleIndex The index of the particle to calculate
+    /// \param antennaIndex The index of the antenna point to calculate
+    /// \return The magnetic field vector with units of Tesla
     TVector3 GetBFieldAtAntenna(unsigned int particleIndex,
                                 unsigned int antennaIndex);                          
   };
