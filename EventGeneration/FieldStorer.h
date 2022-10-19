@@ -23,8 +23,8 @@ namespace rad
         std::vector<TVector3> eField;
         std::vector<TVector3> bField;
 
-        double InterpolateCubicSpline(std::vector<double> xVals,
-                                      std::vector<double> yVals, double interp);
+        double DoCubicInterpolation(std::vector<double> xVals,
+                                    std::vector<double> yVals, double interp);
 
     public:
         /// Parametrised constructor

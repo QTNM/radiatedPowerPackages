@@ -2,6 +2,8 @@
 
 #include "EventGeneration/FieldStorer.h"
 
+#include "TSpline.h"
+
 #include <iostream>
 
 rad::FieldStorer::FieldStorer(TVector3 eField0, TVector3 bField0, double tA0)
@@ -28,33 +30,21 @@ void rad::FieldStorer::AddNewFields(TVector3 newEField, TVector3 newBField,
     }
 }
 
-double rad::FieldStorer::InterpolateCubicSpline(std::vector<double> xVals,
-                                                std::vector<double> yVals, double interp)
+double rad::FieldStorer::DoCubicInterpolation(std::vector<double> xVals,
+                                              std::vector<double> yVals, double interp)
 {
-    if (xVals.size() != 4 || yVals.size() != 4)
-    {
-        std::cout << "Vectors of input values are the wrong size!!!\n";
-        return 0;
-    }
-    else
-    {
-        double pm1{yVals[0]};
-        double p0{yVals[1]};
-        double p1{yVals[2]};
-        double p2{yVals[3]};
+    // Use the 3rd integrating Lagrange polynomial
+    // First calculate the Lagrange interpolating basis functions
+    double l0{(interp - xVals[1]) * (interp - xVals[2]) * (interp - xVals[3]) /
+              ((xVals[0] - xVals[1]) * (xVals[0] - xVals[2]) * (xVals[0] - xVals[3]))};
+    double l1{(interp - xVals[0]) * (interp - xVals[2]) * (interp - xVals[3]) /
+              ((xVals[1] - xVals[0]) * (xVals[1] - xVals[2]) * (xVals[1] - xVals[3]))};
+    double l2{(interp - xVals[0]) * (interp - xVals[1]) * (interp - xVals[3]) /
+              ((xVals[2] - xVals[0]) * (xVals[2] - xVals[1]) * (xVals[2] - xVals[3]))};
+    double l3{(interp - xVals[0]) * (interp - xVals[1]) * (interp - xVals[2]) /
+              ((xVals[3] - xVals[0]) * (xVals[3] - xVals[1]) * (xVals[3] - xVals[2]))};
 
-        double xm1{xVals[0]};
-        double x0{xVals[1]};
-        double x1{xVals[2]};
-        double x2{xVals[3]};
-
-        double m0{0.5 * ((p1 - p0) / (x1 - x0) + (p0 - pm1) / (x0 - xm1))};
-        double m1{0.5 * ((p2 - p1) / (x2 - x1) + (p1 - p0) / (x1 - x0))};
-        double value{(2 * p0 + m1 - 2 * p1 + m1) * pow(interp, 2) +
-                     (-3 * p0 + 3 * p1 - 2 * m0 - m1) * pow(interp, 2) +
-                     m0 * interp + p0};
-        return value;
-    }
+    return l0 * yVals[0] + l1 * yVals[1] + l2 * yVals[2] + l3 * yVals[3];
 }
 
 TVector3 rad::FieldStorer::GetInterpolatedEField(double timeInterp)
@@ -74,15 +64,25 @@ TVector3 rad::FieldStorer::GetInterpolatedEField(double timeInterp)
     // data point lies between
     for (int i = 0; i < tA.size(); i++)
     {
-        if (timeInterp > tA.at(i))
+        if (timeInterp > tA.at(i) && timeInterp < tA.at(i+1))
         {
-            timeVals.at(0) = tA.at(i - 1);
+            if (i == 0)
+            {
+                timeVals.at(0) = 0;
+                eXVals.at(0) = 0;
+                eYVals.at(0) = 0;
+                eZVals.at(0) = 0;
+            }
+            else
+            {
+                timeVals.at(0) = tA.at(i - 1);
+                eXVals.at(0) = eField.at(i - 1).X();
+                eYVals.at(0) = eField.at(i - 1).Y();
+                eZVals.at(0) = eField.at(i - 1).Z();
+            }
             timeVals.at(1) = tA.at(i);
             timeVals.at(2) = tA.at(i + 1);
             timeVals.at(3) = tA.at(i + 2);
-            eXVals.at(0) = eField.at(i - 1).X();
-            eYVals.at(0) = eField.at(i - 1).Y();
-            eZVals.at(0) = eField.at(i - 1).Z();
             eXVals.at(1) = eField.at(i).X();
             eYVals.at(1) = eField.at(i).Y();
             eZVals.at(1) = eField.at(i).Z();
@@ -97,9 +97,11 @@ TVector3 rad::FieldStorer::GetInterpolatedEField(double timeInterp)
     }
 
     // Now interpolate each field component
-    double eFieldXInterp{InterpolateCubicSpline(timeVals, eXVals, timeInterp)};
-    double eFieldYInterp{InterpolateCubicSpline(timeVals, eYVals, timeInterp)};
-    double eFieldZInterp{InterpolateCubicSpline(timeVals, eZVals, timeInterp)};
+    // double eFieldXInterp{InterpolateCubicSpline(timeVals, eXVals, timeInterp)};
+    double eFieldXInterp{DoCubicInterpolation(timeVals, eYVals, timeInterp)};
+    double eFieldYInterp{DoCubicInterpolation(timeVals, eYVals, timeInterp)};
+    double eFieldZInterp{DoCubicInterpolation(timeVals, eZVals, timeInterp)};
+
     return TVector3(eFieldXInterp, eFieldYInterp, eFieldZInterp);
 }
 
@@ -142,8 +144,8 @@ TVector3 rad::FieldStorer::GetInterpolatedBField(double timeInterp)
     }
 
     // Now interpolate each field component
-    double bFieldXInterp{InterpolateCubicSpline(timeVals, bXVals, timeInterp)};
-    double bFieldYInterp{InterpolateCubicSpline(timeVals, bYVals, timeInterp)};
-    double bFieldZInterp{InterpolateCubicSpline(timeVals, bZVals, timeInterp)};
+    double bFieldXInterp{DoCubicInterpolation(timeVals, bXVals, timeInterp)};
+    double bFieldYInterp{DoCubicInterpolation(timeVals, bYVals, timeInterp)};
+    double bFieldZInterp{DoCubicInterpolation(timeVals, bZVals, timeInterp)};
     return TVector3(bFieldXInterp, bFieldYInterp, bFieldZInterp);
 }
