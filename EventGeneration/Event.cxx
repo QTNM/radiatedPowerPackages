@@ -1,10 +1,12 @@
 /// Event.cxx
 
 #include "EventGeneration/Event.h"
-
 #include "EventGeneration/ParticleState.h"
+#include "EventGeneration/FieldStorer.h"
+
 #include "ElectronDynamics/BaseField.h"
 #include "ElectronDynamics/BorisSolver.h"
+
 #include "Antennas/IAntenna.h"
 
 #include "TFile.h"
@@ -94,9 +96,9 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   TFile *fout = 0;
   TTree *tree = 0;
 
-  double advancedTimes[nTimeSteps];
-  double advancedEFields[nTimeSteps][3];
-  double advancedBFields[nTimeSteps][3];
+  TVector3 eFieldInitial(0, 0, 0);
+  TVector3 bFieldInitial(0, 0, 0);
+  double tAInitial{0};
   // Create the output file
   if (writeToFile)
   {
@@ -110,17 +112,20 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
         (std::find(vars.begin(), vars.end(), OutputVar::kAntEField) != vars.end() ||
          std::find(vars.begin(), vars.end(), OutputVar::kAntBField) != vars.end()))
     {
-      advancedTimes[0] = GetPropagationTime(particleList.at(0), antennaList.at(0));
-      TVector3 eField{GetEFieldAtAntenna(0, 0)};
-      TVector3 bField{GetBFieldAtAntenna(0, 0)};
-      advancedEFields[0][0] = eField.X();
-      advancedEFields[0][1] = eField.Y();
-      advancedEFields[0][2] = eField.Z();
-      advancedBFields[0][0] = bField.X();
-      advancedBFields[0][1] = bField.Y();
-      advancedBFields[0][2] = bField.Z();
+      tAInitial = GetPropagationTime(particleList.at(0), antennaList.at(0));
+      eFieldInitial = GetEFieldAtAntenna(0, 0);
+      bFieldInitial = GetBFieldAtAntenna(0, 0);
+      antEField[0] = 0;
+      antEField[1] = 0;
+      antEField[2] = 0;
+      antBField[0] = 0;
+      antBField[1] = 0;
+      antBField[2] = 0;
     }
+    tree->Fill();
   }
+
+  FieldStorer fieldStorage(eFieldInitial, bFieldInitial, tAInitial);
 
   // Move forward through time
   for (int iStep = 1; iStep < nTimeSteps; iStep++)
@@ -139,9 +144,28 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
             (std::find(vars.begin(), vars.end(), OutputVar::kAntEField) != vars.end() ||
              std::find(vars.begin(), vars.end(), OutputVar::kAntBField) != vars.end()))
         {
+          double tA{clockTime + GetPropagationTime(particleList.at(0), antennaList.at(0))};
+          TVector3 eField{GetEFieldAtAntenna(0, 0)};
+          TVector3 bField{GetBFieldAtAntenna(0, 0)};
+          fieldStorage.AddNewFields(eField, bField, tA);
+
+          // Write to file
+          if (std::find(vars.begin(), vars.end(), OutputVar::kAntEField) != vars.end())
+          {
+            antEField[0] = fieldStorage.GetInterpolatedEField(clockTime).X();
+            antEField[1] = fieldStorage.GetInterpolatedEField(clockTime).Y();
+            antEField[2] = fieldStorage.GetInterpolatedEField(clockTime).Z();
+          }
+          else if (std::find(vars.begin(), vars.end(), OutputVar::kAntBField) != vars.end())
+          {
+            antBField[0] = fieldStorage.GetInterpolatedBField(clockTime).X();
+            antBField[1] = fieldStorage.GetInterpolatedBField(clockTime).Y();
+            antBField[2] = fieldStorage.GetInterpolatedBField(clockTime).Z();
+          }
         }
       }
     }
+    tree->Fill();
   }
 
   // If we opened the file, then close it
@@ -214,6 +238,14 @@ TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
     {
       tree->Branch("bField", bField, "bField[3]/D");
     }
+    else if (quantity == OutputVar::kAntEField)
+    {
+      tree->Branch("antEField", antEField, "antEField[3]/D");
+    }
+    else if (quantity == OutputVar::kAntBField)
+    {
+      tree->Branch("antBField", antBField, "antBField[3]/D");
+    }
     else
     {
       std::cout << "Unsupported option. This will not do what you think.\n";
@@ -259,14 +291,7 @@ void rad::Event::AddLocalParticleData(TTree *outputTree, std::vector<OutputVar> 
       bField[1] = fieldAtPoint.Y();
       bField[2] = fieldAtPoint.Z();
     }
-    else
-    {
-      std::cout << "Unsupported option. This will not do what you think.\n";
-    }
   }
-
-  // Actually fill the tree
-  outputTree->Fill();
 }
 
 TVector3 rad::Event::GetEFieldAtAntenna(unsigned int particleIndex,
