@@ -20,7 +20,15 @@ namespace rad
 
         // E and B fields at the antenna
         kAntEField,
-        kAntBField
+        kAntBField,
+        // Induced voltage at an antenna
+        kAntVoltage,
+
+        // Sample time at some hypothetical digitizer
+        kSampleTime,
+        // In-phase and quadrature components of some voltage
+        kVI,
+        kVQ
     };
 }
 
