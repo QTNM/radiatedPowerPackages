@@ -131,7 +131,8 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
     tree->Fill();
   }
 
-  FieldStorer fieldStorage(eFieldInitial, bFieldInitial, tAInitial);
+  TVector3 posInitial{particleList.at(0).GetPositionVector()};
+  FieldStorer fieldStorage(eFieldInitial, bFieldInitial, posInitial, tAInitial);
 
   // Move forward through time
   for (int iStep = 1; iStep < nTimeSteps; iStep++)
@@ -153,7 +154,8 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
           double tA{clockTime + GetPropagationTime(particleList.at(0), antennaList.at(0))};
           TVector3 eField{GetEFieldAtAntenna(0, 0)};
           TVector3 bField{GetBFieldAtAntenna(0, 0)};
-          fieldStorage.AddNewFields(eField, bField, tA);
+          TVector3 pos{particleList[iPart].GetPositionVector()};
+          fieldStorage.AddNewFields(eField, bField, pos, tA);
 
           // Write to file
           if (VectorContainsVar(vars, kAntEField))
@@ -168,6 +170,11 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
             antBField[0] = fieldStorage.GetInterpolatedBField(clockTime).X();
             antBField[1] = fieldStorage.GetInterpolatedBField(clockTime).Y();
             antBField[2] = fieldStorage.GetInterpolatedBField(clockTime).Z();
+          }
+
+          if (VectorContainsVar(vars, kAntVoltage))
+          {
+            // antVoltage = GetAntennaLoadVoltage(fieldStorage, clockTime);
           }
         }
       }

@@ -6,19 +6,22 @@
 
 #include <iostream>
 
-rad::FieldStorer::FieldStorer(TVector3 eField0, TVector3 bField0, double tA0)
+rad::FieldStorer::FieldStorer(TVector3 eField0, TVector3 bField0,
+                              TVector3 pos0, double tA0)
 {
     tA.push_back(tA0);
     eField.push_back(eField0);
     bField.push_back(bField0);
+    pos.push_back(pos0);
 }
 
 void rad::FieldStorer::AddNewFields(TVector3 newEField, TVector3 newBField,
-                                    double tANew)
+                                    TVector3 newPos, double tANew)
 {
     tA.push_back(tANew);
     eField.push_back(newEField);
     bField.push_back(newBField);
+    pos.push_back(newPos);
 
     const double maxTimeLength{5e-8}; // seconds
     // If the vector is too long, remove the point at the start
@@ -27,6 +30,7 @@ void rad::FieldStorer::AddNewFields(TVector3 newEField, TVector3 newBField,
         tA.erase(tA.begin());
         eField.erase(eField.begin());
         bField.erase(bField.begin());
+        pos.erase(pos.begin());
     }
 }
 
@@ -64,7 +68,7 @@ TVector3 rad::FieldStorer::GetInterpolatedEField(double timeInterp)
     // data point lies between
     for (int i = 0; i < tA.size(); i++)
     {
-        if (timeInterp > tA.at(i) && timeInterp < tA.at(i+1))
+        if (timeInterp > tA.at(i) && timeInterp < tA.at(i + 1))
         {
             if (i == 0)
             {
