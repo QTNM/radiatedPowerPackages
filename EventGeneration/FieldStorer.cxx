@@ -128,15 +128,25 @@ TVector3 rad::FieldStorer::GetInterpolatedBField(double timeInterp)
     // data point lies between
     for (int i = 0; i < tA.size(); i++)
     {
-        if (timeInterp > tA.at(i))
+        if (timeInterp > tA.at(i) && timeInterp < tA.at(i + 1))
         {
-            timeVals.at(0) = tA.at(i - 1);
+            if (i == 0)
+            {
+                timeVals.at(0) = 0;
+                bXVals.at(0) = 0;
+                bYVals.at(0) = 0;
+                bZVals.at(0) = 0;
+            }
+            else
+            {
+                timeVals.at(0) = tA.at(i - 1);
+                bXVals.at(0) = bField.at(i - 1).X();
+                bYVals.at(0) = bField.at(i - 1).Y();
+                bZVals.at(0) = bField.at(i - 1).Z();
+            }
             timeVals.at(1) = tA.at(i);
             timeVals.at(2) = tA.at(i + 1);
             timeVals.at(3) = tA.at(i + 2);
-            bXVals.at(0) = bField.at(i - 1).X();
-            bYVals.at(0) = bField.at(i - 1).Y();
-            bZVals.at(0) = bField.at(i - 1).Z();
             bXVals.at(1) = bField.at(i).X();
             bYVals.at(1) = bField.at(i).Y();
             bZVals.at(1) = bField.at(i).Z();
