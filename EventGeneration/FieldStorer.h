@@ -66,6 +66,11 @@ namespace rad
         /// \param timeInterp The desired time at which to interpolate the value
         /// \return The interpolated particle position (in units of metres)
         TVector3 GetInterpolatedPosition(double timeInterp);
+
+        /// Calculates the antenna load voltage
+        /// \param clockTime The time at which we want to determine the voltage 
+        /// \return The load voltage (in volts)
+        double GetAntennaLoadVoltage(double clockTime);
     };
 }
 

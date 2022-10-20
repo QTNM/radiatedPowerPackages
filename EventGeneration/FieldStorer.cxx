@@ -156,3 +156,67 @@ TVector3 rad::FieldStorer::GetInterpolatedBField(double timeInterp)
     double bFieldZInterp{DoCubicInterpolation(timeVals, bZVals, timeInterp)};
     return TVector3(bFieldXInterp, bFieldYInterp, bFieldZInterp);
 }
+
+TVector3 rad::FieldStorer::GetInterpolatedPosition(double timeInterp)
+{
+    std::vector<double> timeVals(4);
+    std::vector<double> xVals(4);
+    std::vector<double> yVals(4);
+    std::vector<double> zVals(4);
+
+    if (timeInterp < tA.at(0))
+    {
+        return TVector3(0, 0, 0);
+    }
+
+    for (int i = 0; i < tA.size(); i++)
+    {
+        if (timeInterp > tA.at(i) && timeInterp < tA.at(i + 1))
+        {
+            if (i == 0)
+            {
+                timeVals.at(0) = tA.at(0) - (tA.at(1) - tA.at(0));
+                xVals.at(0) = pos.at(0).X();
+                yVals.at(0) = pos.at(0).Y();
+                yVals.at(0) = pos.at(0).Z();
+            }
+            else
+            {
+                timeVals.at(0) = tA.at(i - 1);
+                xVals.at(0) = pos.at(i - 1).X();
+                yVals.at(0) = pos.at(i - 1).Y();
+                yVals.at(0) = pos.at(i - 1).Z();
+            }
+            timeVals.at(1) = tA.at(i);
+            timeVals.at(2) = tA.at(i + 1);
+            timeVals.at(3) = tA.at(i + 2);
+            xVals.at(1) = pos.at(i).X();
+            yVals.at(1) = pos.at(i).Y();
+            zVals.at(1) = pos.at(i).Z();
+            xVals.at(2) = pos.at(i + 1).X();
+            yVals.at(2) = pos.at(i + 1).Y();
+            zVals.at(2) = pos.at(i + 1).Z();
+            xVals.at(3) = pos.at(i + 2).X();
+            yVals.at(3) = pos.at(i + 2).Y();
+            zVals.at(3) = pos.at(i + 2).Z();
+            break;
+        }
+    }
+
+    // Now interpolate each component
+    double xInterp{DoCubicInterpolation(timeVals, xVals, timeInterp)};
+    double yInterp{DoCubicInterpolation(timeVals, yVals, timeInterp)};
+    double zInterp{DoCubicInterpolation(timeVals, zVals, timeInterp)};
+    return TVector3(xInterp, yInterp, zInterp);
+}
+
+double rad::FieldStorer::GetAntennaLoadVoltage(double clockTime)
+{
+    TVector3 theField{GetInterpolatedEField(clockTime)};
+    TVector3 thePos{GetInterpolatedPosition(clockTime)};
+    double voltage{(theField.Dot(theAntenna->GetETheta(thePos)) +
+                    theField.Dot(theAntenna->GetEPhi(thePos))) *
+                   theAntenna->GetHEff()};
+    voltage /= 2.0;
+    return voltage;
+}
