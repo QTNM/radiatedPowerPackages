@@ -7,8 +7,12 @@
     Seb Jones 18-10-2022
 */
 
+#ifndef FIELD_STORER_H
+#define FIELD_STORER_H
+
 #include "BasicFunctions/Constants.h"
 #include "EventGeneration/ParticleState.h"
+#include "Antennas/IAntenna.h"
 
 #include "TVector3.h"
 
@@ -25,6 +29,8 @@ namespace rad
         std::vector<TVector3> bField;
         std::vector<TVector3> pos; // Electron positions
 
+        IAntenna *theAntenna;
+
         double DoCubicInterpolation(std::vector<double> xVals,
                                     std::vector<double> yVals, double interp);
 
@@ -34,7 +40,9 @@ namespace rad
         /// \param bField0 Initial magnetic field at field point
         /// \param pos0 Initial particle position
         /// \param tA0 Initial advanced time at field point
-        FieldStorer(TVector3 eField0, TVector3 bField0, TVector3, double tA0);
+        /// \param ant Pointer to the antenna point where these fields are
+        FieldStorer(TVector3 eField0, TVector3 bField0, TVector3, double tA0,
+                    IAntenna *ant);
 
         /// Adds new fields and time to the object and (if necessary) removes old ones
         /// \param newEField Electric field vector to be added
@@ -60,3 +68,5 @@ namespace rad
         TVector3 GetInterpolatedPosition(double timeInterp);
     };
 }
+
+#endif

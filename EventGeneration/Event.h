@@ -11,6 +11,7 @@
 #include "EventGeneration/ParticleState.h"
 #include "ElectronDynamics/BaseField.h"
 #include "ElectronDynamics/BorisSolver.h"
+#include "EventGeneration/FieldStorer.h"
 #include "Antennas/IAntenna.h"
 #include "EventGeneration/OutputVars.h"
 
@@ -109,25 +110,33 @@ namespace rad
     /// \param vars The variables to write to the TTree
     void AddLocalParticleData(TTree *outputTree, std::vector<OutputVar> vars);
 
-    /// Calculates the electric field from a particle at a specific position 
+    /// Calculates the electric field from a particle at a specific position
     /// \param particleIndex The index of the particle to calculate
     /// \param antennaIndex The index of the antenna point to calculate
-    /// \return The electric field vector with units of V/m 
+    /// \return The electric field vector with units of V/m
     TVector3 GetEFieldAtAntenna(unsigned int particleIndex,
                                 unsigned int antennaIndex);
-    
+
     /// Calculate the magnetic field from a particle at a specific position
     /// \param particleIndex The index of the particle to calculate
     /// \param antennaIndex The index of the antenna point to calculate
     /// \return The magnetic field vector with units of Tesla
     TVector3 GetBFieldAtAntenna(unsigned int particleIndex,
-                                unsigned int antennaIndex);    
+                                unsigned int antennaIndex);
 
     /// Checks if an array of output vars contains a specific one
     /// \param vars Vector of output variables to be checked
-    /// \param testVar Specific variable to be checked for 
-    /// \return True if vector contains specific output variable 
-    bool VectorContainsVar(std::vector<OutputVar> vars, OutputVar testVar);                      
+    /// \param testVar Specific variable to be checked for
+    /// \return True if vector contains specific output variable
+    bool VectorContainsVar(std::vector<OutputVar> vars, OutputVar testVar);
+
+    /// Calculates the antenna load voltage
+    /// \param store The field storer containing the relevant fields
+    /// \param ant Pointer to the relevant antenna
+    /// \param clockTime The time at which we want to determine the voltage
+    /// \return
+    double GetAntennaLoadVoltage(FieldStorer store, IAntenna *ant,
+                                 double clockTime);
   };
 }
 

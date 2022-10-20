@@ -1,18 +1,21 @@
 /// FieldStorer.cxx
 
 #include "EventGeneration/FieldStorer.h"
+#include "Antennas/IAntenna.h"
 
 #include "TSpline.h"
 
 #include <iostream>
 
 rad::FieldStorer::FieldStorer(TVector3 eField0, TVector3 bField0,
-                              TVector3 pos0, double tA0)
+                              TVector3 pos0, double tA0, IAntenna *ant)
 {
     tA.push_back(tA0);
     eField.push_back(eField0);
     bField.push_back(bField0);
     pos.push_back(pos0);
+
+    theAntenna = ant;
 }
 
 void rad::FieldStorer::AddNewFields(TVector3 newEField, TVector3 newBField,

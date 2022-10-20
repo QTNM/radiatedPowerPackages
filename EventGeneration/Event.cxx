@@ -110,7 +110,7 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
 
     if (antennaList.size() > 0 &&
         (VectorContainsVar(vars, kAntEField) || VectorContainsVar(vars, kAntBField) ||
-        VectorContainsVar(vars, kAntVoltage)))
+         VectorContainsVar(vars, kAntVoltage)))
     {
       tAInitial = GetPropagationTime(particleList.at(0), antennaList.at(0));
       eFieldInitial = GetEFieldAtAntenna(0, 0);
@@ -132,7 +132,8 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   }
 
   TVector3 posInitial{particleList.at(0).GetPositionVector()};
-  FieldStorer fieldStorage(eFieldInitial, bFieldInitial, posInitial, tAInitial);
+  FieldStorer fieldStorage(eFieldInitial, bFieldInitial, posInitial, tAInitial,
+                           antennaList.at(0));
 
   // Move forward through time
   for (int iStep = 1; iStep < nTimeSteps; iStep++)
@@ -148,8 +149,8 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
 
         // Check if we are saving antenna data (and have antenna data to save)
         if (antennaList.size() > 0 &&
-            (VectorContainsVar(vars, kAntEField) || 
-            VectorContainsVar(vars, kAntBField)))
+            (VectorContainsVar(vars, kAntEField) ||
+             VectorContainsVar(vars, kAntBField)))
         {
           double tA{clockTime + GetPropagationTime(particleList.at(0), antennaList.at(0))};
           TVector3 eField{GetEFieldAtAntenna(0, 0)};
