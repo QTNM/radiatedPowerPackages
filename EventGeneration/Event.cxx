@@ -109,8 +109,8 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
     AddLocalParticleData(tree, vars);
 
     if (antennaList.size() > 0 &&
-        (std::find(vars.begin(), vars.end(), OutputVar::kAntEField) != vars.end() ||
-         std::find(vars.begin(), vars.end(), OutputVar::kAntBField) != vars.end()))
+        (VectorContainsVar(vars, kAntEField) || VectorContainsVar(vars, kAntBField) ||
+        VectorContainsVar(vars, kAntVoltage)))
     {
       tAInitial = GetPropagationTime(particleList.at(0), antennaList.at(0));
       eFieldInitial = GetEFieldAtAntenna(0, 0);
@@ -121,6 +121,11 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
       antBField[0] = 0;
       antBField[1] = 0;
       antBField[2] = 0;
+
+      if (VectorContainsVar(vars, kAntVoltage))
+      {
+        antVoltage = 0;
+      }
     }
 
     tree->Fill();
@@ -142,8 +147,8 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
 
         // Check if we are saving antenna data (and have antenna data to save)
         if (antennaList.size() > 0 &&
-            (std::find(vars.begin(), vars.end(), OutputVar::kAntEField) != vars.end() ||
-             std::find(vars.begin(), vars.end(), OutputVar::kAntBField) != vars.end()))
+            (VectorContainsVar(vars, kAntEField) || 
+            VectorContainsVar(vars, kAntBField)))
         {
           double tA{clockTime + GetPropagationTime(particleList.at(0), antennaList.at(0))};
           TVector3 eField{GetEFieldAtAntenna(0, 0)};
@@ -151,13 +156,14 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
           fieldStorage.AddNewFields(eField, bField, tA);
 
           // Write to file
-          if (std::find(vars.begin(), vars.end(), OutputVar::kAntEField) != vars.end())
+          if (VectorContainsVar(vars, kAntEField))
           {
             antEField[0] = fieldStorage.GetInterpolatedEField(clockTime).X();
             antEField[1] = fieldStorage.GetInterpolatedEField(clockTime).Y();
             antEField[2] = fieldStorage.GetInterpolatedEField(clockTime).Z();
           }
-          else if (std::find(vars.begin(), vars.end(), OutputVar::kAntBField) != vars.end())
+
+          if (VectorContainsVar(vars, kAntBField))
           {
             antBField[0] = fieldStorage.GetInterpolatedBField(clockTime).X();
             antBField[1] = fieldStorage.GetInterpolatedBField(clockTime).Y();
