@@ -329,3 +329,8 @@ TVector3 rad::Event::GetBFieldAtAntenna(unsigned int particleIndex,
   TVector3 rHat{(antennaPos - particlePos).Unit()};
   return rHat.Cross(eField) * (1.0 / TMath::C());
 }
+
+bool rad::Event::VectorContainsVar(std::vector<OutputVar> vars, OutputVar testVar)
+{
+  return std::find(vars.begin(), vars.end(), OutputVar::kAntEField) != vars.end();
+}

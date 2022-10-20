@@ -127,7 +127,7 @@ namespace rad
     /// \param vars Vector of output variables to be checked
     /// \param testVar Specific variable to be checked for 
     /// \return True if vector contains specific output variable 
-    bool VectorContainsVariable(std::vector<OutputVar> vars, OutputVar testVar);                      
+    bool VectorContainsVar(std::vector<OutputVar> vars, OutputVar testVar);                      
   };
 }
 
