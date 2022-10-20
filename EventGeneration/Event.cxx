@@ -122,6 +122,7 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
       antBField[1] = 0;
       antBField[2] = 0;
     }
+
     tree->Fill();
   }
 
@@ -245,6 +246,10 @@ TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
     else if (quantity == OutputVar::kAntBField)
     {
       tree->Branch("antBField", antBField, "antBField[3]/D");
+    }
+    else if (quantity == OutputVar::kAntVoltage)
+    {
+      tree->Branch("antVoltage", &antVoltage, "antVoltage/D");
     }
     else
     {

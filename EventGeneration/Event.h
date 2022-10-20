@@ -81,6 +81,7 @@ namespace rad
     double bField[3];
     double antEField[3];
     double antBField[3];
+    double antVoltage;
 
     /// Checks if a particle has started relative to the Event clock time
     /// \param part The particle which we are checking if it has started
@@ -120,7 +121,13 @@ namespace rad
     /// \param antennaIndex The index of the antenna point to calculate
     /// \return The magnetic field vector with units of Tesla
     TVector3 GetBFieldAtAntenna(unsigned int particleIndex,
-                                unsigned int antennaIndex);                          
+                                unsigned int antennaIndex);    
+
+    /// Checks if an array of output vars contains a specific one
+    /// \param vars Vector of output variables to be checked
+    /// \param testVar Specific variable to be checked for 
+    /// \return True if vector contains specific output variable 
+    bool VectorContainsVariable(std::vector<OutputVar> vars, OutputVar testVar);                      
   };
 }
 
