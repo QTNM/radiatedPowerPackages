@@ -175,7 +175,7 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
 
           if (VectorContainsVar(vars, kAntVoltage))
           {
-            // antVoltage = GetAntennaLoadVoltage(fieldStorage, clockTime);
+            antVoltage = fieldStorage.GetAntennaLoadVoltage(clockTime);
           }
         }
       }

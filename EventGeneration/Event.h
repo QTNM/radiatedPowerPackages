@@ -129,14 +129,6 @@ namespace rad
     /// \param testVar Specific variable to be checked for
     /// \return True if vector contains specific output variable
     bool VectorContainsVar(std::vector<OutputVar> vars, OutputVar testVar);
-
-    /// Calculates the antenna load voltage
-    /// \param store The field storer containing the relevant fields
-    /// \param ant Pointer to the relevant antenna
-    /// \param clockTime The time at which we want to determine the voltage
-    /// \return
-    double GetAntennaLoadVoltage(FieldStorer store, IAntenna *ant,
-                                 double clockTime);
   };
 }
 
