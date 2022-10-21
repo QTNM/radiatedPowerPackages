@@ -36,7 +36,7 @@ namespace rad
 
     /// Produces a TGraph of the same variable on the y axis of the input graph but using the retarded time
     /// \param grOriginal The input TGraph which should be a time series
-    /// \Returns A time series graph plotted using the retarded time
+    /// \return A time series graph plotted using the retarded time
     TGraph* MakeRetardedTimeGraph(const TGraph* grOriginal);
 
     IAntenna* myAntenna; // The chosen antenna, contains position and direction info
@@ -84,7 +84,7 @@ namespace rad
     /// \param kUseRetardedTime Boolean to use retarded time
     /// \param firstPoint First point of the class members to return
     /// \param firstPoint Last point of the class members to return
-    /// \Returns The electron coordinate as a function of time
+    /// \return The electron coordinate as a function of time
     TGraph* GetPositionTimeDomain(Coord_t coord, const bool kUseRetardedTime=false,
 				  int firstPoint=-1, int lastPoint=-1);
     
@@ -93,7 +93,7 @@ namespace rad
     /// \param kUseRetardedTime Boolean to use retarded time
     /// \param firstPoint First point of the class members to return
     /// \param firstPoint Last point of the class members to return
-    /// \Returns The electric field as a function of time    
+    /// \return The electric field as a function of time    
     TGraph* GetEFieldTimeDomain(Coord_t coord, const bool kUseRetardedTime=false,
 				int firstPoint=-1, int lastPoint=-1);
 
@@ -102,7 +102,7 @@ namespace rad
     /// \param kUseRetardedTime Boolean to use retarded time
     /// \param firstPoint First point of the class members to return
     /// \param firstPoint Last point of the class members to return
-    /// \Returns The magnetic field as a function of time    
+    /// \return The magnetic field as a function of time    
     TGraph* GetBFieldTimeDomain(Coord_t coord, const bool kUseRetardedTime=false);
 
     /// Poynting vector component at the antenna as a function of time
@@ -110,29 +110,29 @@ namespace rad
     /// \param kUseRetardedTime Boolean to use retarded time
     /// \param firstPoint First point of the class members to return
     /// \param firstPoint Last point of the class members to return
-    /// \Returns The poynting vector as a function of time
+    /// \return The poynting vector as a function of time
     TGraph* GetPoyntingVecTimeDomain(Coord_t coord, const bool kUseRetardedTime=false);
     
     /// Electric field magnitude at the antenna as a function of time
     /// \param kUseRetardedTime Boolean to use retarded time
-    /// \Returns The electric field magnitude as a function of time
+    /// \return The electric field magnitude as a function of time
     TGraph* GetEFieldMagTimeDomain(const bool kUseRetardedTime=false);
 
     /// Magnetic field magnitude at the antenna as a function of time
     /// \param kUseRetardedTime Boolean to use retarded time
-    /// \Returns The magnetic field magnitude as a function of time
+    /// \return The magnetic field magnitude as a function of time
     TGraph* GetBFieldMagTimeDomain(const bool kUseRetardedTime=false);
 
     /// Poynting vector magnitude at the antenna as a function of time
     /// \param kUseRetardedTime Boolean to use retarded time
-    /// \Returns The poynting vector magnitude as a function of time
+    /// \return The poynting vector magnitude as a function of time
     TGraph* GetPoyntingMagTimeDomain(const bool kUseRetardedTime=false);
 
     /// Load voltage from the antenna as a function of time (assumes impedance matching)
     /// \param kUseRetardedTime Boolean to use retarded time
     /// \param firstPoint First point of the class members to return
     /// \param lastPoint Last point of the class members to return
-    /// \Returns The load voltage as a function of time 
+    /// \return The load voltage as a function of time 
     TGraph* GetAntennaLoadVoltageTimeDomain(const bool kUseRetardedTime=false,
 					    int firstPoint=-1, int lastPoint=-1);
 
@@ -141,7 +141,7 @@ namespace rad
     /// \param kUseRetardedTime Boolean to use retarded time
     /// \param firstPoint First point of the class members to return
     /// \param lastPoint Last point of the class members to return
-    /// \Returns The load voltage as a function of time 
+    /// \return The load voltage as a function of time 
     TGraph* GetAntennaLoadPowerTimeDomain(const double loadResistance,
 					  const bool kUseRetardedTime=false,
 					  int firstPoint=-1, int lastPoint=-1);
