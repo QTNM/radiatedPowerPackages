@@ -222,8 +222,8 @@ TVector3 rad::FieldStorer::GetInterpolatedPosition(double timeInterp)
 
 double rad::FieldStorer::GetAntennaLoadVoltage(double clockTime)
 {
-    TVector3 theField{GetInterpolatedEField(clockTime)};
-    TVector3 thePos{GetInterpolatedPosition(clockTime)};
+    TVector3 theField{GetInterpolatedEField(clockTime - theAntenna->GetTimeDelay())};
+    TVector3 thePos{GetInterpolatedPosition(clockTime - theAntenna->GetTimeDelay())};
     double voltage{(theField.Dot(theAntenna->GetETheta(thePos)) +
                     theField.Dot(theAntenna->GetEPhi(thePos))) *
                    theAntenna->GetHEff()};

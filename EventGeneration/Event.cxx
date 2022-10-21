@@ -158,7 +158,7 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
     for (int iAnt{0}; iAnt < nAntennas; iAnt++)
     {
       FieldStorer fieldStorage(eFieldInitial[iAnt], bFieldInitial[iAnt], posInitial,
-                               tAInitial[iAnt], antennaList.at(0));
+                               tAInitial[iAnt], antennaList.at(iAnt));
       fsVec.push_back(fieldStorage);
     }
   }
