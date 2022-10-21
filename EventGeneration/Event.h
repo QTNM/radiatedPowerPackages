@@ -76,14 +76,16 @@ namespace rad
     BaseField *magneticField;     // The magnetic field for the simulation
 
     // These arrays are only used for writing outputs
+    int nAntennas;       // Number of separate antennas
+    static const int nMaxAntennas{30};
     double particleTime;
     double pos[3];
     double vel[3];
     double acc[3];
     double bField[3];
-    double antEField[3];
-    double antBField[3];
-    double antVoltage;
+    double antEField[nMaxAntennas][3];
+    double antBField[nMaxAntennas][3];
+    double antVoltage[nMaxAntennas];
 
     /// Checks if a particle has started relative to the Event clock time
     /// \param part The particle which we are checking if it has started
@@ -130,6 +132,9 @@ namespace rad
     /// \param testVar Specific variable to be checked for
     /// \return True if vector contains specific output variable
     bool VectorContainsVar(std::vector<OutputVar> vars, OutputVar testVar);
+
+    /// Sets 2D arrays to (defined) nonsense values
+    void ResetArrays();
   };
 }
 

@@ -39,6 +39,8 @@ rad::Event::Event(std::vector<ParticleState> particles, BaseField *field,
                        2 * R_E / (3 * TMath::C()));
     solverList.push_back(solver);
   }
+
+  nAntennas = 0;
 }
 
 rad::Event::Event(std::vector<ParticleState> particles, std::vector<IAntenna *> antennas,
@@ -63,6 +65,8 @@ rad::Event::Event(std::vector<ParticleState> particles, std::vector<IAntenna *> 
                        2 * R_E / (3 * TMath::C()));
     solverList.push_back(solver);
   }
+
+  nAntennas = antennaList.size();
 }
 
 bool rad::Event::ParticleStartCheck(ParticleState part)
@@ -91,14 +95,26 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   const int nTimeSteps = maximumSimulationTime / simulationStepSize;
   std::cout << "Time steps = " << nTimeSteps << std::endl;
 
+  // Set 2D arrays to defined nonsense values
+  ResetArrays();
+
+  // Do we need to compute fields or voltages?
+  bool computeFields{(VectorContainsVar(vars, kAntEField) ||
+                      VectorContainsVar(vars, kAntBField) ||
+                      VectorContainsVar(vars, kAntVoltage))};
+  if (computeFields)
+  {
+    std::cout << "We are computing EM fields\n";
+  }
+
   // Check if we have chosen to write output to file
   bool writeToFile{outputFile != NULL};
   TFile *fout = 0;
   TTree *tree = 0;
 
-  TVector3 eFieldInitial(0, 0, 0);
-  TVector3 bFieldInitial(0, 0, 0);
-  double tAInitial{0};
+  TVector3 eFieldInitial[nAntennas];
+  TVector3 bFieldInitial[nAntennas];
+  double tAInitial[nAntennas];
   // Create the output file
   if (writeToFile)
   {
@@ -108,32 +124,44 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
     tree = CreateOutputTree(vars);
     AddLocalParticleData(tree, vars);
 
-    if (antennaList.size() > 0 &&
-        (VectorContainsVar(vars, kAntEField) || VectorContainsVar(vars, kAntBField) ||
-         VectorContainsVar(vars, kAntVoltage)))
+    if (antennaList.size() > 0 && computeFields)
     {
-      tAInitial = GetPropagationTime(particleList.at(0), antennaList.at(0));
-      eFieldInitial = GetEFieldAtAntenna(0, 0);
-      bFieldInitial = GetBFieldAtAntenna(0, 0);
-      antEField[0] = 0;
-      antEField[1] = 0;
-      antEField[2] = 0;
-      antBField[0] = 0;
-      antBField[1] = 0;
-      antBField[2] = 0;
-
-      if (VectorContainsVar(vars, kAntVoltage))
+      // If we are writing fields, get fields for each antenna
+      for (int iAnt{0}; iAnt < nAntennas; iAnt++)
       {
-        antVoltage = 0;
+        tAInitial[iAnt] = GetPropagationTime(particleList.at(0),
+                                             antennaList.at(iAnt));
+        bFieldInitial[iAnt] = GetBFieldAtAntenna(0, iAnt);
+        antBField[iAnt][0] = 0.0;
+        antBField[iAnt][1] = 0.0;
+        antBField[iAnt][2] = 0.0;
+        eFieldInitial[iAnt] = GetEFieldAtAntenna(0, iAnt);
+        antEField[iAnt][0] = 0.0;
+        antEField[iAnt][1] = 0.0;
+        antEField[iAnt][2] = 0.0;
+        antVoltage[iAnt] = 0.0;
       }
     }
 
     tree->Fill();
   }
 
-  TVector3 posInitial{particleList.at(0).GetPositionVector()};
-  FieldStorer fieldStorage(eFieldInitial, bFieldInitial, posInitial, tAInitial,
-                           antennaList.at(0));
+  // Create an instance of FieldStorer for every antenna
+  std::vector<FieldStorer> fsVec;
+  if (computeFields)
+  {
+    // Reserve the appropriate amount of memory
+    fsVec.reserve(nAntennas);
+
+    TVector3 posInitial{particleList.at(0).GetPositionVector()};
+    // Create the FieldStorers
+    for (int iAnt{0}; iAnt < nAntennas; iAnt++)
+    {
+      FieldStorer fieldStorage(eFieldInitial[iAnt], bFieldInitial[iAnt], posInitial,
+                               tAInitial[iAnt], antennaList.at(0));
+      fsVec.push_back(fieldStorage);
+    }
+  }
 
   // Move forward through time
   for (int iStep = 1; iStep < nTimeSteps; iStep++)
@@ -148,34 +176,37 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
         AddLocalParticleData(tree, vars);
 
         // Check if we are saving antenna data (and have antenna data to save)
-        if (antennaList.size() > 0 &&
-            (VectorContainsVar(vars, kAntEField) ||
-             VectorContainsVar(vars, kAntBField)))
+        if (antennaList.size() > 0 && computeFields)
         {
-          double tA{clockTime + GetPropagationTime(particleList.at(0), antennaList.at(0))};
-          TVector3 eField{GetEFieldAtAntenna(0, 0)};
-          TVector3 bField{GetBFieldAtAntenna(0, 0)};
-          TVector3 pos{particleList[iPart].GetPositionVector()};
-          fieldStorage.AddNewFields(eField, bField, pos, tA);
-
-          // Write to file
-          if (VectorContainsVar(vars, kAntEField))
+          // Loop over the antennas again and calculate the fields
+          for (int iAnt{0}; iAnt < nAntennas; iAnt++)
           {
-            antEField[0] = fieldStorage.GetInterpolatedEField(clockTime).X();
-            antEField[1] = fieldStorage.GetInterpolatedEField(clockTime).Y();
-            antEField[2] = fieldStorage.GetInterpolatedEField(clockTime).Z();
-          }
+            double tA{clockTime + GetPropagationTime(particleList.at(0),
+                                                     antennaList.at(iAnt))};
+            TVector3 eField{GetEFieldAtAntenna(0, iAnt)};
+            TVector3 bField{GetBFieldAtAntenna(0, iAnt)};
+            TVector3 pos{particleList[iPart].GetPositionVector()};
+            fsVec.at(iAnt).AddNewFields(eField, bField, pos, tA);
 
-          if (VectorContainsVar(vars, kAntBField))
-          {
-            antBField[0] = fieldStorage.GetInterpolatedBField(clockTime).X();
-            antBField[1] = fieldStorage.GetInterpolatedBField(clockTime).Y();
-            antBField[2] = fieldStorage.GetInterpolatedBField(clockTime).Z();
-          }
+            // Write to file
+            if (VectorContainsVar(vars, kAntEField))
+            {
+              antEField[iAnt][0] = fsVec.at(iAnt).GetInterpolatedEField(clockTime).X();
+              antEField[iAnt][1] = fsVec.at(iAnt).GetInterpolatedEField(clockTime).Y();
+              antEField[iAnt][2] = fsVec.at(iAnt).GetInterpolatedEField(clockTime).Z();
+            }
 
-          if (VectorContainsVar(vars, kAntVoltage))
-          {
-            antVoltage = fieldStorage.GetAntennaLoadVoltage(clockTime);
+            if (VectorContainsVar(vars, kAntBField))
+            {
+              antBField[iAnt][0] = fsVec.at(iAnt).GetInterpolatedBField(clockTime).X();
+              antBField[iAnt][1] = fsVec.at(iAnt).GetInterpolatedBField(clockTime).Y();
+              antBField[iAnt][2] = fsVec.at(iAnt).GetInterpolatedBField(clockTime).Z();
+            }
+
+            if (VectorContainsVar(vars, kAntVoltage))
+            {
+              antVoltage[iAnt] = fsVec.at(iAnt).GetAntennaLoadVoltage(clockTime);
+            }
           }
         }
       }
@@ -234,6 +265,13 @@ TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
   // It's hard to imagine why we would want to create a tree without the time info
   tree->Branch("time", &particleTime, "time/D");
 
+  // If necessary, write the number of antennas
+  if (VectorContainsVar(vars, kAntBField) || VectorContainsVar(vars, kAntEField) ||
+      VectorContainsVar(vars, kAntVoltage))
+  {
+    tree->Branch("nAntennas", &nAntennas, "nAntennas/I");
+  }
+
   // Loop through the variables and create the appropriate branches
   for (auto &quantity : vars)
   {
@@ -255,15 +293,15 @@ TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
     }
     else if (quantity == OutputVar::kAntEField)
     {
-      tree->Branch("antEField", antEField, "antEField[3]/D");
+      tree->Branch("antEField", antEField, "antEField[nAntennas][3]/D");
     }
     else if (quantity == OutputVar::kAntBField)
     {
-      tree->Branch("antBField", antBField, "antBField[3]/D");
+      tree->Branch("antBField", antBField, "antBField[nAntennas][3]/D");
     }
     else if (quantity == OutputVar::kAntVoltage)
     {
-      tree->Branch("antVoltage", &antVoltage, "antVoltage/D");
+      tree->Branch("antVoltage", antVoltage, "antVoltage[nAntennas]/D");
     }
     else
     {
@@ -347,4 +385,15 @@ TVector3 rad::Event::GetBFieldAtAntenna(unsigned int particleIndex,
 bool rad::Event::VectorContainsVar(std::vector<OutputVar> vars, OutputVar testVar)
 {
   return std::find(vars.begin(), vars.end(), OutputVar::kAntEField) != vars.end();
+}
+
+void rad::Event::ResetArrays()
+{
+  for (int iAnt = 0; iAnt < nMaxAntennas; iAnt++)
+  {
+    for (int iDir = 0; iDir < 3; iDir++)
+    {
+      antBField[iAnt][iDir] = -9999;
+    }
+  }
 }
