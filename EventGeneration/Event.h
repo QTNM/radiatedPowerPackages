@@ -67,12 +67,13 @@ namespace rad
     std::vector<BorisSolver> solverList;
 
     /// Vector of antennas for signals to be generated on
+    /// Each element of the array represents a separate antenna
     std::vector<IAntenna *> antennaList;
 
-    double clockTime;
-    double simulationStepSize;
-    double maximumSimulationTime;
-    BaseField *magneticField;
+    double clockTime;             // Lab clock time in seconds
+    double simulationStepSize;    // Simulation step size in seconds
+    double maximumSimulationTime; // How long do we want to simulate for
+    BaseField *magneticField;     // The magnetic field for the simulation
 
     // These arrays are only used for writing outputs
     double particleTime;
@@ -111,7 +112,7 @@ namespace rad
     void AddLocalParticleData(TTree *outputTree, std::vector<OutputVar> vars);
 
     /// Calculates the electric field from a particle at a specific position
-    /// \param particleIndex The index of the particle to calculate
+    /// \param particleIndex The index of the particle to c#alculate
     /// \param antennaIndex The index of the antenna point to calculate
     /// \return The electric field vector with units of V/m
     TVector3 GetEFieldAtAntenna(unsigned int particleIndex,
