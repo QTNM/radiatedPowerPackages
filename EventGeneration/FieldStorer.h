@@ -1,7 +1,7 @@
 /*
     FieldStorer.h
 
-    Class for storing the advance time fields.
+    Class for storing the advanced time fields.
     Designed to be used by the Event class to keep a moving track of fields
 
     Seb Jones 18-10-2022
@@ -31,6 +31,12 @@ namespace rad
 
         IAntenna *theAntenna;
 
+        /// Performs a cubic interpolation using a series of known values
+        /// This is done using a Lagrange interpolating polynomial
+        /// \param xVals A vector containing 4 x values
+        /// \param yVals A vector containing the matching 4 y values
+        /// \param interp The x value at which to interpolate
+        /// \return The interpolated y value at the provided x value
         double DoCubicInterpolation(std::vector<double> xVals,
                                     std::vector<double> yVals, double interp);
 
