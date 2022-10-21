@@ -20,7 +20,7 @@ namespace rad {
     virtual TVector3 GetETheta(const TVector3 electronPosition) = 0;
     virtual TVector3 GetEPhi(const TVector3 electronPosition) = 0;
 
-    // Returns the effective antenna height/length  
+    // Return the effective antenna height/length  
     virtual double GetHEff() = 0;
     
     double GetCentralFrequency(){ return centralFreq; }
@@ -69,7 +69,6 @@ namespace rad {
     /// \returns The azimuthal angle phi w.r.t. the antenna axis
     double GetPhi(const TVector3 electronPosition);
   };
-
 }
 
 #endif

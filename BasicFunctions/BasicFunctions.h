@@ -36,7 +36,7 @@ namespace rad
   /// \param fieldPoint The field point at the retarded time
   /// \param ePosition The source position at the retarded time
   /// \param tRet The retarded time being evaluated (in seconds)
-  /// \Returns The corresponding lab time
+  /// \return The corresponding lab time
   double CalcTimeFromRetardedTime(ROOT::Math::XYZPoint fieldPoint, ROOT::Math::XYZPoint ePosition, double tRet);
 
   /// Same function but using TVector3 apparatus
@@ -46,7 +46,7 @@ namespace rad
   /// Basically just saves rewriting a few lines of code multiple times
   /// \param T Particle kinetic energy in electronvolts
   /// \param particleMass The particle mass in kilograms
-  /// \Returns The particle speed in metres per second
+  /// \return The particle speed in metres per second
   double GetSpeedFromKE(double T, double particleMass);
 
   /// Function for calculating the gyroradius/Larmor radius/cyclotron radius of a particle
@@ -83,25 +83,25 @@ namespace rad
   /// \param charge Particle charge. Default is electron charge
   /// \param energy Particle kinetic energy in electronvolts
   /// \param mass Particle mass in kilograms. Default is electron rest mass
-  /// \Returns the cyclotron frequency
+  /// \return The cyclotron frequency
   TVector3 calculate_omega(const TVector3 BField, const double charge=-TMath::Qe(), const double energy=0.0, const double mass=ME);
 
   /// Downmixes a time series of data with the appropriate frequency
   /// \param grInput The input time series data
   /// \param freq The frequency in Hertz with which to downmix
-  /// \Returns The downmixed time series
+  /// \return The downmixed time series
   TGraph* DownmixInPhase(TGraph* grInput, const double freq);
 
   /// Downmixes a time series of data with the appropriate frequency
   /// \param grInput The input time series data
   /// \param freq The frequency in Hertz with which to downmix
-  /// \Returns The downmixed time series
+  /// \return The downmixed time series
   TGraph* DownmixQuadrature(TGraph* grInput, const double freq);
   
   /// Scales all points of a TGraph by a constant
   /// \param grInput The input graph
   /// \param scale factor
-  /// \Returns grInput * scale
+  /// \return grInput * scale
   void ScaleGraph(TGraph* grInput, const double scale);
 
   /// Calculates relativistic electron cyclotron frequency
@@ -111,36 +111,36 @@ namespace rad
 
   /// Sums the points in a number of TGraphs
   /// \param grInput A vector of the graphs to be summed
-  /// \Returns A graph containing the summed points
+  /// \return A graph containing the summed points
   TGraph* SumGraphs(std::vector<TGraph*> grInput);
 
   /// Downsamples a time series graph at a given sample rate using linear interpolation
   /// \param grInput The input graph to be sampled
   /// \param sRate The sample rate
-  /// \Returns The downsampled graph
+  /// \return The downsampled graph
   TGraph* SampleWaveform(TGraph* grInput, const double sRate);
 
   /// Converts an input TGraph to a histogram
   /// \param grInput Input graph to be converted
-  /// \Returns The converted histogram
+  /// \return The converted histogram
   TH1D* GraphToHistogram(TGraph* grInput);
 
   /// Dowmixes, filters and downsamples a time series graph
   /// \param grInput The inputted time domain voltage graph
   /// \param downmixFreq The frequency at which to downmix, in Hertz
   /// \param sampleRate The frequency at which to sample, in Hertz
-  /// \Returns The downmixed, filtered and sampled time domain graph
+  /// \return The downmixed, filtered and sampled time domain graph
   TGraph* SignalProcessGraph(TGraph* grInput, const double downmixFreq, const double sampleRate);
 
   /// Produces a graph of the FFT magnitudes
   /// \param grInput The input real-valued time series data
-  /// \Returns The FFT magnitudes in frequency space
+  /// \return The FFT magnitudes in frequency space
   TGraph* MakeFFTMagGraph(TGraph* grInput);
 
   /// Heaviside step function
   /// \param x Input parameter
-  /// \Returns 1, for x > 0
-  /// \Returns 0, for x <= 0
+  /// \return 1, for x > 0
+  /// \return 0, for x <= 0
   double HeavisideFunc(double x);
 }
  

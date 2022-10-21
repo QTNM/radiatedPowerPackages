@@ -33,7 +33,7 @@ namespace rad
     /// Calculate radiation acceleration from position and velocity
     /// \param pos Position of the charge
     /// \param vec Velocity of the charge
-    /// \Returns a 3-vector of the acceleration from the RR force
+    /// \return a 3-vector of the acceleration from the RR force
     TVector3 radiation_acceleration(const TVector3 pos, const TVector3 vel);
 
     /// Returns the B field at the position

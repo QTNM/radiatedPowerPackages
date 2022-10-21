@@ -28,11 +28,11 @@ namespace rad
 
     /// Calculates the decay rate of a tritium atom for a given decay electron kinetic energy
     /// \param electronEnergy The kinetic energy of the decay electron (in eV)
-    /// \Returns The decay rate with units of s^-1 eV^-1
+    /// \return The decay rate with units of s^-1 eV^-1
     double GetDecayRate(double electronEnergy);
 
     /// Draws a random kinetic energy from the distribution
-    /// \Returns a random energy between 0 and the endpoint energy in eV
+    /// \return a random energy between 0 and the endpoint energy in eV
     double DrawRandomEnergy();
 
   private:

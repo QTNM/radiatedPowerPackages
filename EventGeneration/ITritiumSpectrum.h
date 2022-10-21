@@ -17,11 +17,11 @@ namespace rad {
     
     /// Function to return the decay rate in s^-1 eV^-1
     /// \param electronEnergy The electron kinetic energy in eV
-    /// \Returns The decay rate in units of s^-1 eV^-1
+    /// \return The decay rate in units of s^-1 eV^-1
     virtual double GetDecayRate(double electronEnergy) = 0;
 
     /// Function for getting random energy according to the distribution
-    /// \Returns An energy in electronvolts
+    /// \return An energy in electronvolts
     virtual double DrawRandomEnergy() = 0;
     
   protected:
@@ -38,15 +38,15 @@ namespace rad {
     double endpoint;
 
     /// Calculate squared PMNS matrix element Ue1
-    /// \Returns The squared matrix element Ue1
+    /// \return The squared matrix element Ue1
     double CalculateUe1Sq();
 
     /// Calculate squared PMNS matrix element Ue2
-    /// \Returns The squared matrix element Ue2
+    /// \return The squared matrix element Ue2
     double CalculateUe2Sq();
 
     /// Calculate squared PMNS matrix element Ue3
-    /// \Returns The squared matrix element Ue3
+    /// \return The squared matrix element Ue3
     double CalculateUe3Sq();
   };
 

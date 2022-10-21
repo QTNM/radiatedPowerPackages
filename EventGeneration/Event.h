@@ -47,7 +47,7 @@ namespace rad
     void PropagateParticles(const char *outputFile = NULL, std::vector<OutputVar> vars = {});
 
     /// Gives the clock time of the event
-    /// \Returns The Event clock time (in seconds)
+    /// \return The Event clock time (in seconds)
     double GetClockTime() { return clockTime; }
 
     /// Get the state for one of the particles in the Event
@@ -87,7 +87,7 @@ namespace rad
 
     /// Checks if a particle has started relative to the Event clock time
     /// \param part The particle which we are checking if it has started
-    /// \Returns True if the particle should be being propagated
+    /// \return True if the particle should be being propagated
     bool ParticleStartCheck(ParticleState part);
 
     /// Moves a given particle forward one step in time (according to the supplied time step)
@@ -97,7 +97,7 @@ namespace rad
     /// Calculates the light propagation time between a particle and an antenna point
     /// \param particle The particle in question
     /// \param antenna The selected antenna
-    /// \Return The light propagation time in seconds
+    /// \return The light propagation time in seconds
     double GetPropagationTime(ParticleState particle, IAntenna *antenna);
 
     /// Creates an output tree with the desired variables in it

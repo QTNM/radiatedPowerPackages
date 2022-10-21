@@ -92,7 +92,7 @@ namespace rad
     
     /// Gives the on axis field for the solenoid
     /// \param z The position along the z axis
-    /// \Returns The magnetic field in Tesla
+    /// \return The magnetic field in Tesla
     double on_axis_field(const double z);
     
   public:
@@ -106,7 +106,7 @@ namespace rad
 
     /// Gives the field at a positon vector 
     /// \param vec Position vector of charge
-    /// \Returns The magnetic field vector at the point (in Tesla)
+    /// \return The magnetic field vector at the point (in Tesla)
     TVector3 evaluate_field_at_point(const TVector3 vec);
   };
 
@@ -132,7 +132,7 @@ namespace rad
 
     /// Gives the field at a positon vector 
     /// \param vec Position vector of charge
-    /// \Returns The magnetic field vector at the point (in Tesla)
+    /// \return The magnetic field vector at the point (in Tesla)
     TVector3 evaluate_field_at_point(const TVector3 vec);
   };
 
@@ -157,7 +157,7 @@ namespace rad
 
     /// Get the magnetic field at a point
     /// \param vec The position vector of the charge
-    /// \Returns The magnetic field vector at the point (in Tesla)
+    /// \return The magnetic field vector at the point (in Tesla)
     TVector3 evaluate_field_at_point(const TVector3 vec);
   };
 
@@ -199,7 +199,7 @@ namespace rad
 
     /// Calculates the magnetic field at a point
     /// \param vec The position vector (in metres)
-    /// \Returns The magnetic field vector at the point (in Tesla)
+    /// \return The magnetic field vector at the point (in Tesla)
     TVector3 evaluate_field_at_point(const TVector3 vec);    
   };
 

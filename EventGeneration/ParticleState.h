@@ -22,23 +22,23 @@ namespace rad
     ParticleState(double tStart, double mass, double charge, TVector3 initialPos, TVector3 initialVel);
 
     /// Access the position vector at the current time
-    /// \Returns The position vector at the current time
+    /// \return The position vector at the current time
     TVector3 GetPositionVector() { return positionVector; }
 
     /// Access the velocity vector at the current time
-    /// \Returns The velocity vector at the current time
+    /// \return The velocity vector at the current time
     TVector3 GetVelocityVector() { return velocityVector; }
 
     /// Access the particle mass
-    /// \Returns The particle mass (in kilograms) 
+    /// \return The particle mass (in kilograms) 
     double GetParticleMass() { return particleMass; }
 
     /// Access the particle charge
-    /// \Returns The particle charge (in coulombs)
+    /// \return The particle charge (in coulombs)
     double GetParticleCharge() { return particleCharge; }
 
     /// Access the current particle time
-    /// \Returns The current simulation time of the particle (in seconds)
+    /// \return The current simulation time of the particle (in seconds)
     double GetCurrentTime() { return currentTime; }
 
     /// Gets the relativistic energy of the particle
