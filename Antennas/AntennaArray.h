@@ -36,6 +36,11 @@ namespace rad
         /// Gets the number of elements in the array
         /// \return Integer number of elements in the array
         unsigned int GetNElements() { return elements.size(); }
+
+        /// Return a copy of the chosen element
+        /// \param nAntenna The index of the antenna in question
+        /// \return A pointer to the antenna element
+        IAntenna *GetAntenna(unsigned int nAntenna);
     };
 }
 
