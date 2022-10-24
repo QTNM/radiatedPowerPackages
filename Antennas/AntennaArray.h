@@ -34,7 +34,7 @@ namespace rad
         void AddElement(IAntenna *ant);
 
         /// Gets the number of elements in the array
-        /// Integer number of elements in the array
+        /// \return Integer number of elements in the array
         unsigned int GetNElements() { return elements.size(); }
     };
 }
