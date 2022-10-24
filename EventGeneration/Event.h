@@ -12,8 +12,10 @@
 #include "ElectronDynamics/BaseField.h"
 #include "ElectronDynamics/BorisSolver.h"
 #include "EventGeneration/FieldStorer.h"
-#include "Antennas/IAntenna.h"
 #include "EventGeneration/OutputVars.h"
+
+#include "Antennas/IAntenna.h"
+#include "Antennas/AntennaArray.h"
 
 #include "TTree.h"
 
@@ -70,6 +72,9 @@ namespace rad
     /// Each element of the array represents a separate antenna
     std::vector<IAntenna *> antennaList;
 
+    // We can also do this with arrays of antenna elements
+    std::vector<AntennaArray> arrayList;
+
     double clockTime;             // Lab clock time in seconds
     double simulationStepSize;    // Simulation step size in seconds
     double maximumSimulationTime; // How long do we want to simulate for
@@ -114,11 +119,17 @@ namespace rad
     void AddLocalParticleData(TTree *outputTree, std::vector<OutputVar> vars);
 
     /// Calculates the electric field from a particle at a specific position
-    /// \param particleIndex The index of the particle to c#alculate
+    /// \param particleIndex The index of the particle to calculate
     /// \param antennaIndex The index of the antenna point to calculate
     /// \return The electric field vector with units of V/m
     TVector3 GetEFieldAtAntenna(unsigned int particleIndex,
                                 unsigned int antennaIndex);
+
+    /// Calculates the electric field from a particle at an antenna
+    /// \param particleIndex The index of the particle to c#alculate
+    /// \param ant Pointer to the antenna at which to calculate the field
+    /// \return The electric field vector with units of V/m
+    TVector3 GetEFieldAtAntenna(unsigned int particleIndex, IAntenna *ant);
 
     /// Calculate the magnetic field from a particle at a specific position
     /// \param particleIndex The index of the particle to calculate
@@ -126,6 +137,12 @@ namespace rad
     /// \return The magnetic field vector with units of Tesla
     TVector3 GetBFieldAtAntenna(unsigned int particleIndex,
                                 unsigned int antennaIndex);
+
+    /// Calculates the magnetic field from a particle at an antenna
+    /// \param particleIndex The index of the particle to c#alculate
+    /// \param ant Pointer to the antenna at which to calculate the field
+    /// \return The magnetic field vector with units of T
+    TVector3 GetBFieldAtAntenna(unsigned int particleIndex, IAntenna *ant);
 
     /// Checks if an array of output vars contains a specific one
     /// \param vars Vector of output variables to be checked

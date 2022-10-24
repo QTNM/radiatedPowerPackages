@@ -351,10 +351,9 @@ void rad::Event::AddLocalParticleData(TTree *outputTree, std::vector<OutputVar> 
   }
 }
 
-TVector3 rad::Event::GetEFieldAtAntenna(unsigned int particleIndex,
-                                        unsigned int antennaIndex)
+TVector3 rad::Event::GetEFieldAtAntenna(unsigned int particleIndex, IAntenna *ant)
 {
-  TVector3 antennaPos{antennaList.at(antennaIndex)->GetAntennaPosition()};
+  TVector3 antennaPos{ant->GetAntennaPosition()};
   TVector3 particlePos{particleList.at(particleIndex).GetPositionVector()};
   TVector3 particleVel{particleList.at(particleIndex).GetVelocityVector()};
   double q{particleList.at(particleIndex).GetParticleCharge()};
@@ -372,14 +371,25 @@ TVector3 rad::Event::GetEFieldAtAntenna(unsigned int particleIndex,
   return (term1 + term2) * premult;
 }
 
-TVector3 rad::Event::GetBFieldAtAntenna(unsigned int particleIndex,
-                                        unsigned int antennaIndex)
+TVector3 rad::Event::GetBFieldAtAntenna(unsigned int particleIndex, IAntenna *ant)
 {
-  TVector3 eField{GetEFieldAtAntenna(particleIndex, antennaIndex)};
-  TVector3 antennaPos{antennaList.at(antennaIndex)->GetAntennaPosition()};
+  TVector3 eField{GetEFieldAtAntenna(particleIndex, ant)};
+  TVector3 antennaPos{ant->GetAntennaPosition()};
   TVector3 particlePos{particleList.at(particleIndex).GetPositionVector()};
   TVector3 rHat{(antennaPos - particlePos).Unit()};
   return rHat.Cross(eField) * (1.0 / TMath::C());
+}
+
+TVector3 rad::Event::GetEFieldAtAntenna(unsigned int particleIndex,
+                                        unsigned int antennaIndex)
+{
+  return GetEFieldAtAntenna(particleIndex, antennaList.at(antennaIndex));
+}
+
+TVector3 rad::Event::GetBFieldAtAntenna(unsigned int particleIndex,
+                                        unsigned int antennaIndex)
+{
+  return GetBFieldAtAntenna(particleIndex, antennaList.at(antennaIndex));
 }
 
 bool rad::Event::VectorContainsVar(std::vector<OutputVar> vars, OutputVar testVar)
