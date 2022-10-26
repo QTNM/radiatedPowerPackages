@@ -43,6 +43,15 @@ namespace rad
     Event(std::vector<ParticleState> particles, BaseField *field,
           double simStepSize, double simTime);
 
+    /// Parametrised constructor using an antenna array
+    /// \param particles A vector of the various particle states one wishes to propagate
+    /// \param arrays A vector of the antennas arrays for which signals are generated
+    /// \param field The magnetic field in which the particles are propagated
+    /// \param simStepSize The time step size to use in the simulation (in seconds)
+    /// \param simTime Total time for particles to be simulated for (in seconds)
+    Event(std::vector<ParticleState> particles, std::vector<AntennaArray> arrays,
+          BaseField *field, double simStepSize, double simTime);
+
     /// Propagates the particles for the time specified at construction
     /// \param outputFile The output file directory. Leave as default to write no ouput
     /// \param vars A vector containing the variables to be written to file
@@ -80,9 +89,14 @@ namespace rad
     double maximumSimulationTime; // How long do we want to simulate for
     BaseField *magneticField;     // The magnetic field for the simulation
 
+    std::vector<unsigned int> antennaArrayMap;
+
     // These arrays are only used for writing outputs
-    int nAntennas;       // Number of separate antennas
+    int nAntennas; // Number of separate antennas
+    int nArrays;   // Number of arrays/separate readout channels
+
     static const int nMaxAntennas{30};
+
     double particleTime;
     double pos[3];
     double vel[3];

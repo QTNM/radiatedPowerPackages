@@ -67,6 +67,61 @@ rad::Event::Event(std::vector<ParticleState> particles, std::vector<IAntenna *> 
   }
 
   nAntennas = antennaList.size();
+  nArrays = antennaList.size();
+
+  // All these antennas are considered to be separate elements
+  antennaArrayMap.resize(nAntennas, 0);
+  for (int iAnt{0}; iAnt < nAntennas; iAnt++)
+  {
+    antennaArrayMap.at(iAnt) = iAnt;
+  }
+}
+
+rad::Event::Event(std::vector<ParticleState> particles, std::vector<AntennaArray> arrays,
+                  BaseField *field, double simStepSize, double simTime)
+{
+  assert(particles.size() > 0);
+
+  particleList = particles;
+  magneticField = field;
+  simulationStepSize = simStepSize;
+  maximumSimulationTime = simTime;
+  arrayList = arrays;
+
+  clockTime = 0.0; // For simplicity
+
+  // Create a separate Boris solver for each particle
+  // keep them in the same ordering as the particles
+  solverList.clear();
+  for (auto &part : particleList)
+  {
+    BorisSolver solver(field, part.GetParticleCharge(), part.GetParticleMass(),
+                       2 * R_E / (3 * TMath::C()));
+    solverList.push_back(solver);
+  }
+
+  nArrays = arrays.size();
+  nAntennas = 0;
+
+  int startAntennaIndex{0};
+  for (int iArr{0}; iArr < nArrays; iArr++)
+  {
+    nAntennas += arrayList.at(iArr).GetNElements();
+    // Add all the component antennas to the antenna list
+    for (int iElement{0}; iElement < arrayList.at(iArr).GetNElements(); iElement++)
+    {
+      antennaList.push_back(arrayList.at(iArr).GetAntenna(iElement));
+    }
+
+    // Now fill in the map so we know which array these belong to
+    for (int ii{startAntennaIndex}; ii < startAntennaIndex + nAntennas; ii++)
+    {
+      antennaArrayMap.push_back(iArr);
+    }
+  }
+
+  std::cout << "We have a total of " << nArrays << " arrays, made up of " << nAntennas << " elements\n";
+  std::cout << "Antenna list has size of " << antennaList.size() << std::endl;
 }
 
 bool rad::Event::ParticleStartCheck(ParticleState part)
@@ -90,6 +145,11 @@ void rad::Event::AdvanceParticleStep(int particleNumber)
 
 void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVar> vars)
 {
+  for (int i{0}; i < antennaArrayMap.size(); i++)
+  {
+    std::cout << "Antenna " << i << " is part of array " << antennaArrayMap.at(i) << std::endl;
+  }
+
   std::cout << "Simulation time is " << maximumSimulationTime << " s" << std::endl;
   std::cout << "Simulation step size is " << simulationStepSize << " s" << std::endl;
   const int nTimeSteps = maximumSimulationTime / simulationStepSize;
@@ -139,7 +199,11 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
         antEField[iAnt][0] = 0.0;
         antEField[iAnt][1] = 0.0;
         antEField[iAnt][2] = 0.0;
-        antVoltage[iAnt] = 0.0;
+      }
+
+      for (int iArr{0}; iArr < nArrays; iArr++)
+      {
+        antVoltage[iArr] = 0.0;
       }
     }
 
@@ -167,6 +231,18 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   for (int iStep = 1; iStep < nTimeSteps; iStep++)
   {
     clockTime += simulationStepSize;
+
+    // Reset to 0 so we can start adding voltages
+    for (int iArr{0}; iArr < nArrays; iArr++)
+    {
+      antVoltage[iArr] = 0.0;
+    }
+
+    // Create a sum for each of the arrays, initially all elements zero
+    // This will store the element sums of each of the arrays
+    int whichArray{0};
+    // std::vector<double> arrayVoltageSums(nArrays, 0.0);
+
     for (int iPart = 0; iPart < particleList.size(); iPart++)
     {
       // Check if this particle is meant to be active yet
@@ -205,7 +281,7 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
 
             if (VectorContainsVar(vars, kAntVoltage))
             {
-              antVoltage[iAnt] = fsVec.at(iAnt).GetAntennaLoadVoltage(clockTime);
+              antVoltage[antennaArrayMap.at(iAnt)] += fsVec.at(iAnt).GetAntennaLoadVoltage(clockTime);
             }
           }
         }
@@ -270,6 +346,7 @@ TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
       VectorContainsVar(vars, kAntVoltage))
   {
     tree->Branch("nAntennas", &nAntennas, "nAntennas/I");
+    tree->Branch("nArrays", &nArrays, "nArrays/I");
   }
 
   // Loop through the variables and create the appropriate branches
@@ -301,7 +378,7 @@ TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
     }
     else if (quantity == OutputVar::kAntVoltage)
     {
-      tree->Branch("antVoltage", antVoltage, "antVoltage[nAntennas]/D");
+      tree->Branch("antVoltage", antVoltage, "antVoltage[nArrays]/D");
     }
     else
     {
@@ -404,6 +481,8 @@ void rad::Event::ResetArrays()
     for (int iDir = 0; iDir < 3; iDir++)
     {
       antBField[iAnt][iDir] = -9999;
+      antEField[iAnt][iDir] = -9999;
     }
+    antVoltage[iAnt] = -9999;
   }
 }
