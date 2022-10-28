@@ -9,13 +9,14 @@
 #define EVENT_H
 
 #include "EventGeneration/ParticleState.h"
-#include "ElectronDynamics/BaseField.h"
-#include "ElectronDynamics/BorisSolver.h"
 #include "EventGeneration/FieldStorer.h"
 #include "EventGeneration/OutputVars.h"
-
+#include "ElectronDynamics/BaseField.h"
+#include "ElectronDynamics/BorisSolver.h"
 #include "Antennas/IAntenna.h"
 #include "Antennas/AntennaArray.h"
+#include "SignalProcessing/LocalOscillator.h"
+#include "SignalProcessing/NoiseFunc.h"
 
 #include "TTree.h"
 
@@ -70,6 +71,13 @@ namespace rad
     /// \return  Number of particles in event
     unsigned int GetNParticles();
 
+    /// Adds relevant info to perform any kind of signal processing
+    /// \param osc The local oscillator to use for the mixing
+    /// \param noise The noise to add to the signal
+    /// \param sampleRate The sample rate to use (in Hertz)
+    void AddSigProcInfo(LocalOscillator osc, std::vector<GaussianNoise> noise,
+                        double sampleRate);
+
   private:
     /// Vector of particles
     std::vector<ParticleState> particleList;
@@ -105,6 +113,13 @@ namespace rad
     double antEField[nMaxAntennas][3];
     double antBField[nMaxAntennas][3];
     double antVoltage[nMaxAntennas];
+
+    // Signal processing things
+    LocalOscillator localOsc;             // Local oscillator
+    std::vector<GaussianNoise> noiseFunc; // Noise sources
+    double sRate;                         // Sample rate (in Hertz) 
+
+    ////////////////////// Public member functions /////////////////////////////
 
     /// Checks if a particle has started relative to the Event clock time
     /// \param part The particle which we are checking if it has started

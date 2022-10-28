@@ -486,3 +486,17 @@ void rad::Event::ResetArrays()
     antVoltage[iAnt] = -9999;
   }
 }
+
+void rad::Event::AddSigProcInfo(LocalOscillator osc, std::vector<GaussianNoise> noise,
+                                double sampleRate)
+{
+  if (sampleRate <= 0) 
+  {
+    std::cout<<"Invalid (negative or 0) sample rate chosen. Exiting...\n";
+    exit(1);
+  }
+
+  localOsc = osc;
+  noiseFunc = noise;
+  sRate = sampleRate;
+}
