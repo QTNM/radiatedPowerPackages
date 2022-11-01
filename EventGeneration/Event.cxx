@@ -41,6 +41,8 @@ rad::Event::Event(std::vector<ParticleState> particles, BaseField *field,
   }
 
   nAntennas = 0;
+
+  computeSigProc = false;
 }
 
 rad::Event::Event(std::vector<ParticleState> particles, std::vector<IAntenna *> antennas,
@@ -75,6 +77,8 @@ rad::Event::Event(std::vector<ParticleState> particles, std::vector<IAntenna *> 
   {
     antennaArrayMap.at(iAnt) = iAnt;
   }
+
+  computeSigProc = false;
 }
 
 rad::Event::Event(std::vector<ParticleState> particles, std::vector<AntennaArray> arrays,
@@ -120,6 +124,8 @@ rad::Event::Event(std::vector<ParticleState> particles, std::vector<AntennaArray
     }
   }
 
+  computeSigProc = false;
+
   std::cout << "We have a total of " << nArrays << " arrays, made up of " << nAntennas << " elements\n";
   std::cout << "Antenna list has size of " << antennaList.size() << std::endl;
 }
@@ -164,13 +170,23 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
                       VectorContainsVar(vars, kAntVoltage))};
   if (computeFields)
   {
-    std::cout << "We are computing EM fields\n";
+    std::cout << "We are computing EM fields.\n";
+  }
+
+  if (computeSigProc)
+  {
+    std::cout << "We are doing signal processing.\n";
   }
 
   // Check if we have chosen to write output to file
   bool writeToFile{outputFile != NULL};
   TFile *fout = 0;
   TTree *tree = 0;
+  TTree *sampleTree = 0;
+
+  const double samplePeriod{1.0 / sRate};
+  // Use this to keep track of next sample time 
+  double nextSampleTime{0.0 + samplePeriod}; 
 
   TVector3 eFieldInitial[nAntennas];
   TVector3 bFieldInitial[nAntennas];
@@ -183,6 +199,33 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
     // Create the TTree with the correct variables
     tree = CreateOutputTree(vars);
     AddLocalParticleData(tree, vars);
+
+    // For the first point just set the (non-noisy) voltage values to zero
+    if (computeSigProc)
+    {
+      sampleTree = CreateSampleTree();
+      sampleTime = 0.0;
+
+      // Set up the noise functions
+      for (auto &iNoise : noiseFunc)
+      {
+        iNoise.SetSampleFreq(sRate);
+        iNoise.SetSigma();
+      }
+
+      for (int iArr{0}; iArr < nArrays; iArr)
+      {
+        VI[iArr] = 0.0;
+        VQ[iArr] = 0.0;
+        // Add the noise terms if necessary
+        for (auto &iNoise : noiseFunc)
+        {
+          VI[iArr] += iNoise.GetNoiseVoltage(true);
+          VQ[iArr] += iNoise.GetNoiseVoltage(true);
+        }
+      }
+      sampleTree->Fill();
+    }
 
     if (antennaList.size() > 0 && computeFields)
     {
@@ -296,12 +339,20 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
     fout->cd();
     tree->Write();
     delete tree;
+
+    if (computeSigProc)
+    {
+      sampleTree->Write();
+      delete sampleTree;
+    }
+
     fout->Close();
     delete fout;
   }
   else
   {
     delete tree;
+    delete sampleTree;
     delete fout;
   }
 }
@@ -385,6 +436,17 @@ TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
       std::cout << "Unsupported option. This will not do what you think.\n";
     }
   }
+  return tree;
+}
+
+TTree *rad::Event::CreateSampleTree()
+{
+  // We always want all the variables so just add them
+  auto *tree = new TTree("sampleOutput", "sampleOutput");
+  tree->Branch("time", &sampleTime, "time/D");
+  tree->Branch("nArrays", &nArrays, "nArrays/I");
+  tree->Branch("VI", VI, "VI[nArrays]/D");
+  tree->Branch("VQ", VQ, "VQ[nArrays]/D");
   return tree;
 }
 
@@ -484,19 +546,23 @@ void rad::Event::ResetArrays()
       antEField[iAnt][iDir] = -9999;
     }
     antVoltage[iAnt] = -9999;
+    VI[iAnt] = -9999;
+    VQ[iAnt] = -9999;
   }
 }
 
 void rad::Event::AddSigProcInfo(LocalOscillator osc, std::vector<GaussianNoise> noise,
                                 double sampleRate)
 {
-  if (sampleRate <= 0) 
+  if (sampleRate <= 0)
   {
-    std::cout<<"Invalid (negative or 0) sample rate chosen. Exiting...\n";
+    std::cout << "Invalid (negative or 0) sample rate chosen. Exiting...\n";
     exit(1);
   }
 
   localOsc = osc;
   noiseFunc = noise;
   sRate = sampleRate;
+
+  computeSigProc = true;
 }

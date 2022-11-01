@@ -114,6 +114,13 @@ namespace rad
     double antBField[nMaxAntennas][3];
     double antVoltage[nMaxAntennas];
 
+    // Variables for the signal processed data
+    double sampleTime;
+    double VI[nMaxAntennas]; // In phase voltage component
+    double VQ[nMaxAntennas]; // Quadrature voltage component
+
+    bool computeSigProc;
+
     // Signal processing things
     LocalOscillator localOsc;             // Local oscillator
     std::vector<GaussianNoise> noiseFunc; // Noise sources
@@ -140,6 +147,9 @@ namespace rad
     /// \param vars Vector containing the desired output variables
     /// \return A TTree with the desired variables as branches
     TTree *CreateOutputTree(std::vector<OutputVar> vars);
+
+    /// Creates an output tree for signal-processed outputs
+    TTree *CreateSampleTree();
 
     /// Adds the data from the particle state to the TTree
     /// Specifically, data doesn't involve any kind of propagation time
