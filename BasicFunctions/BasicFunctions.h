@@ -15,21 +15,21 @@
 #include <vector>
 
 namespace rad
-{  
+{
   void setGraphAttr(TGraph *gr);
-  
+
   void SetHistAttr(TH1 *h);
-  
+
   void SetHistAttr(TH2 *h);
 
   double CalcAeHertzianDipole(const double wavelength, const ROOT::Math::XYZVector dipoleDir,
-			      const ROOT::Math::XYZPoint ePosition,
-			      const ROOT::Math::XYZPoint antennaPoint);
-  
+                              const ROOT::Math::XYZPoint ePosition,
+                              const ROOT::Math::XYZPoint antennaPoint);
+
   double CalcAlHertzianDipole(const double wavelength, const ROOT::Math::XYZVector dipoleDir,
-			      const ROOT::Math::XYZPoint ePosition,
-			      const ROOT::Math::XYZPoint antennaPoint);
-  
+                              const ROOT::Math::XYZPoint ePosition,
+                              const ROOT::Math::XYZPoint antennaPoint);
+
   double CalcRetardedTime(const ROOT::Math::XYZPoint fieldPoint, const ROOT::Math::XYZPoint ePosition, const double labTime);
 
   /// For a given retarded time, source and field point, returns the lab time
@@ -54,18 +54,21 @@ namespace rad
   /// \param bField The magnetioc field vector at the particle position in Tesla
   /// \param particleMass The particle mass in kg
   double GetGyroradius(TVector3 velocity, TVector3 bField, double particleMass);
-  
+
   // Produces power spectrum with the desired normalisation
-  TGraph* MakePowerSpectrumNorm(const TGraph* grWave);
+  TGraph *MakePowerSpectrumNorm(const TGraph *grWave);
 
   // Produdces power spectrum normalised to the mean squared amplitude of the time domain
-  TGraph* MakePowerSpectrumPeriodogram(const TGraph* grWave);  
-  
+  TGraph *MakePowerSpectrumPeriodogram(const TGraph *grWave);
+
   // Integrate the power spectrum
-  double IntegratePowerNorm(const TGraph* grFFT, Int_t firstBin=-1, Int_t lastBin=-1);
+  double IntegratePowerNorm(const TGraph *grFFT, Int_t firstBin = -1, Int_t lastBin = -1);
 
   // Implements a simple band pass filter
-  TGraph* BandPassFilter(const TGraph* grWave, const double minFreq, const double maxFreq);
+  TGraph *BandPassFilter(const TGraph *grWave, const double minFreq, const double maxFreq);
+
+  std::vector<double> BandPassFilter(std::vector<double> xVals, std::vector<double> yVals,
+                                     double minFreq, double maxFreq);
 
   // PDF of the Rayleigh distribution
   double RayleighPDF(const double x, const double sigma);
@@ -76,66 +79,66 @@ namespace rad
   double RayleighPDFFunc(double *x, double *par);
 
   double RayleighCDFFunc(double *x, double *par);
-  
-  void AddWhiteNoiseFrequencyDomainPowerNorm(TGraph* grIn, const double Teff, const int seed=0);
+
+  void AddWhiteNoiseFrequencyDomainPowerNorm(TGraph *grIn, const double Teff, const int seed = 0);
 
   /// \param BField A 3-vector describing the magnetic field at a point in space
   /// \param charge Particle charge. Default is electron charge
   /// \param energy Particle kinetic energy in electronvolts
   /// \param mass Particle mass in kilograms. Default is electron rest mass
   /// \return The cyclotron frequency
-  TVector3 calculate_omega(const TVector3 BField, const double charge=-TMath::Qe(), const double energy=0.0, const double mass=ME);
+  TVector3 calculate_omega(const TVector3 BField, const double charge = -TMath::Qe(), const double energy = 0.0, const double mass = ME);
 
   /// Downmixes a time series of data with the appropriate frequency
   /// \param grInput The input time series data
   /// \param freq The frequency in Hertz with which to downmix
   /// \return The downmixed time series
-  TGraph* DownmixInPhase(TGraph* grInput, const double freq);
+  TGraph *DownmixInPhase(TGraph *grInput, const double freq);
 
   /// Downmixes a time series of data with the appropriate frequency
   /// \param grInput The input time series data
   /// \param freq The frequency in Hertz with which to downmix
   /// \return The downmixed time series
-  TGraph* DownmixQuadrature(TGraph* grInput, const double freq);
-  
+  TGraph *DownmixQuadrature(TGraph *grInput, const double freq);
+
   /// Scales all points of a TGraph by a constant
   /// \param grInput The input graph
   /// \param scale factor
   /// \return grInput * scale
-  void ScaleGraph(TGraph* grInput, const double scale);
+  void ScaleGraph(TGraph *grInput, const double scale);
 
   /// Calculates relativistic electron cyclotron frequency
   /// \param KE The electron kinetic energy in eV
   /// \param B Magnetic field strength in Tesla
-  double CalcCyclotronFreq(const double KE, const double B=1.0);
+  double CalcCyclotronFreq(const double KE, const double B = 1.0);
 
   /// Sums the points in a number of TGraphs
   /// \param grInput A vector of the graphs to be summed
   /// \return A graph containing the summed points
-  TGraph* SumGraphs(std::vector<TGraph*> grInput);
+  TGraph *SumGraphs(std::vector<TGraph *> grInput);
 
   /// Downsamples a time series graph at a given sample rate using linear interpolation
   /// \param grInput The input graph to be sampled
   /// \param sRate The sample rate
   /// \return The downsampled graph
-  TGraph* SampleWaveform(TGraph* grInput, const double sRate);
+  TGraph *SampleWaveform(TGraph *grInput, const double sRate);
 
   /// Converts an input TGraph to a histogram
   /// \param grInput Input graph to be converted
   /// \return The converted histogram
-  TH1D* GraphToHistogram(TGraph* grInput);
+  TH1D *GraphToHistogram(TGraph *grInput);
 
   /// Dowmixes, filters and downsamples a time series graph
   /// \param grInput The inputted time domain voltage graph
   /// \param downmixFreq The frequency at which to downmix, in Hertz
   /// \param sampleRate The frequency at which to sample, in Hertz
   /// \return The downmixed, filtered and sampled time domain graph
-  TGraph* SignalProcessGraph(TGraph* grInput, const double downmixFreq, const double sampleRate);
+  TGraph *SignalProcessGraph(TGraph *grInput, const double downmixFreq, const double sampleRate);
 
   /// Produces a graph of the FFT magnitudes
   /// \param grInput The input real-valued time series data
   /// \return The FFT magnitudes in frequency space
-  TGraph* MakeFFTMagGraph(TGraph* grInput);
+  TGraph *MakeFFTMagGraph(TGraph *grInput);
 
   /// Heaviside step function
   /// \param x Input parameter
@@ -143,5 +146,5 @@ namespace rad
   /// \return 0, for x <= 0
   double HeavisideFunc(double x);
 }
- 
+
 #endif
