@@ -126,7 +126,7 @@ namespace rad
     std::vector<GaussianNoise> noiseFunc; // Noise sources
     double sRate;                         // Sample rate (in Hertz) 
 
-    ////////////////////// Public member functions /////////////////////////////
+    ////////////////////// Private member functions ////////////////////////////
 
     /// Checks if a particle has started relative to the Event clock time
     /// \param part The particle which we are checking if it has started
