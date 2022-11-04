@@ -67,6 +67,12 @@ namespace rad
   // Implements a simple band pass filter
   TGraph *BandPassFilter(const TGraph *grWave, const double minFreq, const double maxFreq);
 
+  /// Function implementing a band pass filter on vectors of values
+  /// \param xVals A vector of equally spaced time values  
+  /// \param yVals A vector of the corresponding y values
+  /// \param minFreq The value (in Hertz) below which to filter out frequencies
+  /// \param maxFreq The value (in Hertz) above which to filter out frequencies
+  /// \return A vector of the filtered y values
   std::vector<double> BandPassFilter(std::vector<double> xVals, std::vector<double> yVals,
                                      double minFreq, double maxFreq);
 
