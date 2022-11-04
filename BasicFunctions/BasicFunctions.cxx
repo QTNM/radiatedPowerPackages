@@ -221,30 +221,43 @@ TGraph *rad::BandPassFilter(const TGraph *grWave, const double minFreq, const do
 std::vector<double> rad::BandPassFilter(std::vector<double> xVals, std::vector<double> yVals,
                                         double minFreq, double maxFreq)
 {
-  int length = yVals.size();
-  double deltaT{xVals.at(1) - xVals.at(0)};
-  FFTWComplex *theFFT = FFTtools::doFFT(length, &yVals[0]);
-
-  int newLength{(length / 2) + 1};
-  double deltaF{1.0 / (deltaT * length)};
-
-  double tempF{0};
-  for (int i{0}; i < newLength; i++)
+  // Do some input checking
+  if (xVals.size() != yVals.size())
   {
-    if (tempF < minFreq || tempF > maxFreq)
-    {
-      theFFT[i].re = 0;
-      theFFT[i].im = 0;
-    }
-    tempF += deltaT;
+    std::cout << "Your x and y values are not the same length. Are you sure this is right?\n";
   }
+  if (xVals.size() < 2 || yVals.size() < 2)
+  {
+    std::cout << "Invalid input value size. Returning standard output.\n";
+    return std::vector<double>{0};
+  }
+  else
+  {
+    int length = yVals.size();
+    double deltaT{xVals.at(1) - xVals.at(0)};
+    FFTWComplex *theFFT = FFTtools::doFFT(length, &yVals[0]);
 
-  double *filteredVals = FFTtools::doInvFFT(length, theFFT);
-  std::vector<double> filteredValsVec(filteredVals, filteredVals + length);
+    int newLength{(length / 2) + 1};
+    double deltaF{1.0 / (deltaT * length)};
 
-  delete[] theFFT;
-  delete[] filteredVals;
-  return filteredValsVec;
+    double tempF{0};
+    for (int i{0}; i < newLength; i++)
+    {
+      if (tempF < minFreq || tempF > maxFreq)
+      {
+        theFFT[i].re = 0;
+        theFFT[i].im = 0;
+      }
+      tempF += deltaT;
+    }
+
+    double *filteredVals = FFTtools::doInvFFT(length, theFFT);
+    std::vector<double> filteredValsVec(filteredVals, filteredVals + length);
+
+    delete[] theFFT;
+    delete[] filteredVals;
+    return filteredValsVec;
+  }
 }
 
 double rad::RayleighPDF(const double x, const double sigma)
