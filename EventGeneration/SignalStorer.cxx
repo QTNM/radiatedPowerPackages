@@ -42,8 +42,8 @@ void rad::SignalStorer::AddNewPoint(double v, double t)
                                vDownmixedI.at(nVals - 2), vDownmixedI.at(nVals - 1)};
     std::vector<double> vqVals{vDownmixedQ.at(nVals - 4), vDownmixedQ.at(nVals - 3),
                                vDownmixedQ.at(nVals - 2), vDownmixedQ.at(nVals - 1)};
-    double vIInterp{DoCubicInterpolation(timeVals, viVals, nextSample10Time)};
-    double vQInterp{DoCubicInterpolation(timeVals, vqVals, nextSample10Time)};
+    double vIInterp{CubicInterpolation(timeVals, viVals, nextSample10Time)};
+    double vQInterp{CubicInterpolation(timeVals, vqVals, nextSample10Time)};
     vSample10I.push_back(vIInterp);
     vSample10Q.push_back(vQInterp);
 
@@ -68,21 +68,4 @@ void rad::SignalStorer::AddNewPoint(double v, double t)
 
     nextSampleTime += 1.0 / sampleRate;
   }
-}
-
-double rad::SignalStorer::DoCubicInterpolation(std::vector<double> xVals,
-                                               std::vector<double> yVals, double interp)
-{
-  // Use the 3rd integrating Lagrange polynomial
-  // First calculate the Lagrange interpolating basis functions
-  double l0{(interp - xVals[1]) * (interp - xVals[2]) * (interp - xVals[3]) /
-            ((xVals[0] - xVals[1]) * (xVals[0] - xVals[2]) * (xVals[0] - xVals[3]))};
-  double l1{(interp - xVals[0]) * (interp - xVals[2]) * (interp - xVals[3]) /
-            ((xVals[1] - xVals[0]) * (xVals[1] - xVals[2]) * (xVals[1] - xVals[3]))};
-  double l2{(interp - xVals[0]) * (interp - xVals[1]) * (interp - xVals[3]) /
-            ((xVals[2] - xVals[0]) * (xVals[2] - xVals[1]) * (xVals[2] - xVals[3]))};
-  double l3{(interp - xVals[0]) * (interp - xVals[1]) * (interp - xVals[2]) /
-            ((xVals[3] - xVals[0]) * (xVals[3] - xVals[1]) * (xVals[3] - xVals[2]))};
-
-  return l0 * yVals[0] + l1 * yVals[1] + l2 * yVals[2] + l3 * yVals[3];
 }

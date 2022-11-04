@@ -10,7 +10,6 @@
 #ifndef FIELD_STORER_H
 #define FIELD_STORER_H
 
-#include "BasicFunctions/Constants.h"
 #include "EventGeneration/ParticleState.h"
 #include "Antennas/IAntenna.h"
 
@@ -30,15 +29,6 @@ namespace rad
         std::vector<TVector3> pos; // Electron positions
 
         IAntenna *theAntenna;
-
-        /// Performs a cubic interpolation using a series of known values
-        /// This is done using a Lagrange interpolating polynomial
-        /// \param xVals A vector containing 4 x values
-        /// \param yVals A vector containing the matching 4 y values
-        /// \param interp The x value at which to interpolate
-        /// \return The interpolated y value at the provided x value
-        double DoCubicInterpolation(std::vector<double> xVals,
-                                    std::vector<double> yVals, double interp);
 
     public:
         /// Parametrised constructor

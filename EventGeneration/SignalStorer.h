@@ -45,15 +45,6 @@ namespace rad
 		// The local oscillator used in the signal processing
 		LocalOscillator lo;
 
-		/// Performs a cubic interpolation using a series of known values
-		/// This is done using a Lagrange interpolating polynomial
-		/// \param xVals A vector containing 4 x values
-		/// \param yVals A vector containing the matching 4 y values
-		/// \param interp The x value at which to interpolate
-		/// \return The interpolated y value at the provided x value
-		double DoCubicInterpolation(std::vector<double> xVals,
-																std::vector<double> yVals, double interp);
-
 	public:
 		SignalStorer(double vInitial, double tInitial,
 								 double sRate, LocalOscillator osc);
