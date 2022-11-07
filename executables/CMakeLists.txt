@@ -8,9 +8,6 @@ target_link_libraries(normTest PUBLIC ${EXTRA_LIBS} ${ROOT_LIBRARIES} ${ROOTFFTW
 add_executable(noiseTests noiseTests.cxx)
 target_link_libraries(noiseTests PUBLIC ${EXTRA_LIBS} ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
 
-#add_executable(polarPlots polarPlots.cxx)
-#target_link_libraries(polarPlots PUBLIC BasicFunctions ${ROOT_LIBRARIES})
-
 add_executable(signalSum signalSum.cxx)
 target_link_libraries(signalSum PUBLIC ${EXTRA_LIBS} ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
 
