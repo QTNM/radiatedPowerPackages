@@ -27,7 +27,7 @@ void rad::FieldStorer::AddNewFields(TVector3 newEField, TVector3 newBField,
     bField.push_back(newBField);
     pos.push_back(newPos);
 
-    const double maxTimeLength{5e-8}; // seconds
+    const double maxTimeLength{4e-9}; // seconds
     // If the vector is too long, remove the point at the start
     if (tA.at(tA.size() - 1) - tA.at(0) > maxTimeLength)
     {
@@ -53,7 +53,7 @@ TVector3 rad::FieldStorer::GetInterpolatedEField(double timeInterp)
 
     // Loop through the times and find the points which our
     // data point lies between
-    for (int i = 0; i < tA.size(); i++)
+    for (int i = tA.size() - 1; i >= 0; i--)
     {
         if (timeInterp > tA.at(i) && timeInterp < tA.at(i + 1))
         {
