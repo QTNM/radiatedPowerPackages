@@ -53,6 +53,16 @@ namespace rad
 		/// \param v The new voltage to be added (in volts)
 		/// \param t The time at which the voltage is measured (in seconds)
 		void AddNewPoint(double v, double t);
+
+		/// Gets the in-phase component of the signal-processed voltage 
+		/// \param time The time at which we want to get the voltage
+		/// \return The in-phase voltage (in volts)
+		double GetVI(double time);
+
+		/// Gets the quadrature component of the signal-processed voltage 
+		/// \param time The time at which we want to get the voltage
+		/// \return The quadrature voltage (in volts)
+		double GetVQ(double time);
 	};
 }
 
