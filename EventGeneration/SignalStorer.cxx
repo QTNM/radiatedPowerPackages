@@ -68,7 +68,6 @@ void rad::SignalStorer::AddNewPoint(double v, double t)
     vFilterI.clear();
     vFilterQ.clear();
     // Apply a band pass filter
-    std::cout<<"vSample10I, vSample10Q, timeSample10 "<<vSample10I.size()<<", "<<vSample10Q.size()<<", "<<timesSample10.size()<<std::endl;
     vFilterI = BandPassFilter(timesSample10, vSample10I, 0.0, sampleRate / 2.0);
     vFilterQ = BandPassFilter(timesSample10, vSample10Q, 0.0, sampleRate / 2.0);
 
