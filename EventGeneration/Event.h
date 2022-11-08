@@ -115,7 +115,7 @@ namespace rad
     double antVoltage[nMaxAntennas];
 
     // Variables for the signal processed data
-    double sampleTime;
+    double sampleTime; // The next sample time
     double VI[nMaxAntennas]; // In phase voltage component
     double VQ[nMaxAntennas]; // Quadrature voltage component
 

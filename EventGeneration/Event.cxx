@@ -3,6 +3,7 @@
 #include "EventGeneration/Event.h"
 #include "EventGeneration/ParticleState.h"
 #include "EventGeneration/FieldStorer.h"
+#include "EventGeneration/SignalStorer.h"
 
 #include "ElectronDynamics/BaseField.h"
 #include "ElectronDynamics/BorisSolver.h"
@@ -167,7 +168,7 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   // Do we need to compute fields or voltages?
   bool computeFields{(VectorContainsVar(vars, kAntEField) ||
                       VectorContainsVar(vars, kAntBField) ||
-                      VectorContainsVar(vars, kAntVoltage))};
+                      VectorContainsVar(vars, kAntVoltage)) || computeSigProc};
   if (computeFields)
   {
     std::cout << "We are computing EM fields.\n";
@@ -185,8 +186,6 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   TTree *sampleTree = 0;
 
   const double samplePeriod{1.0 / sRate};
-  // Use this to keep track of next sample time 
-  double nextSampleTime{0.0 + samplePeriod}; 
 
   TVector3 eFieldInitial[nAntennas];
   TVector3 bFieldInitial[nAntennas];
@@ -203,17 +202,20 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
     // For the first point just set the (non-noisy) voltage values to zero
     if (computeSigProc)
     {
+      std::cout<<"Creating sample tree"<<std::endl;
       sampleTree = CreateSampleTree();
       sampleTime = 0.0;
 
+      std::cout << "Created sample time\n";
       // Set up the noise functions
       for (auto &iNoise : noiseFunc)
       {
         iNoise.SetSampleFreq(sRate);
         iNoise.SetSigma();
       }
+      std::cout << "Set up noise\n";
 
-      for (int iArr{0}; iArr < nArrays; iArr)
+      for (int iArr{0}; iArr < nArrays; iArr++)
       {
         VI[iArr] = 0.0;
         VQ[iArr] = 0.0;
@@ -224,7 +226,10 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
           VQ[iArr] += iNoise.GetNoiseVoltage(true);
         }
       }
+      std::cout << "Added initial noise\n";
       sampleTree->Fill();
+      sampleTime += samplePeriod;
+      std::cout << "Completed initial signal loop"<<std::endl;
     }
 
     if (antennaList.size() > 0 && computeFields)
@@ -270,21 +275,43 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
     }
   }
 
+  // Create an instance of SignalStorer for every antenna array
+  std::cout << "Creating signal vectors\n";
+  std::vector<SignalStorer> ssVec;
+  if (computeSigProc)
+  {
+    // Reserve appropriate amound of memory
+    ssVec.reserve(nAntennas);
+    // Create the relevant number of SignalStorers
+    for (int iArr{0}; iArr < nArrays; iArr++)
+    {
+      SignalStorer sigStore(0, 0, sRate, localOsc);
+      ssVec.push_back(sigStore);
+    }
+  }
+  std::cout << "Created signal vector\n";
+
+  clock_t processStart{clock()};
+  clock_t lastStep{processStart};
   // Move forward through time
   for (int iStep = 1; iStep < nTimeSteps; iStep++)
   {
     clockTime += simulationStepSize;
 
+    if (iStep % 1000 == 0)
+    {
+      clock_t timeNow{clock()};
+      std::cout << "Clock time = " << clockTime << " s, process time (step, total) = (" << double(timeNow - processStart) / CLOCKS_PER_SEC << ", " << double(timeNow - lastStep) / CLOCKS_PER_SEC << ") s\n";
+      lastStep = timeNow;
+    }
+
     // Reset to 0 so we can start adding voltages
     for (int iArr{0}; iArr < nArrays; iArr++)
     {
       antVoltage[iArr] = 0.0;
+      VI[iArr] = 0.0;
+      VQ[iArr] = 0.0;
     }
-
-    // Create a sum for each of the arrays, initially all elements zero
-    // This will store the element sums of each of the arrays
-    int whichArray{0};
-    // std::vector<double> arrayVoltageSums(nArrays, 0.0);
 
     for (int iPart = 0; iPart < particleList.size(); iPart++)
     {
@@ -322,9 +349,34 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
               antBField[iAnt][2] = fsVec.at(iAnt).GetInterpolatedBField(clockTime).Z();
             }
 
-            if (VectorContainsVar(vars, kAntVoltage))
+            if (VectorContainsVar(vars, kAntVoltage) || computeSigProc)
             {
               antVoltage[antennaArrayMap.at(iAnt)] += fsVec.at(iAnt).GetAntennaLoadVoltage(clockTime);
+            }
+          }
+        }
+
+        // Do some signal processing, if so desired
+        if (computeSigProc)
+        {
+          // Loop over the antenna arrays
+          for (int iArr{0}; iArr < nArrays; iArr++)
+          {
+            // Add voltage to the signal storer
+            ssVec.at(iArr).AddNewPoint(antVoltage[iArr], clockTime);
+            // If it's time to sample the voltages then let's do that
+            if (clockTime >= sampleTime)
+            {
+              VI[iArr] = ssVec.at(iArr).GetVI(sampleTime);
+              VQ[iArr] = ssVec.at(iArr).GetVQ(sampleTime);
+              // Add any noise we have
+              for (auto &iNoise : noiseFunc)
+              {
+                VI[iArr] += iNoise.GetNoiseVoltage(true);
+                VQ[iArr] += iNoise.GetNoiseVoltage(true);
+              }
+              sampleTree->Fill();
+              sampleTime += samplePeriod;
             }
           }
         }
