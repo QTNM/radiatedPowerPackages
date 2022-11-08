@@ -80,6 +80,8 @@ rad::Event::Event(std::vector<ParticleState> particles, std::vector<IAntenna *> 
   }
 
   computeSigProc = false;
+
+  std::cout << "We have " << nAntennas << " antennas in " << nArrays << " arrays.\n";
 }
 
 rad::Event::Event(std::vector<ParticleState> particles, std::vector<AntennaArray> arrays,
@@ -128,7 +130,6 @@ rad::Event::Event(std::vector<ParticleState> particles, std::vector<AntennaArray
   computeSigProc = false;
 
   std::cout << "We have a total of " << nArrays << " arrays, made up of " << nAntennas << " elements\n";
-  std::cout << "Antenna list has size of " << antennaList.size() << std::endl;
 }
 
 bool rad::Event::ParticleStartCheck(ParticleState part)
@@ -165,10 +166,12 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   // Set 2D arrays to defined nonsense values
   ResetArrays();
 
+  // Set our booleans to the correct values
+  SetFileWritingBooleans(vars);
+
   // Do we need to compute fields or voltages?
-  bool computeFields{(VectorContainsVar(vars, kAntEField) ||
-                      VectorContainsVar(vars, kAntBField) ||
-                      VectorContainsVar(vars, kAntVoltage)) || computeSigProc};
+  bool computeFields{(writeAntennaInfo || writeSignalInfo || computeSigProc)};
+
   if (computeFields)
   {
     std::cout << "We are computing EM fields.\n";
@@ -182,7 +185,8 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   // Check if we have chosen to write output to file
   bool writeToFile{outputFile != NULL};
   TFile *fout = 0;
-  TTree *tree = 0;
+  TTree *trajTree = 0;
+  TTree *antennaTree = 0;
   TTree *sampleTree = 0;
 
   const double samplePeriod{1.0 / sRate};
@@ -195,18 +199,26 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   {
     std::cout << "We are writing to file.\n";
     fout = new TFile(outputFile, "RECREATE");
-    // Create the TTree with the correct variables
-    tree = CreateOutputTree(vars);
-    AddLocalParticleData(tree, vars);
+    // Create the particle TTree with the correct variables
+    if (writeTrajInfo)
+    {
+      trajTree = CreateTrajectoryTree(vars);
+      AddLocalParticleData(trajTree, vars);
+      trajTree->Fill();
+    }
+
+    // Create the antenna TTree
+    if (writeAntennaInfo)
+      antennaTree = CreateAntennaTree(vars);
 
     // For the first point just set the (non-noisy) voltage values to zero
     if (computeSigProc)
     {
-      std::cout<<"Creating sample tree"<<std::endl;
-      sampleTree = CreateSampleTree();
+      if (writeSignalInfo)
+        sampleTree = CreateSampleTree();
+
       sampleTime = 0.0;
 
-      std::cout << "Created sample time\n";
       // Set up the noise functions
       for (auto &iNoise : noiseFunc)
       {
@@ -227,9 +239,11 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
         }
       }
       std::cout << "Added initial noise\n";
-      sampleTree->Fill();
+      if (writeSignalInfo)
+        sampleTree->Fill();
+
       sampleTime += samplePeriod;
-      std::cout << "Completed initial signal loop"<<std::endl;
+      std::cout << "Completed initial signal loop" << std::endl;
     }
 
     if (antennaList.size() > 0 && computeFields)
@@ -253,9 +267,10 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
       {
         antVoltage[iArr] = 0.0;
       }
-    }
 
-    tree->Fill();
+      if (writeAntennaInfo)
+        antennaTree->Fill();
+    }
   }
 
   // Create an instance of FieldStorer for every antenna
@@ -319,7 +334,7 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
       if (ParticleStartCheck(particleList[iPart]))
       {
         AdvanceParticleStep(iPart);
-        AddLocalParticleData(tree, vars);
+        AddLocalParticleData(trajTree, vars);
 
         // Check if we are saving antenna data (and have antenna data to save)
         if (antennaList.size() > 0 && computeFields)
@@ -354,6 +369,9 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
               antVoltage[antennaArrayMap.at(iAnt)] += fsVec.at(iAnt).GetAntennaLoadVoltage(clockTime);
             }
           }
+
+          if (writeAntennaInfo)
+            antennaTree->Fill();
         }
 
         // Do some signal processing, if so desired
@@ -364,8 +382,11 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
           {
             // Add voltage to the signal storer
             ssVec.at(iArr).AddNewPoint(antVoltage[iArr], clockTime);
-            // If it's time to sample the voltages then let's do that
-            if (clockTime >= sampleTime)
+          }
+          // If it's time to sample the voltages then let's do that
+          if (clockTime >= sampleTime)
+          {
+            for (int iArr{0}; iArr < nArrays; iArr++)
             {
               VI[iArr] = ssVec.at(iArr).GetVI(sampleTime);
               VQ[iArr] = ssVec.at(iArr).GetVQ(sampleTime);
@@ -375,26 +396,51 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
                 VI[iArr] += iNoise.GetNoiseVoltage(true);
                 VQ[iArr] += iNoise.GetNoiseVoltage(true);
               }
-              sampleTree->Fill();
-              sampleTime += samplePeriod;
             }
+            // Now we write the info if necessary
+            if (writeSignalInfo)
+              sampleTree->Fill();
+
+            sampleTime += samplePeriod;
           }
         }
       }
     }
-    tree->Fill();
   }
 
   // If we opened the file, then close it
   if (writeToFile)
   {
-    fout->cd();
-    tree->Write();
-    delete tree;
-
-    if (computeSigProc)
+    if (writeTrajInfo)
     {
+      fout->cd();
+      trajTree->Write();
+      delete trajTree;
+    }
+    else
+    {
+      delete trajTree;
+    }
+
+    if (writeAntennaInfo)
+    {
+      fout->cd();
+      antennaTree->Write();
+      delete antennaTree;
+    }
+    else
+    {
+      delete antennaTree;
+    }
+
+    if (writeSignalInfo)
+    {
+      fout->cd();
       sampleTree->Write();
+      delete sampleTree;
+    }
+    else
+    {
       delete sampleTree;
     }
 
@@ -403,7 +449,7 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   }
   else
   {
-    delete tree;
+    delete trajTree;
     delete sampleTree;
     delete fout;
   }
@@ -437,6 +483,67 @@ unsigned int rad::Event::GetNParticles()
   return particleList.size();
 }
 
+TTree *rad::Event::CreateTrajectoryTree(std::vector<OutputVar> vars)
+{
+  auto *tree = new TTree("trajectoryOut", "trajectoryOut");
+
+  // Always put a branch for the time in here
+  tree->Branch("time", &particleTime, "time/D");
+
+  // Loop through the variables and create the appropriate branches
+  for (auto &quantity : vars)
+  {
+    if (quantity == OutputVar::kPos)
+    {
+      tree->Branch("pos", pos, "pos[3]/D");
+    }
+    else if (quantity == OutputVar::kVel)
+    {
+      tree->Branch("vel", vel, "vel[3]/D");
+    }
+    else if (quantity == OutputVar::kAcc)
+    {
+      tree->Branch("acc", acc, "acc[3]/D");
+    }
+    else if (quantity == OutputVar::kBField)
+    {
+      tree->Branch("bField", bField, "bField[3]/D");
+    }
+  }
+
+  return tree;
+}
+
+TTree *rad::Event::CreateAntennaTree(std::vector<OutputVar> var)
+{
+  auto *tree = new TTree("antennaOut", "antennaOut");
+
+  // Always put a branch for the time in here
+  tree->Branch("time", &particleTime, "time/D");
+  // Also likely to need to the number of antennas and arrays as well
+  tree->Branch("nAntennas", &nAntennas, "nAntennas/I");
+  tree->Branch("nArrays", &nArrays, "nArrays/I");
+
+  for (auto &quantity : var)
+  {
+    if (quantity == OutputVar::kAntEField)
+    {
+      tree->Branch("antEField", antEField, "antEField[nAntennas][3]/D");
+    }
+    else if (quantity == OutputVar::kAntBField)
+    {
+      tree->Branch("antBField", antBField, "antBField[nAntennas][3]/D");
+    }
+    else if (quantity == OutputVar::kAntVoltage)
+    {
+      tree->Branch("antVoltage", antVoltage, "antVoltage[nArrays]/D");
+    }
+  }
+
+  return tree;
+}
+
+/*
 TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
 {
   auto *tree = new TTree("output", "output");
@@ -490,6 +597,7 @@ TTree *rad::Event::CreateOutputTree(std::vector<OutputVar> vars)
   }
   return tree;
 }
+*/
 
 TTree *rad::Event::CreateSampleTree()
 {
@@ -585,7 +693,7 @@ TVector3 rad::Event::GetBFieldAtAntenna(unsigned int particleIndex,
 
 bool rad::Event::VectorContainsVar(std::vector<OutputVar> vars, OutputVar testVar)
 {
-  return std::find(vars.begin(), vars.end(), OutputVar::kAntEField) != vars.end();
+  return std::find(vars.begin(), vars.end(), testVar) != vars.end();
 }
 
 void rad::Event::ResetArrays()
@@ -617,4 +725,30 @@ void rad::Event::AddSigProcInfo(LocalOscillator osc, std::vector<GaussianNoise> 
   sRate = sampleRate;
 
   computeSigProc = true;
+}
+
+void rad::Event::SetFileWritingBooleans(std::vector<OutputVar> vars)
+{
+  writeTrajInfo = false;
+  writeAntennaInfo = false;
+  writeSignalInfo = false;
+
+  // Loop over the vector of variables
+  for (auto &quantity : vars)
+  {
+    if (quantity == kPos || quantity == kVel ||
+        quantity == kAcc || quantity == kBField)
+    {
+      writeTrajInfo = true;
+    }
+    else if (quantity == kAntBField || quantity == kAntEField ||
+             quantity == kAntVoltage)
+    {
+      writeAntennaInfo = true;
+    }
+    else if (quantity == kVI || quantity == kVQ)
+    {
+      writeSignalInfo = true;
+    }
+  }
 }

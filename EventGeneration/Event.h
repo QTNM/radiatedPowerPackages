@@ -119,7 +119,13 @@ namespace rad
     double VI[nMaxAntennas]; // In phase voltage component
     double VQ[nMaxAntennas]; // Quadrature voltage component
 
+    // Boolean to keep track of signal processing
     bool computeSigProc;
+
+    // Boolean to keep track of if we are writing trajectory stuff
+    bool writeTrajInfo;
+    bool writeAntennaInfo;
+    bool writeSignalInfo;
 
     // Signal processing things
     LocalOscillator localOsc;             // Local oscillator
@@ -146,7 +152,17 @@ namespace rad
     /// Creates an output tree with the desired variables in it
     /// \param vars Vector containing the desired output variables
     /// \return A TTree with the desired variables as branches
-    TTree *CreateOutputTree(std::vector<OutputVar> vars);
+    // TTree *CreateOutputTree(std::vector<OutputVar> vars);
+
+    /// Creates an output tree for storing particle trajectories
+    /// \param var The vector of vars to output 
+    /// \return Pointer to a TTree with the correct branches created 
+    TTree *CreateTrajectoryTree(std::vector<OutputVar> var);
+
+    /// Creates an output tree for storing fields and (unprocessed) antenna signals
+    /// \param var The vector of vars to output 
+    /// \return Pointer to a TTree with the create branches created
+    TTree *CreateAntennaTree(std::vector<OutputVar> var);
 
     /// Creates an output tree for signal-processed outputs
     TTree *CreateSampleTree();
@@ -191,6 +207,10 @@ namespace rad
 
     /// Sets 2D arrays to (defined) nonsense values
     void ResetArrays();
+
+    /// Sets the booleans defining file output to correct values
+    /// \param vars The OutputVars which we want to write to file 
+    void SetFileWritingBooleans(std::vector<OutputVar> vars);
   };
 }
 
