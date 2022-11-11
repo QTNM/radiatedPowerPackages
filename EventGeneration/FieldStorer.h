@@ -35,6 +35,11 @@ namespace rad
         /// \return Index of tA which is our first guess 
         int GetFirstGuessPoint(double timeInterp);
 
+        /// Function for returning the interpolation index  
+        /// \param timeInterp The time at which we want to interpolate 
+        /// \return The index of tA which lies immediately before timeInterp  
+        int GetInterpolationIndex(double timeInterp);
+
     public:
         /// Parametrised constructor
         /// \param eField0 Initial electric field at field point

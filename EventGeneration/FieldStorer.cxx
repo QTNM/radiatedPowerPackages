@@ -47,6 +47,39 @@ int rad::FieldStorer::GetFirstGuessPoint(double timeInterp)
     return firstGuessPnt;
 }
 
+int rad::FieldStorer::GetInterpolationIndex(double timeInterp)
+{
+  const int firstGuessPnt{GetFirstGuessPoint(timeInterp)};
+  int interpIndex{0};
+  // Now check which direction to search in
+  if (tA.at(firstGuessPnt) < timeInterp)
+  {
+    // We are searching upwards
+    for (int i{firstGuessPnt}; i < tA.size() - 2; i++) 
+    {
+      // Now aim to find the tA values which we lie between
+      if (timeInterp > tA.at(i) && timeInterp < tA.at(i + 1))
+      {
+        interpIndex = i;
+        break;
+      }
+    }  
+  }
+  else 
+  {
+    // We are searching downwards
+    for (int i{firstGuessPnt}; i >= 0; i--)
+    {
+      if (timeInterp > tA.at(i) && timeInterp < tA.at(i+1))
+      {
+        interpIndex = i;
+        break;
+      }
+    }
+  }
+  return interpIndex;
+}
+
 TVector3 rad::FieldStorer::GetInterpolatedEField(double timeInterp)
 {
     std::vector<double> timeVals(4);
@@ -58,7 +91,7 @@ TVector3 rad::FieldStorer::GetInterpolatedEField(double timeInterp)
     if (timeInterp < tA.at(0))
     {
         return TVector3(0, 0, 0);
-    }
+    } 
 
     // Loop through the times and find the points which our
     // data point lies between
