@@ -30,6 +30,11 @@ namespace rad
 
         IAntenna *theAntenna;
 
+        /// Function for making a first guess at where to do interpolation
+        /// \param timeInterp The time at which we want to interpolate 
+        /// \return Index of tA which is our first guess 
+        int GetFirstGuessPoint(double timeInterp);
+
     public:
         /// Parametrised constructor
         /// \param eField0 Initial electric field at field point

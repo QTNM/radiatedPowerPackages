@@ -38,6 +38,15 @@ void rad::FieldStorer::AddNewFields(TVector3 newEField, TVector3 newBField,
     }
 }
 
+int rad::FieldStorer::GetFirstGuessPoint(double timeInterp)
+{
+    // First make a guess at the best place to start 
+    const double pntsPerTime{double(tA.size()) / (tA.at(tA.size() - 1) - tA.at(0))};
+    int firstGuessPnt = round(pntsPerTime * (timeInterp - tA.at(0)));
+    if (firstGuessPnt < 0) firstGuessPnt = 0;
+    return firstGuessPnt;
+}
+
 TVector3 rad::FieldStorer::GetInterpolatedEField(double timeInterp)
 {
     std::vector<double> timeVals(4);
