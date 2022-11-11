@@ -313,7 +313,7 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
   {
     clockTime += simulationStepSize;
 
-    if (iStep % 1000 == 0)
+    if (iStep % 10000 == 0)
     {
       clock_t timeNow{clock()};
       std::cout << "Clock time = " << clockTime << " s, process time (step, total) = (" << double(timeNow - processStart) / CLOCKS_PER_SEC << ", " << double(timeNow - lastStep) / CLOCKS_PER_SEC << ") s\n";
@@ -376,7 +376,7 @@ void rad::Event::PropagateParticles(const char *outputFile, std::vector<OutputVa
 
         // Do some signal processing, if so desired
         if (computeSigProc)
-        {
+        { 
           // Loop over the antenna arrays
           for (int iArr{0}; iArr < nArrays; iArr++)
           {
