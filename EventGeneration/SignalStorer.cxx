@@ -8,6 +8,7 @@ rad::SignalStorer::SignalStorer(double vInitial, double tInitial,
 {
   sampleRate = sRate;
   maxTimeLength = 100 / (sRate); // 200 samples
+  // maxTimeLength = 50 / (sRate); // 200 samples
   lo = osc;
   nextSampleTime = tInitial + 1.0 / sRate;
   nextSample10Time = tInitial + 1.0 / (10 * sRate);
@@ -26,7 +27,7 @@ void rad::SignalStorer::AddNewPoint(double v, double t)
   vDownmixedQ.push_back(v * lo.GetQuadratureComponent(t));
   times.push_back(t);
   // Delete points from the beginning if we're over the max time
-  if (vDownmixedI.at(vDownmixedI.size() - 1) - vDownmixedI.at(0) > maxTimeLength)
+  if (times.at(times.size() - 1) - times.at(0) > maxTimeLength)
   {
     vDownmixedI.erase(vDownmixedI.begin());
     vDownmixedQ.erase(vDownmixedQ.begin());
@@ -52,7 +53,7 @@ void rad::SignalStorer::AddNewPoint(double v, double t)
     timesSample10.push_back(nextSample10Time);
     nextSample10Time += 1.0 / (10 * sampleRate);
 
-    if (vSample10I.at(vSample10I.size() - 1) - vSample10I.at(0) > maxTimeLength)
+    if (timesSample10.at(timesSample10.size() - 1) - timesSample10.at(0) > maxTimeLength)
     {
       timesSample10.erase(timesSample10.begin());
       vSample10I.erase(vSample10I.begin());
