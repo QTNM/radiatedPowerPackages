@@ -18,9 +18,15 @@ namespace rad
 {
   void setGraphAttr(TGraph *gr);
 
+  void setGraphAttr(std::unique_ptr<TGraph> &gr);
+
   void SetHistAttr(TH1 *h);
 
+  void SetHistAttr(std::unique_ptr<TH1D> &h);
+
   void SetHistAttr(TH2 *h);
+
+  void SetHistAttr(std::unique_ptr<TH2> &h);
 
   double CalcAeHertzianDipole(const double wavelength, const ROOT::Math::XYZVector dipoleDir,
                               const ROOT::Math::XYZPoint ePosition,

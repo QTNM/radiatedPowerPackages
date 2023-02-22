@@ -29,6 +29,15 @@ void rad::setGraphAttr(TGraph *gr)
   gr->SetLineWidth(2);
 }
 
+void rad::setGraphAttr(std::unique_ptr<TGraph> &gr)
+{
+  gr->GetXaxis()->SetTitleSize(0.05);
+  gr->GetYaxis()->SetTitleSize(0.05);
+  gr->GetXaxis()->SetLabelSize(0.05);
+  gr->GetYaxis()->SetLabelSize(0.05);
+  gr->SetLineWidth(2);
+}
+
 void rad::SetHistAttr(TH1 *h)
 {
   h->GetXaxis()->SetTitleSize(0.05);
@@ -38,7 +47,26 @@ void rad::SetHistAttr(TH1 *h)
   h->SetLineWidth(2);
 }
 
+void rad::SetHistAttr(std::unique_ptr<TH1D> &h)
+{
+  h->GetXaxis()->SetTitleSize(0.05);
+  h->GetYaxis()->SetTitleSize(0.05);
+  h->GetXaxis()->SetLabelSize(0.05);
+  h->GetYaxis()->SetLabelSize(0.05);
+  h->SetLineWidth(2);
+}
+
 void rad::SetHistAttr(TH2 *h)
+{
+  h->GetXaxis()->SetTitleSize(0.05);
+  h->GetYaxis()->SetTitleSize(0.05);
+  h->GetZaxis()->SetTitleSize(0.05);
+  h->GetXaxis()->SetLabelSize(0.05);
+  h->GetYaxis()->SetLabelSize(0.05);
+  h->GetZaxis()->SetLabelSize(0.05);
+}
+
+void rad::SetHistAttr(std::unique_ptr<TH2> &h)
 {
   h->GetXaxis()->SetTitleSize(0.05);
   h->GetYaxis()->SetTitleSize(0.05);
