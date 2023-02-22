@@ -106,9 +106,9 @@ int main(int argc, char** argv)
   ScaleGraph(grSumPgram, 1/loadResistance);
   grSumPgram->SetTitle(Form("Total power %.4f fW", totalPowerSum));
 
-  TH1D* hNoiseSqrtPower = new TH1D("hNoiseSqrtPower", "#sqrt{P} in 18.5 kHz bins; #sqrt{P} [W^{0.5}]; N_{bins}", 70, 0, 5e-9);
+  auto hNoiseSqrtPower{std::make_unique<TH1D>("hNoiseSqrtPower", "#sqrt{P} in 18.5 kHz bins; #sqrt{P} [W^{0.5}]; N_{bins}", 70, 0, 5e-9)};
   SetHistAttr(hNoiseSqrtPower);
-  TH1D* hNoisePower = new TH1D("hNoisePower", "P in 18.5 kHz bins; P [W]; N_{bins}", 70, 0, 2.5e-17);
+  auto hNoisePower{std::make_unique<TH1D>("hNoisePower", "P in 18.5 kHz bins; P [W]; N_{bins}", 70, 0, 2.5e-17)};
   SetHistAttr(hNoisePower);
   
   for (int i = 0; i < grSumPgram->GetN(); i++) {
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
     hNoisePower->Fill(grVIPgram->GetPointY(i));
   }
   
-  TFile* fout = new TFile(outputFile, "RECREATE");
+  auto fout{std::make_unique<TFile>(outputFile, "RECREATE")};
   fout->cd();
   grVIPgram->Write("grVIPgram");
   grVQPgram->Write("grVQPgram");
@@ -129,8 +129,6 @@ int main(int argc, char** argv)
   hNoisePower->Write();
   hNoiseSqrtPower->Write();
   
-  fout->Close();
-  delete fout;
-  
+  fout->Close();  
   return 0;
 }
