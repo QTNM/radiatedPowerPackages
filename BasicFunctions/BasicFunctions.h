@@ -91,11 +91,29 @@ namespace rad
   double CubicInterpolation(std::vector<double> xVals, std::vector<double> yVals,
                             double xInterp);
 
-  // PDF of the Rayleigh distribution
-  double RayleighPDF(const double x, const double sigma);
+  /// @brief PDF of the Rayleigh distribution
+  /// @param x
+  /// @param sigma Scale parameter of the distribution
+  /// @return Probability density at x
+  double RayleighPDF(double x, double sigma);
 
-  // CDF of the Rayleigh distribution
-  double RayleighCDF(const double x, const double sigma);
+  /// @brief PDF of the Rayleigh distribution using long double 
+  /// @param x
+  /// @param sigma Scale parameter of the distribution
+  /// @return Probability density at x
+  long double RayleighPDF(long double x, long double sigma);
+
+  /// @brief CDF for the Rayleigh distribution
+  /// @param x 
+  /// @param sigma Scale parameter of the distribution
+  /// @return Cumulative distribution at x
+  double RayleighCDF(double x, double sigma);
+
+  /// @brief CDF for the Rayleigh distribution using long double 
+  /// @param x 
+  /// @param sigma Scale parameter of the distribution
+  /// @return Cumulative distribution at x
+  long double RayleighCDF(long double x, long double sigma);
 
   double RayleighPDFFunc(double *x, double *par);
 

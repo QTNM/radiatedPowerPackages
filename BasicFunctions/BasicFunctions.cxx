@@ -319,16 +319,29 @@ double rad::CubicInterpolation(std::vector<double> xVals, std::vector<double> yV
   return l0 * yVals[0] + l1 * yVals[1] + l2 * yVals[2] + l3 * yVals[3];
 }
 
-double rad::RayleighPDF(const double x, const double sigma)
+double rad::RayleighPDF(double x, double sigma)
 {
   double sigmaSq = sigma * sigma;
-  double prob = (x / sigmaSq) * exp(-1 * x * x / (2 * sigmaSq));
+  double prob = (x / sigmaSq) * exp(-x * x / (2 * sigmaSq));
   return prob;
 }
 
-double rad::RayleighCDF(const double x, const double sigma)
+long double rad::RayleighPDF(long double x, long double sigma)
 {
-  double f = 1.0 - exp(-1 * x * x / (2 * sigma * sigma));
+  long double sigmaSq = sigma * sigma;
+  long double prob = (x / sigmaSq) * exp(-x * x / (2 * sigmaSq));
+  return prob;
+}
+
+double rad::RayleighCDF(double x, double sigma)
+{
+  double f{1.0 - exp(-x * x / (2 * sigma * sigma))};
+  return f;
+}
+
+long double rad::RayleighCDF(long double x, long double sigma)
+{
+  long double f{1.0 - exp(-x * x / (2 * sigma * sigma))};
   return f;
 }
 
