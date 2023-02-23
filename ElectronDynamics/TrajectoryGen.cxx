@@ -57,12 +57,12 @@ rad::ElectronTrajectoryGen::ElectronTrajectoryGen(TString outputFile, BaseField 
 void rad::ElectronTrajectoryGen::GenerateTraj()
 {
   // Open the output file
-  TFile *fout = new TFile(outputFilePath, "RECREATE");
-  TTree *tree = new TTree("tree", "tree");
-  double time;
-  double xPos, yPos, zPos;
-  double xVel, yVel, zVel;
-  double xAcc, yAcc, zAcc;
+  auto fout = std::make_unique<TFile>(outputFilePath, "RECREATE");
+  auto tree = std::make_unique<TTree>("tree", "tree");
+  double time{};
+  double xPos{}, yPos{}, zPos{};
+  double xVel{}, yVel{}, zVel{};
+  double xAcc{}, yAcc{}, zAcc{};
   tree->Branch("time", &time);
   tree->Branch("xPos", &xPos);
   tree->Branch("yPos", &yPos);
@@ -91,14 +91,15 @@ void rad::ElectronTrajectoryGen::GenerateTraj()
   TVector3 ePos = initialPosition;
   TVector3 eVel = initialVelocity;
 
-  int nTimeSteps = simulationTime / stepSize;
+  double nTimeSteps{round(simulationTime / stepSize)};
   // Advance through the time steps
+  const double printoutTime{1e-6}; // seconds
   for (int i = 1; i < nTimeSteps; i++)
   {
     time = startTime + double(i) * stepSize;
     std::tuple<TVector3, TVector3> outputStep = solver.advance_step(stepSize, ePos, eVel);
 
-    if (std::fmod(time, 1e-6) < stepSize)
+    if (std::fmod(time, printoutTime) < stepSize)
     {
       std::cout << time << " seconds of trajectory simulated..." << std::endl;
     }
@@ -121,7 +122,5 @@ void rad::ElectronTrajectoryGen::GenerateTraj()
   }
   fout->cd();
   tree->Write();
-
   fout->Close();
-  delete fout;
 }
