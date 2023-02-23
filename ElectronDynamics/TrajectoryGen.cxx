@@ -12,37 +12,42 @@
 
 #include <tuple>
 #include <cmath>
+#include <memory>
 
-rad::ElectronTrajectoryGen::ElectronTrajectoryGen(TString outputFile, BaseField* field, TVector3 initPos, TVector3 initVel, double simStepSize, double simTime, double initialSimTime, double tau)
+rad::ElectronTrajectoryGen::ElectronTrajectoryGen(TString outputFile, BaseField *field,
+                                                  TVector3 initPos, TVector3 initVel,
+                                                  double simStepSize, double simTime,
+                                                  double initialSimTime, double tau) : outputFilePath(outputFile)
 {
-  outputFilePath = outputFile;
   // Check the file path can be opened in
-  TFile* fout = new TFile(outputFilePath, "RECREATE");
-  if (!fout) {
+  auto fout = std::make_unique<TFile>(outputFilePath, "RECREATE");
+  if (!fout)
+  {
     // File path not opened correctly
-    std::cout<<"File cannot be created. Exiting..."<<std::endl;
-    delete fout;
+    std::cout << "File cannot be created. Exiting..." << std::endl;
     exit(1);
   }
-  else {
+  else
+  {
     // File path is all good
     fout->Close();
-    delete fout;
   }
-  
+
   solver = BorisSolver(field, -TMath::Qe(), ME, tau);
 
   // Check that various input values make sense
-  if (simStepSize <= 0) {
-    std::cout<<"Invalid simulation step size ("<<simStepSize<<"). Exiting..."<<std::endl;
+  if (simStepSize <= 0)
+  {
+    std::cout << "Invalid simulation step size (" << simStepSize << "). Exiting..." << std::endl;
     exit(1);
   }
-  if (simTime <= 0) {
-    std::cout<<"Invalid simulation time ("<<simTime<<"). Exiting..."<<std::endl;
+  if (simTime <= 0)
+  {
+    std::cout << "Invalid simulation time (" << simTime << "). Exiting..." << std::endl;
     exit(1);
   }
-  
-  stepSize  = simStepSize;
+
+  stepSize = simStepSize;
   startTime = initialSimTime;
   simulationTime = simTime;
   initialPosition = initPos;
@@ -52,8 +57,8 @@ rad::ElectronTrajectoryGen::ElectronTrajectoryGen(TString outputFile, BaseField*
 void rad::ElectronTrajectoryGen::GenerateTraj()
 {
   // Open the output file
-  TFile* fout = new TFile(outputFilePath, "RECREATE");
-  TTree* tree = new TTree("tree", "tree");
+  TFile *fout = new TFile(outputFilePath, "RECREATE");
+  TTree *tree = new TTree("tree", "tree");
   double time;
   double xPos, yPos, zPos;
   double xVel, yVel, zVel;
@@ -88,14 +93,16 @@ void rad::ElectronTrajectoryGen::GenerateTraj()
 
   int nTimeSteps = simulationTime / stepSize;
   // Advance through the time steps
-  for (int i = 1; i < nTimeSteps; i++) {
+  for (int i = 1; i < nTimeSteps; i++)
+  {
     time = startTime + double(i) * stepSize;
     std::tuple<TVector3, TVector3> outputStep = solver.advance_step(stepSize, ePos, eVel);
 
-    if (std::fmod(time, 1e-6) < stepSize) {
-      std::cout<<time<<" seconds of trajectory simulated..."<<std::endl;
+    if (std::fmod(time, 1e-6) < stepSize)
+    {
+      std::cout << time << " seconds of trajectory simulated..." << std::endl;
     }
-    
+
     ePos = std::get<0>(outputStep);
     eVel = std::get<1>(outputStep);
     eAcc = solver.acc(ePos, eVel);
