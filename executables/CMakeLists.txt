@@ -49,3 +49,6 @@ target_link_libraries(RealisticFields PUBLIC Antennas SignalProcessing ElectronD
 
 add_executable(RFBandwidthCRESDA RFBandwidthCRESDA.cxx)
 target_link_libraries(RFBandwidthCRESDA PRIVATE ElectronDynamics BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(SignalRequirements SignalRequirements.cxx)
+target_link_libraries(SignalRequirements PRIVATE BasicFunctions ${ROOT_LIBRARIES})
