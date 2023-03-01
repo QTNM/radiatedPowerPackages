@@ -14,6 +14,7 @@
 #include "TF1.h"
 #include "TFile.h"
 #include "TGraph.h"
+#include "TH1.h"
 #include "TLine.h"
 #include "TMath.h"
 
@@ -24,10 +25,114 @@ using std::endl;
 using std::make_unique;
 using std::unique_ptr;
 
+/// @brief Calculate the rate of frequency change from radiative emission
+/// @param B Magnetic field in Tesla
+/// @param theta Pitch angle in radians
+/// @param beta Electron speed divided by c
+/// @return The rate of change of electron frequency in Hz s^-1
+double CalcDfDt(double B, double theta = TMath::PiOver2(),
+                double beta = 0.2627) {
+  double gamma{1 / sqrt(1 - beta * beta)};
+  double E{gamma * ME * TMath::C() * TMath::C()};
+  double premult{pow(TMath::Qe(), 5) * pow(B, 3) * TMath::C() /
+                 (12 * EPSILON0 * pow(TMath::Pi() * ME, 2))};
+  return premult * (1 / (E * E)) * pow(beta * sin(theta), 2) /
+         (1 - beta * beta);
+}
+
+/// @brief Calculate the optimum acquisition time
+/// @param B Magnetic field in Tesla
+/// @param theta Pitch angle in radians
+/// @param beta Electron speed divided by c
+/// @return The optimum acquisition time (for a frequency bin) in seconds
+double CalcTAcqOpt(double B, double theta = TMath::PiOver2(),
+                   double beta = 0.2627) {
+  return 1 / sqrt(CalcDfDt(B, theta, beta));
+}
+
+/// @brief Calculate the required power threshold to ensure a given false
+/// trigger time
+/// @param B Magnetic field in Tesla
+/// @param tFalse Mean time (in seconds) between false triggers
+/// @param TNoise Noise temperature in kelvin
+/// @param obsWidth Observation width in Hz
+/// @return The required trigger threshold (in watts)
+long double CalcRequiredTriggerThreshold(double B, double TNoise, double tFalse,
+                                         double obsWidth) {
+  double tAcqOpt{CalcTAcqOpt(B)};
+  const double deltaFOpt{1 / tAcqOpt};
+  const long double sigma{sqrt(TMath::K() * TNoise * deltaFOpt)};
+  const long double nBins{obsWidth / deltaFOpt};
+  long double pTrig{tAcqOpt / tFalse};
+  long double CDF{pow(1 - pTrig, 1 / nBins)};
+  long double vSq{-2 * sigma * sigma * log(1 - CDF)};
+  return vSq / 2;
+}
+
+double CalcLarmorPower(double beta, double B) {
+  double f0{TMath::Qe() * B / ME * (1 / (2 * TMath::Pi()))};
+  double premult{2 * TMath::Pi() * pow(TMath::Qe() * f0, 2) /
+                 (3 * EPSILON0 * TMath::C())};
+  return premult * beta * beta / (1 - beta * beta);
+}
+
+unique_ptr<TGraph> MakeTriggerThresholdGraph(double TNoise, double tFalse,
+                                             double obsWidth, int nPnts = 200,
+                                             double bMin = 0.4,
+                                             double bMax = 1.2) {
+  auto grThresh = make_unique<TGraph>();
+  setGraphAttr(grThresh);
+  grThresh->SetLineWidth(3);
+  grThresh->SetTitle(Form("T_{noise} = %.0f K; B [T]; P_{trig} [fW]", TNoise));
+
+  for (int n{0}; n < nPnts; n++) {
+    double b{bMin + (bMax - bMin) * double(n) / double(nPnts - 1)};
+    long double threshold{
+        CalcRequiredTriggerThreshold(b, TNoise, tFalse, obsWidth)};
+    grThresh->SetPoint(n, b, threshold * 1e15);
+  }
+  return grThresh;
+}
+
+unique_ptr<TGraph> MakeLarmorPowerGraph(int nPnts = 200, double bMin = 0.4,
+                                        double bMax = 1.2) {
+  auto grLarmor = make_unique<TGraph>();
+  setGraphAttr(grLarmor);
+  grLarmor->SetTitle("; B [T]; P_{rad} [fW]");
+  grLarmor->SetLineWidth(3);
+
+  for (int n{0}; n < nPnts; n++) {
+    double b{bMin + (bMax - bMin) * double(n) / double(nPnts - 1)};
+    double power{CalcLarmorPower(0.2627, b)};
+    grLarmor->SetPoint(n, b, power * 1e15);
+  }
+  return grLarmor;
+}
+
+unique_ptr<TGraph> MakeTriggerThresholdGraphNorm(double TNoise, double tFalse,
+                                                 double obsWidth,
+                                                 int nPnts = 200,
+                                                 double bMin = 0.4,
+                                                 double bMax = 1.2) {
+  auto grThresh =
+      MakeTriggerThresholdGraph(TNoise, tFalse, obsWidth, nPnts, bMin, bMax);
+  setGraphAttr(grThresh);
+  grThresh->SetLineWidth(3);
+  grThresh->SetTitle(
+      Form("T_{noise} = %.0f K; B [T]; P_{trig} / P_{rad}", TNoise));
+
+  auto grLarmor = MakeLarmorPowerGraph(nPnts, bMin, bMax);
+  for (int n{0}; n < nPnts; n++) {
+    double powerNorm{grThresh->GetPointY(n) / grLarmor->GetPointY(n)};
+    grThresh->SetPointY(n, powerNorm);
+  }
+  return grThresh;
+}
+
 unique_ptr<TGraph> MakeFalseTrigTimePlot(double T, double bandwidth,
                                          int nPnts = 400, double pMin = 5e-18,
                                          double pMax = 1e-15) {
-  const long double sigma{TMath::K() * T * bandwidth};
+  const long double sigma{sqrt(TMath::K() * T * bandwidth)};
   const long double tAcq{1 / bandwidth};
   const double logPowerDiff{(log10(pMax) - log10(pMin)) / double(nPnts - 1)};
 
@@ -53,8 +158,7 @@ unique_ptr<TGraph> MakeFalseTrigTimePlot(double T, double bandwidth,
 unique_ptr<TGraph> MakeFalseTrigProbPlot(double T, double bandwidth,
                                          int nPnts = 400, double pMin = 5e-18,
                                          double pMax = 1e-15) {
-  const long double sigma{TMath::K() * T * bandwidth};
-  const long double tAcq{1 / bandwidth};
+  const long double sigma{sqrt(TMath::K() * T * bandwidth)};
   const double logPowerDiff{(log10(pMax) - log10(pMin)) / double(nPnts - 1)};
 
   auto grProb = make_unique<TGraph>();
@@ -132,14 +236,31 @@ int main(int argc, char *argv[]) {
   fPDF->Write("fPDF");
   meanLine->Write("meanLine");
 
-  const int nBins{50000};
+  const int nBins{5882};
+  auto hWhiteNoise =
+      make_unique<TH1D>("hWhiteNoise", "; Frequency [MHz]; FFT [W^{0.5}]",
+                        nBins, 0, nBins * bandwidth / 1e6);
+  SetHistAttr(hWhiteNoise);
+  auto hFFT =
+      make_unique<TH1D>("hFFT", "; FFT [W^{0.5}]; N_{bins}", 200, 0, 6 * sigma);
+  SetHistAttr(hFFT);
+
   double totalPower{0};
   for (int n{0}; n < nBins; n++) {
-    double power{pow(fPDF->GetRandom(), 2) / 2};
+    double fft{fPDF->GetRandom()};
+    hFFT->Fill(fft);
+    hWhiteNoise->SetBinContent(n + 1, fft);
+    double power{fft * fft / 2};
     totalPower += power;
   }
   double sampledPowerPerBin{totalPower / double(nBins)};
   cout << "Sampled power per bin = " << sampledPowerPerBin << " W\n";
+
+  fout->cd();
+  hFFT->Write();
+  hWhiteNoise->Write();
+  hFFT.reset();
+  hWhiteNoise.reset();
 
   const int nBins100MHz{5882};
   const double hypotheticalSignalPower{1e-16};  // W
@@ -149,7 +270,8 @@ int main(int argc, char *argv[]) {
       1 - pow(RayleighCDF(sigVoltageMag, sigma), nBins100MHz)};
   cout << "Probability a given noise bin is higher = " << probNoiseHigher1Bin
        << endl;
-  cout << "Probability that any noise bin in a 100 MHz range is higher = "
+  cout << "Probability that any noise bin in a 100 MHz "
+          "range is higher = "
        << probNoiseHigher100MHz << endl;
 
   // Plot probabilities as a function of bin power
@@ -168,6 +290,24 @@ int main(int argc, char *argv[]) {
   auto grTime11K = MakeFalseTrigTimePlot(11, bandwidth);
   grTime11K->SetLineColor(kOrange + 1);
 
+  auto grLarmor = MakeLarmorPowerGraph();
+  grLarmor->SetLineColor(kMagenta + 1);
+  grLarmor->SetLineStyle(2);
+
+  auto grThresh6K = MakeTriggerThresholdGraph(6, 10, 100e6);
+  grThresh6K->SetLineColor(kRed);
+  auto grThresh7K = MakeTriggerThresholdGraph(7, 10, 100e6);
+  grThresh7K->SetLineColor(kBlue);
+  auto grThresh11K = MakeTriggerThresholdGraph(11, 10, 100e6);
+  grThresh11K->SetLineColor(kOrange + 1);
+
+  auto grThreshNorm6K = MakeTriggerThresholdGraphNorm(6, 10, 100e6);
+  grThreshNorm6K->SetLineColor(kRed);
+  auto grThreshNorm7K = MakeTriggerThresholdGraphNorm(7, 10, 100e6);
+  grThreshNorm7K->SetLineColor(kBlue);
+  auto grThreshNorm11K = MakeTriggerThresholdGraphNorm(11, 10, 100e6);
+  grThreshNorm11K->SetLineColor(kOrange + 1);
+
   fout->cd();
   grProb6K->Write("grProb6K");
   grProb7K->Write("grProb7K");
@@ -175,6 +315,15 @@ int main(int argc, char *argv[]) {
   grTime6K->Write("grTime6K");
   grTime7K->Write("grTime7K");
   grTime11K->Write("grTime11K");
+
+  grLarmor->Write("grLarmor");
+  grThresh6K->Write("grThresh6K");
+  grThresh7K->Write("grThresh7K");
+  grThresh11K->Write("grThresh11K");
+
+  grThreshNorm6K->Write("grThreshNorm6K");
+  grThreshNorm7K->Write("grThreshNorm7K");
+  grThreshNorm11K->Write("grThreshNorm11K");
 
   fout->Close();
   return 0;
