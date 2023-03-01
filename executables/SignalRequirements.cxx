@@ -69,6 +69,10 @@ long double CalcRequiredTriggerThreshold(double B, double TNoise, double tFalse,
   return vSq / 2;
 }
 
+/// @brief Calculates the Larmor power for an electron
+/// @param beta Electron speed divided by c
+/// @param B Magnetic field in tesla
+/// @return Radiated power in watts
 double CalcLarmorPower(double beta, double B) {
   double f0{TMath::Qe() * B / ME * (1 / (2 * TMath::Pi()))};
   double premult{2 * TMath::Pi() * pow(TMath::Qe() * f0, 2) /
@@ -129,9 +133,9 @@ unique_ptr<TGraph> MakeTriggerThresholdGraphNorm(double TNoise, double tFalse,
   return grThresh;
 }
 
-unique_ptr<TGraph> MakeFalseTrigTimePlot(double T, double bandwidth,
-                                         int nPnts = 400, double pMin = 5e-18,
-                                         double pMax = 1e-15) {
+unique_ptr<TGraph> MakeTfPlot(double T, double bandwidth, int nBins = 1,
+                              int nPnts = 400, double pMin = 5e-18,
+                              double pMax = 0.5e-15) {
   const long double sigma{sqrt(TMath::K() * T * bandwidth)};
   const long double tAcq{1 / bandwidth};
   const double logPowerDiff{(log10(pMax) - log10(pMin)) / double(nPnts - 1)};
@@ -147,8 +151,38 @@ unique_ptr<TGraph> MakeFalseTrigTimePlot(double T, double bandwidth,
     double power{pMin * pow(10, logPowerDiff * double(n))};
     long double vMag{sqrt(2 * power)};
     long double probNoise100MHz{1 - pow(RayleighCDF(vMag, sigma), nBins100MHz)};
-    if (probNoise100MHz > 0) {
-      long double trigTime{tAcq / probNoise100MHz};
+    long double pTrig{pow(probNoise100MHz, nBins)};
+    if (pTrig > 0) {
+      long double trigTime{tAcq / pTrig};
+      grTime->SetPoint(n, power * 1e15, trigTime);
+    }
+  }
+  return grTime;
+}
+
+unique_ptr<TGraph> MakeTfPlotNeighbour(double T, double bandwidth, int nBins,
+                                       int nPnts = 400, double pMin = 5e-18,
+                                       double pMax = 0.5e-15) {
+  const long double sigma{sqrt(TMath::K() * T * bandwidth)};
+  const long double tAcq{1 / bandwidth};
+  const double logPowerDiff{(log10(pMax) - log10(pMin)) / double(nPnts - 1)};
+
+  auto grTime = make_unique<TGraph>();
+  setGraphAttr(grTime);
+  const long double nBins100MHz{100e6 / bandwidth};
+  grTime->SetLineWidth(3);
+  grTime->SetTitle(Form(
+      "T_{noise} = %.0f K; P_{bin} [fW]; Time between false triggers [s]", T));
+
+  for (int n{0}; n < nPnts; n++) {
+    double power{pMin * pow(10, logPowerDiff * double(n))};
+    long double vMag{sqrt(2 * power)};
+    long double probNoise100MHz{1 - pow(RayleighCDF(vMag, sigma), nBins100MHz)};
+    long double probNoise1Bin{1 - RayleighCDF(vMag, sigma)};
+    long double pTrig{probNoise100MHz * pow(probNoise1Bin, nBins - 1) *
+                      pow(2, nBins - 1)};
+    if (pTrig > 0) {
+      long double trigTime{tAcq / pTrig};
       grTime->SetPoint(n, power * 1e15, trigTime);
     }
   }
@@ -157,7 +191,7 @@ unique_ptr<TGraph> MakeFalseTrigTimePlot(double T, double bandwidth,
 
 unique_ptr<TGraph> MakeFalseTrigProbPlot(double T, double bandwidth,
                                          int nPnts = 400, double pMin = 5e-18,
-                                         double pMax = 1e-15) {
+                                         double pMax = 0.1e-15) {
   const long double sigma{sqrt(TMath::K() * T * bandwidth)};
   const double logPowerDiff{(log10(pMax) - log10(pMin)) / double(nPnts - 1)};
 
@@ -283,12 +317,40 @@ int main(int argc, char *argv[]) {
   auto grProb11K = MakeFalseTrigProbPlot(11, bandwidth);
   grProb11K->SetLineColor(kOrange + 1);
 
-  auto grTime6K = MakeFalseTrigTimePlot(6, bandwidth);
+  auto grTime6K = MakeTfPlot(6, bandwidth, 1);
   grTime6K->SetLineColor(kRed);
-  auto grTime7K = MakeFalseTrigTimePlot(7, bandwidth);
+  auto grTime7K = MakeTfPlot(7, bandwidth, 1);
   grTime7K->SetLineColor(kBlue);
-  auto grTime11K = MakeFalseTrigTimePlot(11, bandwidth);
+  auto grTime11K = MakeTfPlot(11, bandwidth, 1);
   grTime11K->SetLineColor(kOrange + 1);
+
+  auto grTime6K_2bins = MakeTfPlot(6, bandwidth, 2);
+  grTime6K_2bins->SetLineColor(kMagenta + 1);
+  auto grTime7K_2bins = MakeTfPlot(7, bandwidth, 2);
+  grTime7K_2bins->SetLineColor(kMagenta + 1);
+  auto grTime11K_2bins = MakeTfPlot(11, bandwidth, 2);
+  grTime11K_2bins->SetLineColor(kMagenta + 1);
+
+  auto grTime6K_4bins = MakeTfPlot(6, bandwidth, 4);
+  grTime6K_4bins->SetLineColor(kBlack);
+  auto grTime7K_4bins = MakeTfPlot(7, bandwidth, 4);
+  grTime7K_4bins->SetLineColor(kBlack);
+  auto grTime11K_4bins = MakeTfPlot(11, bandwidth, 4);
+  grTime11K_4bins->SetLineColor(kBlack);
+
+  auto grTime6K_2binsC = MakeTfPlotNeighbour(6, bandwidth, 2);
+  grTime6K_2binsC->SetLineColor(kGreen + 1);
+  auto grTime7K_2binsC = MakeTfPlotNeighbour(7, bandwidth, 2);
+  grTime7K_2binsC->SetLineColor(kGreen + 1);
+  auto grTime11K_2binsC = MakeTfPlotNeighbour(11, bandwidth, 2);
+  grTime11K_2binsC->SetLineColor(kGreen + 1);
+
+  auto grTime6K_4binsC = MakeTfPlotNeighbour(6, bandwidth, 4);
+  grTime6K_4binsC->SetLineColor(kCyan + 1);
+  auto grTime7K_4binsC = MakeTfPlotNeighbour(7, bandwidth, 4);
+  grTime7K_4binsC->SetLineColor(kCyan + 1);
+  auto grTime11K_4binsC = MakeTfPlotNeighbour(11, bandwidth, 4);
+  grTime11K_4binsC->SetLineColor(kCyan + 1);
 
   auto grLarmor = MakeLarmorPowerGraph();
   grLarmor->SetLineColor(kMagenta + 1);
@@ -312,9 +374,26 @@ int main(int argc, char *argv[]) {
   grProb6K->Write("grProb6K");
   grProb7K->Write("grProb7K");
   grProb11K->Write("grProb11K");
+
   grTime6K->Write("grTime6K");
   grTime7K->Write("grTime7K");
   grTime11K->Write("grTime11K");
+
+  grTime6K_2bins->Write("grTime6K_2bins");
+  grTime7K_2bins->Write("grTime7K_2bins");
+  grTime11K_2bins->Write("grTime11K_2bins");
+
+  grTime6K_4bins->Write("grTime6K_4bins");
+  grTime7K_4bins->Write("grTime7K_4bins");
+  grTime11K_4bins->Write("grTime11K_4bins");
+
+  grTime6K_2binsC->Write("grTime6K_2binsC");
+  grTime7K_2binsC->Write("grTime7K_2binsC");
+  grTime11K_2binsC->Write("grTime11K_2binsC");
+
+  grTime6K_4binsC->Write("grTime6K_4binsC");
+  grTime7K_4binsC->Write("grTime7K_4binsC");
+  grTime11K_4binsC->Write("grTime11K_4binsC");
 
   grLarmor->Write("grLarmor");
   grThresh6K->Write("grThresh6K");
