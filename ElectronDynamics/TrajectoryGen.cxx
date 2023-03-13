@@ -44,7 +44,7 @@ rad::ElectronTrajectoryGen::ElectronTrajectoryGen(
 
   // Open the output file
   auto fout = std::make_unique<TFile>(outputFile, "RECREATE");
-  auto tree = std::make_unique<TTree>("tree", "tree");
+  TTree *tree = new TTree("tree", "tree");
   double time{};
   double xPos{}, yPos{}, zPos{};
   double xVel{}, yVel{}, zVel{};
@@ -106,6 +106,6 @@ rad::ElectronTrajectoryGen::ElectronTrajectoryGen(
     tree->Fill();
   }
   fout->cd();
-  tree->Write();
+  tree->Write("", TObject::kOverwrite);
   fout->Close();
 }
