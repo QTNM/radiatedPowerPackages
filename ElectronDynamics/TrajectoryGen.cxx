@@ -66,16 +66,16 @@ rad::ElectronTrajectoryGen::ElectronTrajectoryGen(
   xPos = initPos.X();
   yPos = initPos.Y();
   zPos = initPos.Z();
-  xVel = initPos.X();
-  yVel = initPos.Y();
-  zVel = initPos.Z();
+  xVel = initVel.X();
+  yVel = initVel.Y();
+  zVel = initVel.Z();
   xAcc = eAcc.X();
   yAcc = eAcc.Y();
   zAcc = eAcc.Z();
   tree->Fill();
 
   TVector3 ePos = initPos;
-  TVector3 eVel = initPos;
+  TVector3 eVel = initVel;
 
   double nTimeSteps{round(simTime / simStepSize)};
   // Advance through the time steps
