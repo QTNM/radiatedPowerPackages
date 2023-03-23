@@ -28,8 +28,9 @@ class IAntenna {
   double timeDelay;
 
  public:
-  ~IAntenna() {}
+  // ~IAntenna() {}
 
+  /////// Getters ////////
   // Get the radiation patterns
   // Overidden in each antenna derived class
   virtual TVector3 GetETheta(const TVector3 electronPosition) = 0;
@@ -89,9 +90,6 @@ class IAntenna {
 
   /// Gets the integral of the radiation pattern. Used for normalisation
   double GetPatternIntegral();
-
-  ////////// Getters /////////
-  double GetCentralFreq() { return centralFreq; }
 
   ////////// Setters /////////
   /// @brief Sets the antenna position vector
