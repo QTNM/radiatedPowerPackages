@@ -28,7 +28,7 @@ class IAntenna {
   double timeDelay;
 
  public:
-  // ~IAntenna() {}
+  virtual ~IAntenna() {}
 
   /////// Getters ////////
   // Get the radiation patterns
