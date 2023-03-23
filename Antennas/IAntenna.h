@@ -11,6 +11,22 @@
 namespace rad {
 
 class IAntenna {
+ private:
+  TVector3 antennaPosition;
+  TVector3 antennaXAxis;
+  TVector3 antennaYAxis;
+  TVector3 antennaZAxis;
+
+  /// The upper and lower frequency bandwidths
+  double lowerBandwidth;
+  double upperBandwidth;
+
+  /// Central frequency of the antenna bandwidth
+  double centralFreq;
+
+  /// Time delay for this antenna
+  double timeDelay;
+
  public:
   ~IAntenna() {}
 
@@ -61,21 +77,6 @@ class IAntenna {
   virtual double GetAEffPhi(TVector3 ePos) = 0;
 
  protected:
-  TVector3 antennaPosition;
-  TVector3 antennaXAxis;
-  TVector3 antennaYAxis;
-  TVector3 antennaZAxis;
-
-  /// The upper and lower frequency bandwidths
-  double lowerBandwidth;
-  double upperBandwidth;
-
-  /// Central frequency of the antenna bandwidth
-  double centralFreq;
-
-  /// Time delay for this antenna
-  double timeDelay;
-
   /// \param electronPosition The position of the electron in global coordinates
   /// \returns The unit vector in the theta direction (relative to antenna axis)
   /// in global coords
@@ -88,6 +89,34 @@ class IAntenna {
 
   /// Gets the integral of the radiation pattern. Used for normalisation
   double GetPatternIntegral();
+
+  ////////// Getters /////////
+  double GetCentralFreq() { return centralFreq; }
+
+  ////////// Setters /////////
+  /// @brief Sets the antenna position vector
+  /// @param pos Position vector to set to
+  void SetAntennaPosition(TVector3 pos) { antennaPosition = pos; }
+
+  /// @brief X axis setter
+  /// @param ax
+  void SetAntennaXAx(TVector3 ax) { antennaXAxis = ax; }
+
+  /// @brief Y axis setter
+  /// @param ax
+  void SetAntennaYAx(TVector3 ax) { antennaYAxis = ax; }
+
+  /// @brief Z axis setter
+  /// @param ax
+  void SetAntennaZAx(TVector3 ax) { antennaZAxis = ax; }
+
+  /// @brief Central frequency setter
+  /// @param f Frequency in Hz
+  void SetCentralFreq(double f) { centralFreq = f; }
+
+  /// @brief Time delay setter
+  /// @param t Time delay in seconds
+  void SetTimeDelay(double t) { timeDelay = t; }
 };
 
 }  // namespace rad
