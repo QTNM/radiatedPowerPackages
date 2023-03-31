@@ -268,7 +268,7 @@ class HTSMagnetUCL : public BaseField {
   HTSMagnetUCL();
 
   /// Default destructor
-  ~HTSMagnetUCL();
+  ~HTSMagnetUCL() override;
 
   /// Calculates the magnetic field at a point
   /// \param vec The position vector (in metres)
