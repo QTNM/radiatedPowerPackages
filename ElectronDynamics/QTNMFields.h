@@ -60,7 +60,7 @@ class CoilField : public BaseField {
 
   /// \param vec Position vector of charge
   /// \returns The magnetic field vector at the point
-  TVector3 evaluate_field_at_point(const TVector3 vec);
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
 
   /// @brief Calculate electric field at a point
   /// @param v Position at which to calculate field
@@ -90,7 +90,7 @@ class BathtubField : public BaseField {
 
   /// \param vec Position vector of charge
   /// \returns The magnetic field vector at the point
-  TVector3 evaluate_field_at_point(const TVector3 vec);
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
 
   /// @brief Calculate electric field at a point
   /// @param v Position at which to calculate field
@@ -136,7 +136,7 @@ class SolenoidField : public BaseField {
   /// Gives the field at a positon vector
   /// \param vec Position vector of charge
   /// \Returns The magnetic field vector at the point (in Tesla)
-  TVector3 evaluate_field_at_point(const TVector3 vec);
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
 
   /// @brief Calculate electric field at a point
   /// @param v Position at which to calculate field
@@ -181,7 +181,7 @@ class InhomogeneousBackgroundField : public BaseField {
   /// Gives the field at a positon vector
   /// \param vec Position vector of charge
   /// \Returns The magnetic field vector at the point (in Tesla)
-  TVector3 evaluate_field_at_point(const TVector3 vec);
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
 
   /// @brief Calculate electric field at a point
   /// @param v Position at which to calculate field
@@ -217,7 +217,7 @@ class InhomogeneousBathtubField : public BaseField {
   /// Get the magnetic field at a point
   /// \param vec The position vector of the charge
   /// \Returns The magnetic field vector at the point (in Tesla)
-  TVector3 evaluate_field_at_point(const TVector3 vec);
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
 
   /// @brief Calculate electric field at a point
   /// @param v Position at which to calculate field
@@ -244,7 +244,7 @@ class HarmonicField : public BaseField {
 
   /// \param vec Position vector of charge
   /// \returns The magnetic field at the point
-  TVector3 evaluate_field_at_point(const TVector3 vec);
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
 
   /// @brief Calculate electric field at a point
   /// @param v Position at which to calculate field
@@ -273,7 +273,7 @@ class HTSMagnetUCL : public BaseField {
   /// Calculates the magnetic field at a point
   /// \param vec The position vector (in metres)
   /// \Returns The magnetic field vector at the point (in Tesla)
-  TVector3 evaluate_field_at_point(const TVector3 vec);
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
 
   /// @brief Calculate electric field at a point
   /// @param v Position at which to calculate field
@@ -291,7 +291,7 @@ class HTSMagnetTrap : public BaseField {
  public:
   HTSMagnetTrap(double radius, double current);
 
-  TVector3 evaluate_field_at_point(const TVector3 vec);
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
 
   /// @brief Calculate electric field at a point
   /// @param v Position at which to calculate field

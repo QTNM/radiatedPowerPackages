@@ -30,12 +30,12 @@ class ComsolField : public BaseField {
   ComsolField(std::string fieldFile, double centralField = 0.0);
 
   /// Destructor
-  ~ComsolField();
+  ~ComsolField() override;
 
   /// Calculates the magnetic field at a point in space
   /// \param vec The position vector (units of metres)
   /// \return The magnetic field vector (units of tesla)
-  TVector3 evaluate_field_at_point(const TVector3 vec);
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
 
   /// @brief Calculate electric field at a point
   /// @param v Position at which to calculate field
@@ -59,12 +59,12 @@ class ComsolHarmonicField : public BaseField {
                       double centralField = 0.0);
 
   /// Destructor
-  ~ComsolHarmonicField();
+  ~ComsolHarmonicField() override;
 
   /// Calculates the magnetic field at a point in space
   /// \param vec The position vector (units of metres)
   /// \return The magnetic field vector (units of tesla)
-  TVector3 evaluate_field_at_point(const TVector3 vec);
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
 
   /// @brief Calculate electric field at a point
   /// @param v Position at which to calculate field
