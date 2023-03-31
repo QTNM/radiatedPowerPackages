@@ -52,3 +52,6 @@ target_link_libraries(RFBandwidthCRESDA PRIVATE ElectronDynamics BasicFunctions 
 
 add_executable(SignalRequirements SignalRequirements.cxx)
 target_link_libraries(SignalRequirements PRIVATE BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(FakeTrackGen FakeTrackGen.cxx)
+target_link_libraries(FakeTrackGen PRIVATE BasicFunctions ${ROOT_LIBRARIES})
