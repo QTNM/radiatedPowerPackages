@@ -93,6 +93,10 @@ std::tuple<TVector3, TVector3> rad::BorisSolver::advance_step(
   return std::make_tuple(x_nplus1, v_nplus1);
 }
 
-TVector3 rad::BorisSolver::calc_b_field(const TVector3 pos) {
+TVector3 rad::BorisSolver::calc_b_field(TVector3 pos) {
   return (field->evaluate_field_at_point(pos));
+}
+
+TVector3 rad::BorisSolver::calc_e_field(TVector3 pos) {
+  return (field->evaluate_e_field_at_point(pos));
 }
