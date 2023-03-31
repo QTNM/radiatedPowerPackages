@@ -66,29 +66,32 @@ std::tuple<TVector3, TVector3> rad::BorisSolver::advance_step(
   TVector3 v_n = v0;
 
   // Half position step
-  TVector3 x_nplushalf = x_n + v_n * (time_step / 2.0);
+  TVector3 x_nplushalf{x_n + v_n * (time_step / 2.0)};
 
-  // Do the first half of the RR acceleration
-  TVector3 u_minus =
-      u_n + (time_step / 2.0) * radiation_acceleration(x_nplushalf, u_n);
-  double gamma_minus = sqrt(1.0 + u_n.Dot(u_n) / pow(TMath::C(), 2));
+  // Do the first half of the Coloumb force
+  TVector3 E_nplushalf{calc_e_field(x_nplushalf)};
+  TVector3 E_tot_minus{E_nplushalf + radiation_acceleration(x_nplushalf, u_n) *
+                                         (mass / charge)};
+  TVector3 u_minus{u_n + (time_step * charge / (2 * mass)) * E_tot_minus};
+  double gamma_minus{sqrt(1.0 + u_n.Dot(u_n) / pow(TMath::C(), 2))};
 
   // Rotation step
-  TVector3 B_nplushalf = calc_b_field(x_nplushalf);
+  TVector3 B_nplushalf{calc_b_field(x_nplushalf)};
+  double theta{charge * time_step / (mass * gamma_minus) * B_nplushalf.Mag()};
+  TVector3 u_minus_par{u_minus.Dot(B_nplushalf.Unit()) * B_nplushalf.Unit()};
+  TVector3 u_plus{u_minus_par + (u_minus - u_minus_par) * cos(theta) +
+                  (u_minus.Cross(B_nplushalf.Unit())) * sin(theta)};
 
-  double theta = charge * time_step / (mass * gamma_minus) * B_nplushalf.Mag();
-  TVector3 t = TMath::Tan(theta / 2.0) * B_nplushalf.Unit();
-  TVector3 u_prime = u_minus + u_minus.Cross(t);
-  TVector3 u_plus = u_minus + 2.0 / (1.0 + t.Dot(t)) * u_prime.Cross(t);
-
-  // Second half of the RR acceleration
-  TVector3 u_nplus1 =
-      u_plus + (time_step / 2.0) * radiation_acceleration(x_nplushalf, u_plus);
+  // Second half of the Coulomb force
+  TVector3 E_tot_plus{E_nplushalf +
+                      radiation_acceleration(x_nplushalf, u_plus) *
+                          (mass / charge)};
+  TVector3 u_nplus1{u_plus + (time_step * charge / (2 * mass)) * E_tot_plus};
 
   // Now update position
-  double gamma_nplus1 = sqrt(1 + pow(u_nplus1.Mag() / TMath::C(), 2));
-  TVector3 v_nplus1 = u_nplus1 * (1 / gamma_nplus1);
-  TVector3 x_nplus1 = x_nplushalf + v_nplus1 * (time_step / 2.0);
+  double gamma_nplus1{sqrt(1 + pow(u_nplus1.Mag() / TMath::C(), 2))};
+  TVector3 v_nplus1{u_nplus1 * (1 / gamma_nplus1)};
+  TVector3 x_nplus1{x_nplushalf + v_nplus1 * (time_step / 2.0)};
 
   return std::make_tuple(x_nplus1, v_nplus1);
 }
