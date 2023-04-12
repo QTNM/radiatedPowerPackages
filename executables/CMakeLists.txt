@@ -55,3 +55,9 @@ target_link_libraries(SignalRequirements PRIVATE BasicFunctions ${ROOT_LIBRARIES
 
 add_executable(FakeTrackGen FakeTrackGen.cxx)
 target_link_libraries(FakeTrackGen PRIVATE BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(PenningTrapTraj PenningTrapTraj.cxx)
+target_link_libraries(PenningTrapTraj PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(AxialFreqPT AxialFreqPT.cxx)
+target_link_libraries(AxialFreqPT PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
