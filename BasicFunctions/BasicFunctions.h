@@ -213,6 +213,15 @@ TVector3 RotateToGlobalCoords(TVector3 v, TVector3 xAx, TVector3 yAx,
 /// \return f(x) evaluated at x
 double SkewedGaussian(double x, double A, double mu, double sigma,
                       double alpha);
+
+/// @brief Function for a chirp signal
+/// @param A Signal amplitude
+/// @param t Time at which to generate signal [s]
+/// @param phi0 Initial phase [radians]
+/// @param f0 Initial frequency [Hz]
+/// @param c Chirp rate [Hz s^-1]
+/// @return The chirp function at the supplied time
+double ChirpSignal(double A, double t, double phi0, double f0, double c);
 }  // namespace rad
 
 #endif

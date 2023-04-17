@@ -17,10 +17,6 @@
 
 using namespace rad;
 
-double ChirpSignal(double A, double t, double phi0, double f0, double c) {
-  return A * sin(phi0 + 2 * TMath::Pi() * (c * t * t / 2 + f0 * t));
-}
-
 TGraph *GetChirpGraph(double srate, int N, double A, double f0, double c) {
   TGraph *gr = new TGraph();
   setGraphAttr(gr);

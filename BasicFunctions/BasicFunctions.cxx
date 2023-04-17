@@ -582,3 +582,7 @@ double rad::SkewedGaussian(double x, double A, double mu, double sigma,
   double skew{1 + TMath::Erf(alpha * (x - mu) / (sigma * sqrt(2)))};
   return gaus * skew;
 }
+
+double rad::ChirpSignal(double A, double t, double phi0, double f0, double c) {
+  return A * sin(phi0 + 2 * TMath::Pi() * (c * t * t / 2 + f0 * t));
+}
