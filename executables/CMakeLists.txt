@@ -61,3 +61,6 @@ target_link_libraries(PenningTrapTraj PRIVATE BasicFunctions ElectronDynamics ${
 
 add_executable(AxialFreqPT AxialFreqPT.cxx)
 target_link_libraries(AxialFreqPT PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(StartPositionPT StartPositionPT.cxx)
+target_link_libraries(StartPositionPT PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
