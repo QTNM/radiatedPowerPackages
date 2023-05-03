@@ -1,1 +1,1 @@
-add_library(Scattering BaseScatter.cxx ElasticScatter.cxx)
+add_library(Scattering BaseScatter.cxx ElasticScatter.cxx InelasticScatter.cxx)
