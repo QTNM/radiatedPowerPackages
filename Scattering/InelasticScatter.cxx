@@ -78,7 +78,7 @@ double rad::InelasticScatter::GetRandomW() {
   const double wMax{omegaMax * RYDBERG_EV};
   const double wBinWidth{(wMax - wMin) / double(nBins)};
   const double thetaMin{0};
-  const double thetaMax{TMath::Pi()};
+  const double thetaMax{TMath::PiOver2()};
   const double thetaBinWidth{(thetaMax - thetaMin) / double(nBins)};
 
   // Build the distribution of differential cross-section
@@ -106,7 +106,7 @@ double rad::InelasticScatter::GetRandomW() {
 double rad::InelasticScatter::GetRandomTheta(double W) {
   const unsigned int nBins{200};
   const double thetaMin{0};
-  const double thetaMax{TMath::Pi()};
+  const double thetaMax{TMath::PiOver2()};
   const double thetaBinWidth{(thetaMax - thetaMin) / double(nBins)};
 
   std::vector<double> thetaVec{};
@@ -128,7 +128,7 @@ double rad::InelasticScatter::GetRandomTheta(double W) {
 double rad::InelasticScatter::GetPrimaryScatteredE(double W, double theta) {
   double E1{GetIncidentKE()};
   double E2Prime{W};
-  return E1 + E2Prime + 2 * cos(theta) * sqrt(E1 * E2Prime);
+  return E1 + E2Prime - 2 * cos(theta) * sqrt(E1 * E2Prime);
 }
 
 double rad::InelasticScatter::GetPrimaryScatteredAngle(double W, double theta) {
