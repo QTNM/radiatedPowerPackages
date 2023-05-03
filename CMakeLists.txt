@@ -45,5 +45,7 @@ list(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/Antennas")
 
 add_subdirectory(ElectronDynamics)
 
+add_subdirectory(Scattering)
+
 add_subdirectory(executables)
 
