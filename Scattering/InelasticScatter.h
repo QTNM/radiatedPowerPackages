@@ -99,6 +99,27 @@ class InelasticScatter : public BaseScatter {
   /// @param theta Scattering angle of secondary electron in radians
   /// @return Cross-section in m^2 / eV / rad
   double GetDoubleDiffXSec(double W, double theta);
+
+  /// @brief Get a random secondary electron KE
+  /// @return Energy in eV
+  double GetRandomW();
+
+  /// @brief Get a random secondary electron scattering angle
+  /// @param W Secondary electron kinetic energy in eV
+  /// @return Angle in radians
+  double GetRandomTheta(double W);
+
+  /// @brief Calculate kinetic energy of scattered primary
+  /// @param W Secondary electron kinetic energy in eV
+  /// @param theta Scattered angle of secondary in radians
+  /// @return Scattered energy of primary in eV
+  double GetPrimaryScatteredE(double W, double theta);
+
+  /// @brief Calculate scattering angle of primary
+  /// @param W Secondary electron kinetic energy in eV
+  /// @param theta Scattered angle of secondary in radians
+  /// @return Scattered angle of primary in radians
+  double GetPrimaryScatteredAngle(double W, double theta);
 };
 }  // namespace rad
 
