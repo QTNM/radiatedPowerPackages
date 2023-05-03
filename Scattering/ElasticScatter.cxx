@@ -5,6 +5,7 @@
 #include "Scattering/ElasticScatter.h"
 
 #include <cmath>
+#include <random>
 
 #include "BasicFunctions/BasicFunctions.h"
 #include "TMath.h"
@@ -93,4 +94,28 @@ double rad::ElasticScatter::GetDiffXSec(double cosTheta) {
   cVec.push_back(CubicInterpolation(eTmp, c6Tmp, T));
 
   return GetDiffXSec(aVec, b, cVec, cosTheta) * angstrom * angstrom;
+}
+
+double rad::ElasticScatter::GetRandomScatteringAngle() {
+  const unsigned int nPnts{1000};
+  const double cThetaMin{-1};
+  const double cThetaMax{0.9995};  // Strange behaviour close to 1
+
+  std::vector<double> cThetaVec{};
+  std::vector<double> xsecVec{};
+  for (unsigned int i{0}; i < nPnts; i++) {
+    double cTheta{cThetaMin +
+                  (cThetaMax - cThetaMin) * double(i) / double(nPnts - 1)};
+    cThetaVec.push_back(cTheta);
+    double xsec{GetDiffXSec(cTheta)};
+    xsecVec.push_back(xsec);
+  }
+
+  // Now construct the distribution and sample from it
+  std::piecewise_linear_distribution<double> xsecDist(
+      cThetaVec.begin(), cThetaVec.end(), xsecVec.begin());
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  double cThetaSampled{xsecDist(mt)};
+  return acos(cThetaSampled);
 }

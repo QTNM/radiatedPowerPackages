@@ -76,6 +76,11 @@ class ElasticScatter : public BaseScatter {
   /// @param cosTheta Cosine of scattering angle of the electron
   /// @return Differential cross section in units of m^2 / sr
   double GetDiffXSec(double cosTheta);
+
+  /// @brief Generates a random scattering angle according to the differential
+  /// cross-section
+  /// @return The scattering angle in radians
+  double GetRandomScatteringAngle();
 };
 }  // namespace rad
 
