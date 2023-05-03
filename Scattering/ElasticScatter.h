@@ -68,6 +68,10 @@ class ElasticScatter : public BaseScatter {
                      double cosTheta);
 
  public:
+  /// @brief Override constructor
+  /// @param T Incident kinetic energy in eV
+  ElasticScatter(double T) : BaseScatter(T) {}
+
   /// @brief Total Mott cross section
   /// @return Cross section in m^2
   double GetTotalXSec() override;

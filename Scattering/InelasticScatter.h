@@ -90,6 +90,10 @@ class InelasticScatter : public BaseScatter {
   double G1(double omega, double t);
 
  public:
+  /// @brief Override constructor
+  /// @param T Incident kinetic energy in eV
+  InelasticScatter(double T) : BaseScatter(T) {}
+
   /// @brief Calculate total inelastic cross section on atomic hydrogen
   /// @return Cross section in m^2
   double GetTotalXSec() override;
