@@ -55,3 +55,6 @@ target_link_libraries(SignalRequirements PRIVATE BasicFunctions ${ROOT_LIBRARIES
 
 add_executable(FakeTrackGen FakeTrackGen.cxx)
 target_link_libraries(FakeTrackGen PRIVATE BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(ScatteringCheck ScatteringCheck.cxx)
+target_link_libraries(ScatteringCheck PRIVATE BasicFunctions ElectronDynamics Scattering ${ROOT_LIBRARIES})
