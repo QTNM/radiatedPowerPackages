@@ -127,6 +127,62 @@ TH2D *MakeSpectrogram(double srate, double totTime, double snrMax, double B = 1,
   return h2Spec;
 }
 
+TH2D *MakeSpectrogram(TGraph *grIn, double totTime, double snrMax, double B = 1,
+                      double theta = TMath::PiOver2(), double Ek = 18.6e3) {
+  // Calculate chirp rate
+  const double cRate{GetChirpRate(Ek, B, theta)};
+  const double srate{1 / (grIn->GetPointX(1) - grIn->GetPointX(0))};
+
+  // Optimal time and frequency bins
+  const double tAcqOpt{pow(cRate, -0.5)};
+  const double deltaFOpt{1 / tAcqOpt};
+  // Calculate the number of time bins
+  const int nTimeBins{int(std::floor(totTime / tAcqOpt))};
+  // Number of samples per time bin
+  const int nSamplesPerTimeBin{int(std::round(tAcqOpt * srate))};
+  const double fBinWidth{srate / double(nSamplesPerTimeBin)};
+  const int nFBins{int(std::round((srate / 2) / fBinWidth))};
+
+  // Initialize histogram
+  auto h2Spec = new TH2D(
+      "",
+      Form("SNR_{max} = %.0f; Time [ms]; Frequency [MHz]; Power [A. U.]",
+           snrMax),
+      nTimeBins, 0, double(nTimeBins) * tAcqOpt * 1e3, nFBins, 0,
+      double(nFBins) * fBinWidth / 1e6);
+  SetHistAttr(h2Spec);
+
+  // Calculate start frequency
+  const double f0{CalcCyclotronFreq(Ek, B)};  // Hz
+  // Now after downmixing
+  const double mixerFreq{26.81e9};    // Hz
+  const double f0DM{f0 - mixerFreq};  // Hz
+  std::cout << "Downmixed frequency = " << f0DM / 1e6 << " MHz\n";
+
+  // Now divide the graph up and add to the spectrogram
+  for (int iBin{1}; iBin <= h2Spec->GetNbinsX(); iBin++) {
+    // Create a graph which is the relevant subset of points
+    const int p1{(iBin - 1) * nSamplesPerTimeBin};
+    const int p2{iBin * nSamplesPerTimeBin};
+
+    auto grSub = new TGraph();
+    for (int n{p1}; n < p2; n++) {
+      grSub->SetPoint(grSub->GetN(), grIn->GetPointX(n), grIn->GetPointY(n));
+    }
+    // Do the FFT
+    auto grSubPower = MakePowerSpectrumPeriodogram(grSub);
+    delete grSub;
+
+    // Now write to the histogram
+    for (int iF{0}; iF < grSubPower->GetN(); iF++) {
+      h2Spec->SetBinContent(iBin, iF + 1, grSubPower->GetPointY(iF));
+    }
+    delete grSubPower;
+  }
+
+  return h2Spec;
+}
+
 int main(int argc, char *argv[]) {
   TString outputFile{argv[1]};
   auto fout = std::make_unique<TFile>(outputFile, "recreate");
@@ -148,17 +204,49 @@ int main(int argc, char *argv[]) {
       double thetaDeg{thetaDegDist(rng)};
       double theta{thetaDeg * TMath::Pi() / 180};
       double Ek{EkDist(rng)};
-      auto h2Spec = MakeSpectrogram(sampleRate, runTime, double(SNR),
+      const double cRate{GetChirpRate(Ek, chosenField, theta)};
+
+      // Optimal time and frequency bins
+      const double tAcqOpt{pow(cRate, -0.5)};
+      const double deltaFOpt{1 / tAcqOpt};
+
+      const double noisePower{1};
+      const double signalPower{noisePower * double(SNR) * sin(theta) *
+                               sin(theta)};
+      // Calculate the number of time bins
+      const int nTimeBins{int(std::floor(runTime / tAcqOpt))};
+      // Number of samples per time bin
+      const int nSamplesPerTimeBin{int(std::round(tAcqOpt * sampleRate))};
+
+      // Calculate start frequency
+      const double f0{CalcCyclotronFreq(Ek, chosenField)};  // Hz
+      // Now after downmixing
+      const double mixerFreq{26.81e9};    // Hz
+      const double f0DM{f0 - mixerFreq};  // Hz
+
+      auto gr = GetChirpGraph(sampleRate, nSamplesPerTimeBin * nTimeBins,
+                              sqrt(2 * signalPower), f0DM, cRate);
+      // Add noise
+      const double noiseTemp{noisePower / (TMath::K() * deltaFOpt)};
+      AddWhiteNoise(gr, noiseTemp);
+
+      // Filter to remove noise around signal
+      const double filterLo{f0DM - 1e6};
+      const double filterHi{f0DM + 1e6};
+      TGraph *grFiltered = BandPassFilter(gr, filterLo, filterHi);
+      grFiltered->SetTitle(
+          Form("SNR_{max} = %.0f; Time [s]; Voltage [A. U.]", double(SNR)));
+      delete gr;
+
+      // Now make a spectrogram
+      auto h2Spec = MakeSpectrogram(grFiltered, runTime, double(SNR),
                                     chosenField, theta, Ek);
       h2Spec->SetTitle(
           Form("SNR_{max} = %d, #theta = %.2f^{#circ}, E = %.0f eV", SNR,
                thetaDeg, Ek));
 
-      // Calculate the downmixed frequency
       // Set the axis to the region of interest
-      const double f0{CalcCyclotronFreq(Ek, chosenField)};
-      const double f0DM{f0 - 26.81e9};
-      h2Spec->GetYaxis()->SetRangeUser(f0DM / 1e6 - 1, f0DM / 1e6 + 1);
+      h2Spec->GetYaxis()->SetRangeUser(filterLo / 1e6, filterHi);
       fout->cd();
       h2Spec->Write(Form("h2SpecSNR%d_%d", SNR, iTh));
     }
