@@ -194,8 +194,10 @@ int main(int argc, char *argv[]) {
   std::mt19937 rng(seed);
 
   const double runTime{1e-3};  //  seconds
+  const int maxSNR{18};
+  const int minSNR{0};
 
-  for (int SNR{1}; SNR <= 18; SNR++) {
+  for (int SNR{minSNR}; SNR <= maxSNR; SNR++) {
     // Create 10 spectograms with slight variations in theta and Ek
     const int nThrows{10};
     std::uniform_real_distribution<double> thetaDegDist(89.5, 90);
@@ -237,6 +239,8 @@ int main(int argc, char *argv[]) {
       grFiltered->SetTitle(
           Form("SNR_{max} = %.0f; Time [s]; Voltage [A. U.]", double(SNR)));
       delete gr;
+      fout->cd();
+      grFiltered->Write(Form("grVoltSNR%d_%d", SNR, iTh));
 
       // Now make a spectrogram
       auto h2Spec = MakeSpectrogram(grFiltered, runTime, double(SNR),
@@ -246,7 +250,7 @@ int main(int argc, char *argv[]) {
                thetaDeg, Ek));
 
       // Set the axis to the region of interest
-      h2Spec->GetYaxis()->SetRangeUser(filterLo / 1e6, filterHi);
+      h2Spec->GetYaxis()->SetRangeUser(filterLo / 1e6, filterHi / 1e6);
       fout->cd();
       h2Spec->Write(Form("h2SpecSNR%d_%d", SNR, iTh));
     }
