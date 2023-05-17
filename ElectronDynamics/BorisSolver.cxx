@@ -55,6 +55,9 @@ TVector3 rad::BorisSolver::acc(const TVector3 pos, const TVector3 vel) {
   // Add Larmor terms
   acc += radiation_acceleration(pos, vel);
 
+  // Acceleration from electric field
+  acc += charge * calc_e_field(pos);
+
   return acc;
 }
 
