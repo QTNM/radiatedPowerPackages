@@ -98,7 +98,7 @@ int main(int argc, char** argv)
   ScaleGraph(grVQPgram, 1/loadResistance);
   double totalPowerVI = FFTtools::sumPower(grVIPgram) * 1e15;
   double totalPowerVQ = FFTtools::sumPower(grVQPgram) * 1e15;  
-  grVIPgram->SetTitle(Form("Total power %.4f fW", totalPowerVQ));
+  grVIPgram->SetTitle(Form("Total power %.4f fW", totalPowerVI));
   grVQPgram->SetTitle(Form("Total power %.4f fW", totalPowerVQ));
   TGraph* grSum = SumGraphs(vecV);
   TGraph* grSumPgram = MakePowerSpectrumPeriodogram(grSum);
