@@ -15,6 +15,7 @@
 #include "ElectronDynamics/QTNMFields.h"
 #include "Scattering/ElasticScatter.h"
 #include "Scattering/InelasticScatter.h"
+#include "TBranch.h"
 #include "TFile.h"
 #include "TH1.h"
 #include "TString.h"
@@ -77,10 +78,24 @@ TVector3 RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
   return newVector;
 }
 
+/// @brief Reset an array to nonsense
+/// @param arr The array in question
+/// @param arrSize Size of array
+void ResetArray(unsigned int *arr, unsigned int arrSize) {
+  for (unsigned int i{0}; i < arrSize; i++) arr[i] = 0;
+}
+
+/// @brief Reset an array to nonsense
+/// @param arr The array in question
+/// @param arrSize Size of array
+void ResetArray(double *arr, unsigned int arrSize) {
+  for (unsigned int i{0}; i < arrSize; i++) arr[i] = -1;
+}
+
 int main() {
   const TString outputFile{
       "/home/sjones/work/qtnm/outputs/ScatteringCheck/plots.root"};
-  auto fout = std::make_unique<TFile>(outputFile, "recreate");
+  TFile fout(outputFile, "recreate");
 
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -90,22 +105,24 @@ int main() {
   pld spec{GenSpectrum(nSpecPnts)};
 
   // Number of electrons to generate
-  const unsigned int nElectrons{100};
+  const unsigned int nElectrons{1000};
+
+  // Define histograms
   TH1D hEngInit("hEngInit", "Initial energies; E [keV]; N_{e}", 50, 0, 18.6);
   SetHistAttr(hEngInit);
+  TH1D hLifetime("hLifetime", "Lifetime (trapped electrons); N_{e}", 50, 0,
+                 500e-6);
+  SetHistAttr(hLifetime);
+  TH1D hScatters("hScatters",
+                 "Number of scatters (trapped electrons); N; N_{e}", 10, 0, 10);
+  SetHistAttr(hScatters);
+
   TH1D hPathLen("hPathLen", "Distance between scatters; L [m]; N_{e}", 50, 0,
                 4000);
   SetHistAttr(hPathLen);
   TH1D hPathTime("hPathTime", "Time between scatters; t [s]; N_{e}", 50, 0,
                  70e-6);
   SetHistAttr(hPathTime);
-
-  TH1D hScatters("hScatters",
-                 "Number of scatters (trapped electrons); N; N_{e}", 10, 0, 10);
-  SetHistAttr(hScatters);
-  TH1D hLifetime("hLifetime", "Lifetime (trapped electrons); N_{e}", 50, 0,
-                 500e-6);
-  SetHistAttr(hLifetime);
   TH1D hElastic("hElastic", "Is scatter elastic?; Elastic?; N_{scatters}", 2,
                 -0.5, 1.5);
   SetHistAttr(hElastic);
@@ -123,6 +140,31 @@ int main() {
       "Scattering angle (inelastic scatters); #theta [degrees]; N_{scatters}",
       50, 0, 5);
   SetHistAttr(hScatInel);
+
+  // Create TTree with the same information in (easier to combine)
+  TTree outTree("scatTree", "Scattering tree");
+  const unsigned int nMaxScatters{30};
+
+  double eInit{0};
+  double totalTime{0};
+  unsigned int nScatters{0};
+  double scatterLen[nMaxScatters];
+  double scatterTime[nMaxScatters];
+  double scatterAng[nMaxScatters];
+  unsigned int scatterEl[nMaxScatters];
+  unsigned int scatterInel[nMaxScatters];
+  double scatterELoss[nMaxScatters];
+
+  outTree.Branch("eInit", &eInit, "eInit/D");
+  outTree.Branch("nScatters", &nScatters, "nScatters/i");
+  outTree.Branch("lifetime", &totalTime, "lifetime/D");
+  outTree.Branch("scatterLen", scatterLen, "scatterLen[nScatters]/D");
+  outTree.Branch("scatterTime", scatterTime, "scatterTime[nScatters]/D");
+  outTree.Branch("scatterAng", scatterAng, "scatterAng[nScatters]/D");
+  outTree.Branch("scatterEl", scatterEl, "scatterEl[nScatters]/i");
+  outTree.Branch("scatterInel", scatterInel, "scatterInel[nScatters]/i");
+  outTree.Branch("scatterELoss", scatterELoss, "scatterELoss[nScatters]/D");
+
   // Define a magnetic trap. Start with a harmonic one
   const double coilRadius{0.03};                               // m
   const double trapDepth{4e-3};                                // T
@@ -133,21 +175,31 @@ int main() {
   const double zMax{0.1};                                      // metres
 
   for (unsigned int i{0}; i < nElectrons; i++) {
-    int nScatters{0};
     TVector3 pos(0, 0, 0);  // metres
     TVector3 vel{GenDecayVelocity(spec, gen)};
     double speed{vel.Mag()};
     // Recover the electron kinetic energy
     double gamma{1 / sqrt(1 - pow(vel.Mag() / TMath::C(), 2))};
     double ke{(gamma - 1) * ME_EV};
+
     cout << "Electron " << i + 1 << ": E_i = " << ke / 1e3 << " keV\n";
     hEngInit.Fill(ke / 1e3);
 
     bool isTrapped{true};
     const double keCutoff{1};       // eV
     const double timeCutoff{1e-3};  // s
-    double totalTime{0};            // s
     const double tau{2 * R_E / (3 * TMath::C())};
+
+    // Variables used in the tree
+    totalTime = 0;  // s
+    eInit = ke;
+    nScatters = 0;
+    ResetArray(scatterLen, nMaxScatters);
+    ResetArray(scatterTime, nMaxScatters);
+    ResetArray(scatterAng, nMaxScatters);
+    ResetArray(scatterEl, nMaxScatters);
+    ResetArray(scatterInel, nMaxScatters);
+    ResetArray(scatterELoss, nMaxScatters);
 
     double scatAngle{0};
     while (isTrapped && ke > 1 && totalTime < timeCutoff) {
@@ -165,6 +217,9 @@ int main() {
       const double pathTimeStep{pathLenStep / vel.Mag()};
       hPathLen.Fill(pathLenStep);
       hPathTime.Fill(pathTimeStep);
+
+      scatterLen[nScatters] = pathLenStep;
+      scatterTime[nScatters] = pathTimeStep;
 
       std::cout << "Scattering after " << pathTimeStep * 1e6 << " us\n";
       // Propagate the particle up to its next scatter
@@ -198,7 +253,6 @@ int main() {
         // Calculate the current kinetic energy
         gamma = 1 / sqrt(1 - pow(vel.Mag() / TMath::C(), 2));
         ke = (gamma - 1) * ME_EV;
-        speed = vel.Mag();
 
         // Recalculate the cross sections based on the cross-sections
         ElasticScatter scatEl2(ke);
@@ -211,13 +265,17 @@ int main() {
 
         // First figure out if this is an elastic or inelastic scatter
         std::uniform_real_distribution<double> uni(0.0, 1.0);
+        double eLoss{0};
         if (uni(gen) < elXSec / totalXSec) {
           // We have an elastic scatter
           cout << "Elastic scatter\n";
           // No energy loss so just get the scattering angle
           scatAngle = scatEl2.GetRandomScatteringAngle();
           hElastic.Fill(1);
-          hScatEl.Fill(scatAngle);
+          hScatEl.Fill(scatAngle * 180 / TMath::Pi());
+
+          scatterEl[nScatters] = 1;
+          scatterInel[nScatters] = 0;
         } else {
           // We have an inelastic scatter
           cout << "Inelastic scatter\n";
@@ -226,16 +284,26 @@ int main() {
           double theta2Sample{scatInel2.GetRandomTheta(wSample)};
           // Now calculate the energy and the scattering angle of the primary
           scatAngle = scatInel2.GetPrimaryScatteredAngle(wSample, theta2Sample);
-          hELoss.Fill(ke -
-                      scatInel2.GetPrimaryScatteredE(wSample, theta2Sample));
+
+          eLoss = ke - scatInel2.GetPrimaryScatteredE(wSample, theta2Sample);
+          hELoss.Fill(eLoss);
+
           ke = scatInel2.GetPrimaryScatteredE(wSample, theta2Sample);
           hElastic.Fill(0);
-          hScatInel.Fill(scatAngle);
+          hScatInel.Fill(scatAngle * 180 / TMath::Pi());
+
+          scatterEl[nScatters] = 0;
+          scatterInel[nScatters] = 1;
         }
+
         speed = GetSpeedFromKE(ke, ME);
 
+        scatterAng[nScatters] = scatAngle;
+        scatterELoss[nScatters] = eLoss;
+
         cout << "Scattering angle = " << scatAngle * 180 / TMath::Pi()
-             << " degrees\tNew KE = " << ke / 1e3 << " keV\n";
+             << " degrees\t New KE = " << ke / 1e3
+             << " keV\t Energy loss = " << eLoss << " eV\n";
 
         // Now we have to calculate the new direction of the electron
         // We have the polar angle already from sampling
@@ -261,6 +329,8 @@ int main() {
     cout << "Escaped after " << totalTime * 1e6 << " us and " << nScatters
          << " scatters\n\n";
 
+    outTree.Fill();
+
     if (nScatters >= 1) {
       hScatters.Fill(nScatters);
       hLifetime.Fill(totalTime);
@@ -268,7 +338,7 @@ int main() {
   }
   delete field;
 
-  fout->cd();
+  fout.cd();
   hEngInit.Write();
   hPathLen.Write();
   hPathTime.Write();
@@ -280,6 +350,8 @@ int main() {
   hScatInel.Write();
   hELoss.Write();
 
-  fout->Close();
+  outTree.Write();
+
+  fout.Close();
   return 0;
 }

@@ -128,7 +128,7 @@ double rad::InelasticScatter::GetRandomTheta(double W) {
 double rad::InelasticScatter::GetPrimaryScatteredE(double W, double theta) {
   double E1{GetIncidentKE()};
   double E2Prime{W};
-  return E1 + E2Prime - 2 * cos(theta) * sqrt(E1 * E2Prime);
+  return E1 - E2Prime - RYDBERG_EV;
 }
 
 double rad::InelasticScatter::GetPrimaryScatteredAngle(double W, double theta) {
