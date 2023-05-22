@@ -107,40 +107,6 @@ int main() {
   // Number of electrons to generate
   const unsigned int nElectrons{1000};
 
-  // Define histograms
-  TH1D hEngInit("hEngInit", "Initial energies; E [keV]; N_{e}", 50, 0, 18.6);
-  SetHistAttr(hEngInit);
-  TH1D hLifetime("hLifetime", "Lifetime (trapped electrons); N_{e}", 50, 0,
-                 500e-6);
-  SetHistAttr(hLifetime);
-  TH1D hScatters("hScatters",
-                 "Number of scatters (trapped electrons); N; N_{e}", 10, 0, 10);
-  SetHistAttr(hScatters);
-
-  TH1D hPathLen("hPathLen", "Distance between scatters; L [m]; N_{e}", 50, 0,
-                4000);
-  SetHistAttr(hPathLen);
-  TH1D hPathTime("hPathTime", "Time between scatters; t [s]; N_{e}", 50, 0,
-                 70e-6);
-  SetHistAttr(hPathTime);
-  TH1D hElastic("hElastic", "Is scatter elastic?; Elastic?; N_{scatters}", 2,
-                -0.5, 1.5);
-  SetHistAttr(hElastic);
-  TH1D hELoss("hELoss",
-              "Energy loss (inelastic scatters); E [eV]; N_{scatters}", 50, 0,
-              100);
-  SetHistAttr(hELoss);
-  TH1D hScatEl(
-      "hScatEl",
-      "Scattering angle (elastic scatters); #theta [degrees]; N_{scatters}", 50,
-      0, 5);
-  SetHistAttr(hScatEl);
-  TH1D hScatInel(
-      "hScatInel",
-      "Scattering angle (inelastic scatters); #theta [degrees]; N_{scatters}",
-      50, 0, 5);
-  SetHistAttr(hScatInel);
-
   // Create TTree with the same information in (easier to combine)
   TTree outTree("scatTree", "Scattering tree");
   const unsigned int nMaxScatters{30};
@@ -183,7 +149,6 @@ int main() {
     double ke{(gamma - 1) * ME_EV};
 
     cout << "Electron " << i + 1 << ": E_i = " << ke / 1e3 << " keV\n";
-    hEngInit.Fill(ke / 1e3);
 
     bool isTrapped{true};
     const double keCutoff{1};       // eV
@@ -215,8 +180,6 @@ int main() {
       std::exponential_distribution<double> pathDistStep(1 / lambdaStep);
       const double pathLenStep{pathDistStep(gen)};
       const double pathTimeStep{pathLenStep / vel.Mag()};
-      hPathLen.Fill(pathLenStep);
-      hPathTime.Fill(pathTimeStep);
 
       scatterLen[nScatters] = pathLenStep;
       scatterTime[nScatters] = pathTimeStep;
@@ -271,8 +234,6 @@ int main() {
           cout << "Elastic scatter\n";
           // No energy loss so just get the scattering angle
           scatAngle = scatEl2.GetRandomScatteringAngle();
-          hElastic.Fill(1);
-          hScatEl.Fill(scatAngle * 180 / TMath::Pi());
 
           scatterEl[nScatters] = 1;
           scatterInel[nScatters] = 0;
@@ -286,11 +247,7 @@ int main() {
           scatAngle = scatInel2.GetPrimaryScatteredAngle(wSample, theta2Sample);
 
           eLoss = ke - scatInel2.GetPrimaryScatteredE(wSample, theta2Sample);
-          hELoss.Fill(eLoss);
-
           ke = scatInel2.GetPrimaryScatteredE(wSample, theta2Sample);
-          hElastic.Fill(0);
-          hScatInel.Fill(scatAngle * 180 / TMath::Pi());
 
           scatterEl[nScatters] = 0;
           scatterInel[nScatters] = 1;
@@ -330,26 +287,10 @@ int main() {
          << " scatters\n\n";
 
     outTree.Fill();
-
-    if (nScatters >= 1) {
-      hScatters.Fill(nScatters);
-      hLifetime.Fill(totalTime);
-    }
   }
   delete field;
 
   fout.cd();
-  hEngInit.Write();
-  hPathLen.Write();
-  hPathTime.Write();
-
-  hScatters.Write();
-  hLifetime.Write();
-  hElastic.Write();
-  hScatEl.Write();
-  hScatInel.Write();
-  hELoss.Write();
-
   outTree.Write();
 
   fout.Close();
