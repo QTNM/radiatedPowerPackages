@@ -85,18 +85,20 @@ TVector3 RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
 /// @param arr The array in question
 /// @param arrSize Size of array
 void ResetArray(unsigned int *arr, unsigned int arrSize) {
-  for (unsigned int i{0}; i < arrSize; i++) arr[i] = 0;
+  auto spanArr = std::span(arr, arrSize);
+  for (unsigned int i{0}; i < arrSize; i++) spanArr[i] = 0;
 }
 
 /// @brief Reset an array to nonsense
 /// @param arr The array in question
 /// @param arrSize Size of array
 void ResetArray(double *arr, unsigned int arrSize) {
-  for (unsigned int i{0}; i < arrSize; i++) arr[i] = -1;
+  auto spanArr = std::span(arr, arrSize);
+  for (unsigned int i{0}; i < arrSize; i++) spanArr[i] = -1;
 }
 
 int main(int argc, char *argv[]) {
-  int opt;
+  int opt{};
 
   std::string outputFile{" "};
   unsigned int nElectrons{100};
