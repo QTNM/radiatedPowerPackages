@@ -2,6 +2,9 @@
   ScatteringCheck.cxx
 */
 
+#include <getopt.h>
+#include <unistd.h>
+
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -92,10 +95,42 @@ void ResetArray(double *arr, unsigned int arrSize) {
   for (unsigned int i{0}; i < arrSize; i++) arr[i] = -1;
 }
 
-int main() {
-  const TString outputFile{
-      "/home/sjones/work/qtnm/outputs/ScatteringCheck/plots.root"};
-  TFile fout(outputFile, "recreate");
+int main(int argc, char *argv[]) {
+  int opt;
+
+  std::string outputFile{" "};
+  unsigned int nElectrons{100};
+
+  while ((opt = getopt(argc, argv, ":o:n:")) != -1) {
+    switch (opt) {
+      case 'o':
+        outputFile = optarg;
+        std::cout << "Output file is " << outputFile << std::endl;
+        break;
+
+      case 'n':
+        nElectrons = std::stoi(optarg);
+        break;
+
+      case ':':
+        std::cout << "Option needs a value\n";
+        break;
+
+      case '?':
+        std::cout << "Unknown option: " << optopt << std::endl;
+        break;
+    }
+  }
+
+  // Check input
+  if (outputFile == " ") {
+    std::cout << "Must specify output file with -o" << std::endl;
+    exit(1);
+  }
+
+  std::cout << "Simulating " << nElectrons << " electrons\n";
+
+  TFile fout(outputFile.data(), "recreate");
 
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -103,9 +138,6 @@ int main() {
   // First generate the spectrum distribution
   const int nSpecPnts{2000};
   pld spec{GenSpectrum(nSpecPnts)};
-
-  // Number of electrons to generate
-  const unsigned int nElectrons{1000};
 
   // Create TTree with the same information in (easier to combine)
   TTree outTree("scatTree", "Scattering tree");
@@ -167,7 +199,8 @@ int main() {
     ResetArray(scatterELoss, nMaxScatters);
 
     double scatAngle{0};
-    while (isTrapped && ke > 1 && totalTime < timeCutoff) {
+    while (isTrapped && ke > 1 && totalTime < timeCutoff &&
+           nScatters < nMaxScatters) {
       // How far does this electron travel before its first scatter?
       ElasticScatter scatEl(ke);
       double elXSec{scatEl.GetTotalXSec()};
@@ -211,7 +244,6 @@ int main() {
       }  // Loop over propagation steps
 
       if (isTrapped) {
-        nScatters++;
         // Now figure out kinematics of the scatter
         // Calculate the current kinetic energy
         gamma = 1 / sqrt(1 - pow(vel.Mag() / TMath::C(), 2));
@@ -279,6 +311,9 @@ int main() {
 
         // Set the new velocity
         vel = speed * newDirection;
+
+        // Move onto the next scatter
+        nScatters++;
       }
     }
 
