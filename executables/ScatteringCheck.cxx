@@ -97,6 +97,22 @@ void ResetArray(double *arr, unsigned int arrSize) {
   for (unsigned int i{0}; i < arrSize; i++) spanArr[i] = -1;
 }
 
+const unsigned int nMaxScatters{30};
+
+/// @brief Reset an array to nonsense
+/// @param arr The array in question
+/// @param arrSize Size of array
+void ResetArray(std::array<unsigned int, nMaxScatters> arr) {
+  for (unsigned int i{0}; i < nMaxScatters; i++) arr.at(i) = 0;
+}
+
+/// @brief Reset an array to nonsense
+/// @param arr The array in question
+/// @param arrSize Size of array
+void ResetArray(std::array<double, nMaxScatters> arr) {
+  for (unsigned int i{0}; i < nMaxScatters; i++) arr.at(i) = -1;
+}
+
 int main(int argc, char *argv[]) {
   int opt{};
 
@@ -143,27 +159,26 @@ int main(int argc, char *argv[]) {
 
   // Create TTree with the same information in (easier to combine)
   TTree outTree("scatTree", "Scattering tree");
-  const unsigned int nMaxScatters{30};
 
   double eInit{0};
   double totalTime{0};
   unsigned int nScatters{0};
-  double scatterLen[nMaxScatters];
-  double scatterTime[nMaxScatters];
-  double scatterAng[nMaxScatters];
-  unsigned int scatterEl[nMaxScatters];
-  unsigned int scatterInel[nMaxScatters];
-  double scatterELoss[nMaxScatters];
+  std::array<double, nMaxScatters> scatterLen{};
+  std::array<double, nMaxScatters> scatterTime{};
+  std::array<double, nMaxScatters> scatterAng{};
+  std::array<unsigned int, nMaxScatters> scatterEl{};
+  std::array<unsigned int, nMaxScatters> scatterInel{};
+  std::array<double, nMaxScatters> scatterELoss{};
 
   outTree.Branch("eInit", &eInit, "eInit/D");
   outTree.Branch("nScatters", &nScatters, "nScatters/i");
   outTree.Branch("lifetime", &totalTime, "lifetime/D");
-  outTree.Branch("scatterLen", scatterLen, "scatterLen[nScatters]/D");
-  outTree.Branch("scatterTime", scatterTime, "scatterTime[nScatters]/D");
-  outTree.Branch("scatterAng", scatterAng, "scatterAng[nScatters]/D");
-  outTree.Branch("scatterEl", scatterEl, "scatterEl[nScatters]/i");
-  outTree.Branch("scatterInel", scatterInel, "scatterInel[nScatters]/i");
-  outTree.Branch("scatterELoss", scatterELoss, "scatterELoss[nScatters]/D");
+  outTree.Branch("scatterLen", &scatterLen, "scatterLen[nScatters]/D");
+  outTree.Branch("scatterTime", &scatterTime, "scatterTime[nScatters]/D");
+  outTree.Branch("scatterAng", &scatterAng, "scatterAng[nScatters]/D");
+  outTree.Branch("scatterEl", &scatterEl, "scatterEl[nScatters]/i");
+  outTree.Branch("scatterInel", &scatterInel, "scatterInel[nScatters]/i");
+  outTree.Branch("scatterELoss", &scatterELoss, "scatterELoss[nScatters]/D");
 
   // Define a magnetic trap. Start with a harmonic one
   const double coilRadius{0.03};                               // m
@@ -177,7 +192,6 @@ int main(int argc, char *argv[]) {
   for (unsigned int i{0}; i < nElectrons; i++) {
     TVector3 pos(0, 0, 0);  // metres
     TVector3 vel{GenDecayVelocity(spec, gen)};
-    double speed{vel.Mag()};
     // Recover the electron kinetic energy
     double gamma{1 / sqrt(1 - pow(vel.Mag() / TMath::C(), 2))};
     double ke{(gamma - 1) * ME_EV};
@@ -193,12 +207,12 @@ int main(int argc, char *argv[]) {
     totalTime = 0;  // s
     eInit = ke;
     nScatters = 0;
-    ResetArray(scatterLen, nMaxScatters);
-    ResetArray(scatterTime, nMaxScatters);
-    ResetArray(scatterAng, nMaxScatters);
-    ResetArray(scatterEl, nMaxScatters);
-    ResetArray(scatterInel, nMaxScatters);
-    ResetArray(scatterELoss, nMaxScatters);
+    ResetArray(scatterLen);
+    ResetArray(scatterTime);
+    ResetArray(scatterAng);
+    ResetArray(scatterEl);
+    ResetArray(scatterInel);
+    ResetArray(scatterELoss);
 
     double scatAngle{0};
     while (isTrapped && ke > 1 && totalTime < timeCutoff &&
@@ -216,8 +230,8 @@ int main(int argc, char *argv[]) {
       const double pathLenStep{pathDistStep(gen)};
       const double pathTimeStep{pathLenStep / vel.Mag()};
 
-      scatterLen[nScatters] = pathLenStep;
-      scatterTime[nScatters] = pathTimeStep;
+      scatterLen.at(nScatters) = pathLenStep;
+      scatterTime.at(nScatters) = pathTimeStep;
 
       std::cout << "Scattering after " << pathTimeStep * 1e6 << " us\n";
       // Propagate the particle up to its next scatter
@@ -269,8 +283,8 @@ int main(int argc, char *argv[]) {
           // No energy loss so just get the scattering angle
           scatAngle = scatEl2.GetRandomScatteringAngle();
 
-          scatterEl[nScatters] = 1;
-          scatterInel[nScatters] = 0;
+          scatterEl.at(nScatters) = 1;
+          scatterInel.at(nScatters) = 0;
         } else {
           // We have an inelastic scatter
           cout << "Inelastic scatter\n";
@@ -283,14 +297,14 @@ int main(int argc, char *argv[]) {
           eLoss = ke - scatInel2.GetPrimaryScatteredE(wSample, theta2Sample);
           ke = scatInel2.GetPrimaryScatteredE(wSample, theta2Sample);
 
-          scatterEl[nScatters] = 0;
-          scatterInel[nScatters] = 1;
+          scatterEl.at(nScatters) = 0;
+          scatterInel.at(nScatters) = 1;
         }
 
-        speed = GetSpeedFromKE(ke, ME);
+        double speed = GetSpeedFromKE(ke, ME);
 
-        scatterAng[nScatters] = scatAngle;
-        scatterELoss[nScatters] = eLoss;
+        scatterAng.at(nScatters) = scatAngle;
+        scatterELoss.at(nScatters) = eLoss;
 
         cout << "Scattering angle = " << scatAngle * 180 / TMath::Pi()
              << " degrees\t New KE = " << ke / 1e3
