@@ -25,11 +25,11 @@ if(DEFINED ENV{FFTW_WRAPPER_INSTALL})
 	set(FFTW_WRAPPER_LIB_DIR $ENV{FFTW_WRAPPER_INSTALL}/lib)
 	set(FFTW_WRAPPER_INC_DIR $ENV{FFTW_WRAPPER_INSTALL}/include)
 	find_library(ROOTFFTW_LIB RootFftwWrapper REQUIRED HINTS ${FFTW_WRAPPER_LIB_DIR})
+	include_directories(${FFTW_WRAPPER_INC_DIR})
 else()
 	message("Looking for ROOT FFTW wrapper in default location")
 	find_library(ROOTFFTW_LIB RootFftwWrapper REQUIRED)
 endif()
-
 message("ROOTFFTW_LIB is set to ${ROOTFFTW_LIB}")
 
 # Set build locations for libraries and binaries

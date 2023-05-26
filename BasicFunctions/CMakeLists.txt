@@ -1,7 +1,2 @@
 add_library(BasicFunctions BasicFunctions.cxx EMFunctions.cxx TritiumSpectrum.cxx)
 target_link_libraries(BasicFunctions PUBLIC ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
-if(DEFINED ENV{FFTW_WRAPPER_INSTALL})
-	target_include_directories(BasicFunctions PUBLIC ${FFTW_WRAPPER_INC_DIR})
-else()
-	target_include_directories(BasicFunctions PUBLIC ${FFTW_WRAPPER_INC_DIR})
-endif()
