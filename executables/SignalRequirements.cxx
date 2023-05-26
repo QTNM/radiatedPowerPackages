@@ -7,7 +7,6 @@
 
 #include <iostream>
 #include <memory>
-#include <span>
 
 #include "BasicFunctions/BasicFunctions.h"
 #include "BasicFunctions/Constants.h"
@@ -271,8 +270,7 @@ unique_ptr<TGraph> MakeFalseTrigProbPlot(double T, double bandwidth,
 }
 
 int main(int argc, char *argv[]) {
-  auto args = std::span(argv, size_t(argc));
-  TString outputFile{args[1]};
+  TString outputFile{argv[1]};
   auto fout{make_unique<TFile>(outputFile, "RECREATE")};
 
   // Set up noise parameters
