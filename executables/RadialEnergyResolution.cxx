@@ -8,6 +8,7 @@
 #include "BasicFunctions/BasicFunctions.h"
 
 #include "ElectronDynamics/QTNMFields.h"
+#include "ElectronDynamics/ComsolFields.h"
 
 #include "TFile.h"
 #include "TGraph.h"
@@ -50,32 +51,48 @@ int main(int argc, char *argv[])
   const double n{desiredB / (MU0 * current)};
   unique_ptr<SolenoidField> field =
       std::make_unique<SolenoidField>(radius, length, current, n);
+  const double centralField{field->evaluate_field_magnitude(TVector3(0, 0, 0))};
+
+  // Now grab one of the COMSOL fields to have a look at that
+  unique_ptr<ComsolField> cfield =
+      std::make_unique<ComsolField>("/home/sjones/work/qtnm/radiatedPowerPackages/files/fieldmap_50A_170mmx1000mm.csv");
+  const double centralFieldComsol{cfield->evaluate_field_magnitude(TVector3(0, 0, 0))};
 
   // First plot just the radial field and the variation in it
   TGraph *grDeltaB{new TGraph()};
   setGraphAttr(grDeltaB);
   grDeltaB->SetTitle(Form("B_{central} = %.1f T", desiredB));
-  grDeltaB->GetXaxis()->SetTitle("r [m]");
+  grDeltaB->GetXaxis()->SetTitle("R [m]");
   grDeltaB->GetYaxis()->SetTitle("#Delta B / B");
+
+  TGraph *grDeltaBComsol{new TGraph()};
+  setGraphAttr(grDeltaBComsol);
+  grDeltaBComsol->SetTitle("COMSOL field");
+  grDeltaBComsol->GetXaxis()->SetTitle("R [m]");
+  grDeltaBComsol->GetYaxis()->SetTitle("#Delta B / B");
 
   // Some kinematic info that we need
   const double eKE{18.5e3}; // eV
   const double gamma{(ME * TMath::C() * TMath::C() + eKE * TMath::Qe()) / (ME * TMath::C() * TMath::C())};
   std::cout << "Gamma = " << gamma << std::endl;
 
-  const double minRadius{0};
-  const double maxRadius{0.1};
-  const int nRPnts{300};
-  const double centralField{field->evaluate_field_magnitude(TVector3(0, 0, 0))};
+  const double minRadius{0.001};
+  const double maxRadius{0.085};
+  const int nRPnts{237};
+
   for (int iR{0}; iR < nRPnts; iR++)
   {
     double testRadius{minRadius + (maxRadius - minRadius) * double(iR) / double(nRPnts - 1)};
     double testField{field->evaluate_field_magnitude(TVector3(0, testRadius, 0))};
     grDeltaB->SetPoint(iR, testRadius, (testField - centralField) / centralField);
+    double testFieldComsol{cfield->evaluate_field_magnitude(TVector3(0.001, testRadius, 0.001))};
+    grDeltaBComsol->SetPoint(iR, testRadius,
+                             (testFieldComsol - centralFieldComsol) / centralFieldComsol);
   }
 
   fout->cd();
   grDeltaB->Write("grDeltaB");
+  grDeltaBComsol->Write("grDeltaBComsol");
 
   // Randomly distribute points (uniform density) and check what the field is
   TH1D *hB{new TH1D("hB", "B field; B_{init} [T]; N_{electrons}",

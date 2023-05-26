@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 project(radiatedPower VERSION 0.1.0)
 
 # Compiler/build settings
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -15,11 +15,21 @@ include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 add_definitions(${ROOT_CXX_FLAGS})
 
 # Locate Boost libraries
-find_package(Boost 1.73.0 REQUIRED ALL)
+find_package(Boost 1.73.0 REQUIRED ALL HINTS $ENV{BOOST_DIR})
 include_directories(${Boost_INCLUDE_DIRS})
 
-# Add the FFTW ROOT library
-find_library(ROOTFFTW_LIB RootFftwWrapper REQUIRED)
+# Add the FFTW ROOT wrapper library
+# Need to check if the helper variable is set
+if(DEFINED ENV{FFTW_WRAPPER_INSTALL})
+	message("Detected sugggested location for ROOT FFTW wrapper")
+	set(FFTW_WRAPPER_LIB_DIR $ENV{FFTW_WRAPPER_INSTALL}/lib)
+	set(FFTW_WRAPPER_INC_DIR $ENV{FFTW_WRAPPER_INSTALL}/include)
+	find_library(ROOTFFTW_LIB RootFftwWrapper REQUIRED HINTS ${FFTW_WRAPPER_LIB_DIR})
+else()
+	message("Looking for ROOT FFTW wrapper in default location")
+	find_library(ROOTFFTW_LIB RootFftwWrapper REQUIRED)
+endif()
+
 message("ROOTFFTW_LIB is set to ${ROOTFFTW_LIB}")
 
 # Set build locations for libraries and binaries

@@ -7,7 +7,6 @@
 
 #include <iostream>
 #include <memory>
-#include <span>
 
 #include "BasicFunctions/BasicFunctions.h"
 #include "BasicFunctions/Constants.h"
@@ -69,6 +68,26 @@ long double CalcRequiredTriggerThreshold(double B, double TNoise, double tFalse,
   return vSq / 2;
 }
 
+/// @brief Calculate the required power threshold to ensure a given false
+/// trigger time. Assumes triggering on neighbouring bins
+/// @param B Magnetic field in Tesla
+/// @param tFalse Mean time (in seconds) between false triggers
+/// @param TNoise Noise temperature in kelvin
+/// @param obsWidth Observation width in Hz
+/// @param nSamples Number of time samples to search in
+/// @return The required trigger threshold (in watts)
+long double CalcReqTrigThresh(double B, double TNoise, double tFalse,
+                              double obsWidth, int nSamples) {
+  double tAcqOpt{CalcTAcqOpt(B)};
+  const double deltaFOpt{1 / tAcqOpt};
+  const long double sigma{sqrt(TMath::K() * TNoise * deltaFOpt)};
+  const long double nBins{obsWidth / deltaFOpt};
+  long double pTrig{tAcqOpt / tFalse};
+  long double CDF{pow(1 - pTrig, 1 / nBins)};
+  long double vSq{-2 * sigma * sigma * log(1 - CDF)};
+  return vSq / 2;
+}
+
 /// @brief Calculates the Larmor power for an electron
 /// @param beta Electron speed divided by c
 /// @param B Magnetic field in tesla
@@ -118,6 +137,44 @@ unique_ptr<TGraph> MakeTriggerThresholdGraphNorm(double TNoise, double tFalse,
                                                  int nPnts = 200,
                                                  double bMin = 0.4,
                                                  double bMax = 1.2) {
+  auto grThresh =
+      MakeTriggerThresholdGraph(TNoise, tFalse, obsWidth, nPnts, bMin, bMax);
+  setGraphAttr(grThresh);
+  grThresh->SetLineWidth(3);
+  grThresh->SetTitle(
+      Form("T_{noise} = %.0f K; B [T]; P_{trig} / P_{rad}", TNoise));
+
+  auto grLarmor = MakeLarmorPowerGraph(nPnts, bMin, bMax);
+  for (int n{0}; n < nPnts; n++) {
+    double powerNorm{grThresh->GetPointY(n) / grLarmor->GetPointY(n)};
+    grThresh->SetPointY(n, powerNorm);
+  }
+  return grThresh;
+}
+
+unique_ptr<TGraph> MakeTrigThreshNeighbour(double TNoise, double tFalse,
+                                           double obsWidth, int nSamples,
+                                           int nPnts = 200, double bMin = 0.4,
+                                           double bMax = 1.2) {
+  auto grThresh = make_unique<TGraph>();
+  setGraphAttr(grThresh);
+  grThresh->SetLineWidth(3);
+  grThresh->SetTitle(Form("T_{noise} = %.0f K; B [T]; P_{trig} [fW]", TNoise));
+
+  for (int n{0}; n < nPnts; n++) {
+    double b{bMin + (bMax - bMin) * double(n) / double(nPnts - 1)};
+    long double threshold{
+        CalcRequiredTriggerThreshold(b, TNoise, tFalse, obsWidth)};
+    grThresh->SetPoint(n, b, threshold * 1e15);
+  }
+  return grThresh;
+}
+
+unique_ptr<TGraph> MakeTrigThreshNeigbourNorm(double TNoise, double tFalse,
+                                              double obsWidth, int nSamples,
+                                              int nPnts = 200,
+                                              double bMin = 0.4,
+                                              double bMax = 1.2) {
   auto grThresh =
       MakeTriggerThresholdGraph(TNoise, tFalse, obsWidth, nPnts, bMin, bMax);
   setGraphAttr(grThresh);
@@ -213,8 +270,7 @@ unique_ptr<TGraph> MakeFalseTrigProbPlot(double T, double bandwidth,
 }
 
 int main(int argc, char *argv[]) {
-  auto args = std::span(argv, size_t(argc));
-  TString outputFile{args[1]};
+  TString outputFile{argv[1]};
   auto fout{make_unique<TFile>(outputFile, "RECREATE")};
 
   // Set up noise parameters
@@ -352,6 +408,10 @@ int main(int argc, char *argv[]) {
   auto grTime11K_4binsC = MakeTfPlotNeighbour(11, bandwidth, 4);
   grTime11K_4binsC->SetLineColor(kCyan + 1);
 
+  // 0.7 T
+  auto grTime11K_700mT_4binsC = MakeTfPlotNeighbour(11, 11e3, 4);
+  grTime11K_700mT_4binsC->SetLineColor(kCyan + 1);
+
   auto grLarmor = MakeLarmorPowerGraph();
   grLarmor->SetLineColor(kMagenta + 1);
   grLarmor->SetLineStyle(2);
@@ -369,6 +429,13 @@ int main(int argc, char *argv[]) {
   grThreshNorm7K->SetLineColor(kBlue);
   auto grThreshNorm11K = MakeTriggerThresholdGraphNorm(11, 10, 100e6);
   grThreshNorm11K->SetLineColor(kOrange + 1);
+
+  /*
+  auto grThreshNorm7K_4binsC = MakeTrigThreshNeighbourNorm(6, 10, 100e6, 4);
+  grThreshNorm7K_4binsC->SetLineColor(kMagenta + 1);
+  auto grThreshNorm7K_4binsC = MakeTrigThreshNeighbourNorm(6, 10, 100e6, 4);
+  grThreshNorm7K_4binsC->SetLineColor(kMagenta + 1);
+  */
 
   fout->cd();
   grProb6K->Write("grProb6K");
@@ -394,6 +461,7 @@ int main(int argc, char *argv[]) {
   grTime6K_4binsC->Write("grTime6K_4binsC");
   grTime7K_4binsC->Write("grTime7K_4binsC");
   grTime11K_4binsC->Write("grTime11K_4binsC");
+  grTime11K_700mT_4binsC->Write("grTime11K_700mT_4binsC");
 
   grLarmor->Write("grLarmor");
   grThresh6K->Write("grThresh6K");
