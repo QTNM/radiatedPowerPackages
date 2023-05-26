@@ -81,22 +81,6 @@ TVector3 RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
   return newVector;
 }
 
-/// @brief Reset an array to nonsense
-/// @param arr The array in question
-/// @param arrSize Size of array
-void ResetArray(unsigned int *arr, unsigned int arrSize) {
-  auto spanArr = std::span(arr, arrSize);
-  for (unsigned int i{0}; i < arrSize; i++) spanArr[i] = 0;
-}
-
-/// @brief Reset an array to nonsense
-/// @param arr The array in question
-/// @param arrSize Size of array
-void ResetArray(double *arr, unsigned int arrSize) {
-  auto spanArr = std::span(arr, arrSize);
-  for (unsigned int i{0}; i < arrSize; i++) spanArr[i] = -1;
-}
-
 const unsigned int nMaxScatters{30};
 
 /// @brief Reset an array to nonsense
