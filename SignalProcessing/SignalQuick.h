@@ -5,6 +5,7 @@
 #ifndef SIGNAL_QUICK_H
 #define SIGNAL_QUICK_H
 
+#include <deque>
 #include <memory>
 #include <vector>
 
@@ -17,29 +18,40 @@
 namespace rad {
 class SignalQuick {
  public:
-  SignalQuick(TString trajectoryFilePath, std::shared_ptr<IAntenna> ant,
-              LocalOscillator lo, double sRate,
-              std::vector<GaussianNoise> noiseTerms = {});
+  SignalQuick(TString trajectoryFilePath, IAntenna* ant, LocalOscillator lo,
+              double sRate, std::vector<GaussianNoise> noiseTerms = {});
 
   TGraph GetVITimeDomain() { return grVITime; }
 
   TGraph GetVQTimeDomain() { return grVQTime; }
 
  private:
+  // Oscillator for the downmixing
   LocalOscillator localOsc;
+
+  // Sample rate
+  double sampleRate;
+
+  // Noise terms
+  std::vector<GaussianNoise> noiseVec;
 
   TGraph grVITime;  // In phase component
   TGraph grVQTime;  // Quadrature component
 
-  std::vector<double> timeVec;
-  std::vector<double> advancedTimeVec;
+  std::deque<double> timeVec;
+  std::deque<double> advancedTimeVec;
 
   TVector3 antennaPos;
+
+  // Input file details
+  double fileStartTime{};
+  double fileEndTime{};
+  double filePntsPerTime{};
 
   // Pointer to input file
   std::unique_ptr<TFile> inputFile = 0;
   // Pointer to input tree from file
-  TTree *inputTree = 0;
+  TTree* inputTree = 0;
   // Variables for input tree
   double time{};
   double xPos{}, yPos{}, zPos{};
@@ -47,7 +59,7 @@ class SignalQuick {
   double xAcc{}, yAcc{}, zAcc{};
 
   // Pointer to the antenna
-  std::shared_ptr<IAntenna> antenna = 0;
+  IAntenna* antenna = 0;
 
   /// @brief Function to add new times to vectors
   /// @param time New time from file in seconds
@@ -79,6 +91,18 @@ class SignalQuick {
   /// @param tr Retarded time at which to calculate the voltage [seconds]
   /// @return Voltage in volts
   double CalcVoltage(double tr);
+
+  /// @brief Function for downmixing voltages
+  /// @param vi In phase voltage component
+  /// @param vq Quadrature voltage component
+  /// @param t Time in seconds
+  void DownmixVoltages(double& vi, double& vq, double t);
+
+  /// @brief Sets some key parameters about the input file
+  void GetFileInfo();
+
+  /// @brief Adds noise to the signals
+  void AddNoise();
 };
 
 }  // namespace rad

@@ -14,11 +14,12 @@
 #include "TTreeReaderValue.h"
 #include "TVector3.h"
 
-rad::SignalQuick::SignalQuick(TString trajectoryFilePath,
-                              std::shared_ptr<IAntenna> ant, LocalOscillator lo,
-                              double sRate,
+rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
+                              LocalOscillator lo, double sRate,
                               std::vector<GaussianNoise> noiseTerms)
-    : localOsc(lo), antenna(ant) {
+    : localOsc(lo), antenna(ant), sampleRate(sRate), noiseVec(noiseTerms) {
+  SetGraphAttr(grVITime);
+  SetGraphAttr(grVQTime);
   grVITime.GetYaxis()->SetTitle("V_{I}");
   grVQTime.GetYaxis()->SetTitle("V_{Q}");
   grVITime.GetXaxis()->SetTitle("Time [s]");
@@ -29,12 +30,13 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath,
   // Check if input file opens properly
   SetUpTree(trajectoryFilePath);
 
+  // Set file info
+  GetFileInfo();
+
   // Set TTree up to be read out
   double sampleTime{0};    // Second sample time in seconds
   double sample10Time{0};  // First sample time in seconds
-  unsigned int sampleNum{0};
   unsigned int sample10Num{0};
-  double sampleStepSize{1 / sRate};
   double sample10StepSize{1 / (10 * sRate)};
 
   // Create some intermediate level graphs before final sampling
@@ -45,6 +47,10 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath,
   // Initially we are just doing the the higher frequency sampling
   for (unsigned int iE{0}; iE < inputTree->GetEntries(); iE++) {
     inputTree->GetEntry(iE);
+    if (std::fmod(time, 1e-6) < 1e-12) {
+      std::cout << time * 1e6 << " us signal processed...\n";
+    }
+
     AddNewTimes(time, TVector3(xPos, yPos, zPos));
 
     // Do we need to sample now?
@@ -54,12 +60,9 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath,
       double tr{GetRetardedTime(sample10Time)};
 
       double vi{CalcVoltage(tr)};
-      double vq{CalcVoltage(tr)};
+      double vq{vi};
 
-      // Go back to correct tree entry
-      inputTree->GetEntry(iE);
-      vi *= localOsc.GetInPhaseComponent(sample10Time);
-      vq *= localOsc.GetQuadratureComponent(sample10Time);
+      DownmixVoltages(vi, vq, sample10Time);
 
       grVIInter->SetPoint(grVIInter->GetN(), sample10Time, vi);
       grVQInter->SetPoint(grVQInter->GetN(), sample10Time, vq);
@@ -84,14 +87,29 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath,
   for (int i{0}; i < grVIFiltered->GetN(); i++) {
     // We need to sample every 10th point
     if (i % 10 == 0) {
-      grVITime.SetPoint(i, grVIFiltered->GetPointX(i),
+      grVITime.SetPoint(grVITime.GetN(), grVIFiltered->GetPointX(i),
                         grVIFiltered->GetPointY(i));
-      grVQTime.SetPoint(i, grVQFiltered->GetPointX(i),
+      grVQTime.SetPoint(grVQTime.GetN(), grVQFiltered->GetPointX(i),
                         grVQFiltered->GetPointY(i));
     }
   }
   delete grVIFiltered;
   delete grVQFiltered;
+
+  // Now need to add noise (if noise terms exist)
+  if (!noiseTerms.empty()) {
+    std::cout << "Adding noise...\n";
+    AddNoise();
+  }
+}
+
+void rad::SignalQuick::GetFileInfo() {
+  inputTree->GetEntry(0);
+  fileStartTime = time;
+  inputTree->GetEntry(inputTree->GetEntries() - 1);
+  fileEndTime = time;
+  filePntsPerTime =
+      double(inputTree->GetEntries()) / (fileEndTime - fileStartTime);
 }
 
 double rad::SignalQuick::CalcVoltage(double tr) {
@@ -99,15 +117,9 @@ double rad::SignalQuick::CalcVoltage(double tr) {
     // The voltage is from before the signal has reached the antenna
     return 0;
   } else {
-    inputTree->GetEntry(0);
-    const double fileStartTime{time};
-    inputTree->GetEntry(inputTree->GetEntries() - 1);
-    const double fileEndTime{time};
-    const double pntsPerTime{double(inputTree->GetEntries()) /
-                             (fileEndTime - fileStartTime)};
     // We actually have to calculate the voltage
     // Start off with a first guess
-    int firstGuessTInd{int(round(pntsPerTime * (tr - fileStartTime)))};
+    int firstGuessTInd{int(round(filePntsPerTime * (tr - fileStartTime)))};
 
     // Find the appropriate time
     inputTree->GetEntry(firstGuessTInd);
@@ -202,8 +214,8 @@ void rad::SignalQuick::AddNewTimes(double time, TVector3 ePos) {
 
   // If the vectors are getting too long, get rid of the first element
   if (timeVec.size() > 10000) {
-    timeVec.erase(timeVec.begin());
-    advancedTimeVec.erase(advancedTimeVec.begin());
+    timeVec.pop_front();
+    advancedTimeVec.pop_front();
   }
 }
 
@@ -239,6 +251,7 @@ double rad::SignalQuick::GetRetardedTime(double ts) {
 
     // Now we have the relevant index, we need to interpolate
     // This should be the retarded time
+
     std::vector<double> timeVals(4);
     std::vector<double> advancedTimeVals(4);
     if (chosenInd == 0) {
@@ -262,7 +275,7 @@ void rad::SignalQuick::SetUpTree(TString filePath) {
   // Open the input file
   OpenInputFile(filePath);
 
-  inputTree = (TTree *)inputFile->Get("tree");
+  inputTree = (TTree*)inputFile->Get("tree");
   inputTree->SetBranchAddress("time", &time);
   inputTree->SetBranchAddress("xPos", &xPos);
   inputTree->SetBranchAddress("yPos", &yPos);
@@ -299,4 +312,29 @@ unsigned int rad::SignalQuick::GetFirstGuessPoint(double ts) {
 void rad::SignalQuick::CloseInputFile() {
   delete inputTree;
   inputFile->Close();
+}
+
+void rad::SignalQuick::DownmixVoltages(double& vi, double& vq, double t) {
+  vi *= localOsc.GetInPhaseComponent(t);
+  vq *= localOsc.GetQuadratureComponent(t);
+}
+
+void rad::SignalQuick::AddNoise() {
+  // Set up the noise terms
+  for (auto& n : noiseVec) {
+    n.SetSampleFreq(sampleRate);
+    n.SetSigma();
+  }
+
+  // Now actually add the noise
+  for (int i{0}; i < grVITime.GetN(); i++) {
+    double vi{grVITime.GetPointY(i)};
+    double vq{grVQTime.GetPointY(i)};
+    for (auto& n : noiseVec) {
+      vi += n.GetNoiseVoltage(true);
+      vq += n.GetNoiseVoltage(true);
+    }
+    grVITime.SetPointY(i, vi);
+    grVQTime.SetPointY(i, vq);
+  }
 }
