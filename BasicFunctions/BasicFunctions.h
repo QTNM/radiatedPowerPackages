@@ -76,6 +76,11 @@ TGraph *MakePowerSpectrumNorm(const TGraph *grWave);
 // domain
 TGraph *MakePowerSpectrumPeriodogram(const TGraph *grWave);
 
+/// @brief Produces power spectrum
+/// @param grWave Input time series graph
+/// @return TGraph of periodogram
+TGraph MakePowerSpectrumPeriodogram(const TGraph &grWave);
+
 // Integrate the power spectrum
 double IntegratePowerNorm(const TGraph *grFFT, Int_t firstBin = -1,
                           Int_t lastBin = -1);

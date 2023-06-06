@@ -208,6 +208,39 @@ TGraph *rad::MakePowerSpectrumPeriodogram(const TGraph *grWave) {
   return grPower;
 }
 
+TGraph rad::MakePowerSpectrumPeriodogram(const TGraph &grWave) {
+  double *oldY = grWave.GetY();
+  double *oldX = grWave.GetX();
+  double deltaT = oldX[1] - oldX[0];
+  int length = grWave.GetN();
+  FFTWComplex *theFFT = FFTtools::doFFT(length, oldY);
+  double lengthDub = (double)length;
+  int newLength = (length / 2) + 1;
+  double *newY = new double[newLength];
+  double *newX = new double[newLength];
+
+  double deltaF = 1 / (deltaT * length);
+
+  double tempF = 0;
+  for (int i = 0; i < newLength; i++) {
+    float power = pow(FFTtools::getAbs(theFFT[i]), 2);
+    if (i > 0 && i < newLength - 1) power *= 2;  // account for symmetry
+    double scale = lengthDub * lengthDub;
+    power /= scale;
+    newX[i] = tempF;
+    newY[i] = power;
+    tempF += deltaF;
+  }
+
+  TGraph grPower(newLength, newX, newY);
+  SetGraphAttr(grPower);
+  grPower.GetXaxis()->SetTitle("Frequency [Hz]");
+  delete[] theFFT;
+  delete[] newY;
+  delete[] newX;
+  return grPower;
+}
+
 double rad::IntegratePowerNorm(const TGraph *grFFT, Int_t firstBin,
                                Int_t lastBin) {
   double integral = FFTtools::integratePower(grFFT, firstBin, lastBin);
