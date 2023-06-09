@@ -18,12 +18,25 @@
 namespace rad {
 class SignalQuick {
  public:
+  /// @brief Parametrised constructor
+  /// @param trajectoryFilePath
+  /// @param ant
+  /// @param lo
+  /// @param sRate
+  /// @param noiseTerms Vector of noise terms
   SignalQuick(TString trajectoryFilePath, IAntenna* ant, LocalOscillator lo,
               double sRate, std::vector<GaussianNoise> noiseTerms = {});
 
-  TGraph GetVITimeDomain() { return grVITime; }
+  /// Destructor
+  ~SignalQuick();
 
-  TGraph GetVQTimeDomain() { return grVQTime; }
+  /// @brief Getter function for in-phase voltage component
+  /// @return Time domain voltage graph
+  TGraph* GetVITimeDomain() { return grVITime; }
+
+  /// @brief Getter function for quadrature voltage component
+  /// @return Time domain voltage graph
+  TGraph* GetVQTimeDomain() { return grVQTime; }
 
  private:
   // Oscillator for the downmixing
@@ -35,8 +48,8 @@ class SignalQuick {
   // Noise terms
   std::vector<GaussianNoise> noiseVec;
 
-  TGraph grVITime;  // In phase component
-  TGraph grVQTime;  // Quadrature component
+  TGraph* grVITime;  // In phase component
+  TGraph* grVQTime;  // Quadrature component
 
   std::deque<double> timeVec;
   std::deque<double> advancedTimeVec;

@@ -18,12 +18,12 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
                               LocalOscillator lo, double sRate,
                               std::vector<GaussianNoise> noiseTerms)
     : localOsc(lo), antenna(ant), sampleRate(sRate), noiseVec(noiseTerms) {
-  SetGraphAttr(grVITime);
-  SetGraphAttr(grVQTime);
-  grVITime.GetYaxis()->SetTitle("V_{I}");
-  grVQTime.GetYaxis()->SetTitle("V_{Q}");
-  grVITime.GetXaxis()->SetTitle("Time [s]");
-  grVQTime.GetXaxis()->SetTitle("Time [s]");
+  setGraphAttr(grVITime);
+  setGraphAttr(grVQTime);
+  grVITime->GetYaxis()->SetTitle("V_{I}");
+  grVQTime->GetYaxis()->SetTitle("V_{Q}");
+  grVITime->GetXaxis()->SetTitle("Time [s]");
+  grVQTime->GetXaxis()->SetTitle("Time [s]");
 
   antennaPos = ant->GetAntennaPosition();
 
@@ -87,10 +87,10 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
   for (int i{0}; i < grVIFiltered->GetN(); i++) {
     // We need to sample every 10th point
     if (i % 10 == 0) {
-      grVITime.SetPoint(grVITime.GetN(), grVIFiltered->GetPointX(i),
-                        grVIFiltered->GetPointY(i));
-      grVQTime.SetPoint(grVQTime.GetN(), grVQFiltered->GetPointX(i),
-                        grVQFiltered->GetPointY(i));
+      grVITime->SetPoint(grVITime->GetN(), grVIFiltered->GetPointX(i),
+                         grVIFiltered->GetPointY(i));
+      grVQTime->SetPoint(grVQTime->GetN(), grVQFiltered->GetPointX(i),
+                         grVQFiltered->GetPointY(i));
     }
   }
   delete grVIFiltered;
@@ -101,6 +101,11 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
     std::cout << "Adding noise...\n";
     AddNoise();
   }
+}
+
+rad::SignalQuick::~SignalQuick() {
+  delete grVITime;
+  delete grVQTime;
 }
 
 void rad::SignalQuick::GetFileInfo() {
@@ -327,14 +332,14 @@ void rad::SignalQuick::AddNoise() {
   }
 
   // Now actually add the noise
-  for (int i{0}; i < grVITime.GetN(); i++) {
-    double vi{grVITime.GetPointY(i)};
-    double vq{grVQTime.GetPointY(i)};
+  for (int i{0}; i < grVITime->GetN(); i++) {
+    double vi{grVITime->GetPointY(i)};
+    double vq{grVQTime->GetPointY(i)};
     for (auto& n : noiseVec) {
       vi += n.GetNoiseVoltage(true);
       vq += n.GetNoiseVoltage(true);
     }
-    grVITime.SetPointY(i, vi);
-    grVQTime.SetPointY(i, vq);
+    grVITime->SetPointY(i, vi);
+    grVQTime->SetPointY(i, vq);
   }
 }
