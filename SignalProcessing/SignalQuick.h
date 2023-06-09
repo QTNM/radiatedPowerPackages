@@ -38,6 +38,18 @@ class SignalQuick {
   /// @return Time domain voltage graph
   TGraph* GetVQTimeDomain() { return grVQTime; }
 
+  /// @brief Returns the power spectrum of the in-phase voltage component after
+  /// all signal processing Power spectrum in this case is the periodogram
+  /// @param loadResistance The load resistance used for the power calculation
+  /// @return Pointer to power spectrum
+  TGraph* GetVIPowerPeriodogram(double loadResistance);
+
+  /// @brief Returns the power spectrum of the quadrature voltage component
+  /// after all signal processing Power spectrum in this case is the periodogram
+  /// @param loadResistance The load resistance used for the power calculation
+  /// @return Pointer to power spectrum
+  TGraph* GetVQPowerPeriodogram(double loadResistance);
+
  private:
   // Oscillator for the downmixing
   LocalOscillator localOsc;
@@ -48,8 +60,8 @@ class SignalQuick {
   // Noise terms
   std::vector<GaussianNoise> noiseVec;
 
-  TGraph* grVITime;  // In phase component
-  TGraph* grVQTime;  // Quadrature component
+  TGraph* grVITime = 0;  // In phase component
+  TGraph* grVQTime = 0;  // Quadrature component
 
   std::deque<double> timeVec;
   std::deque<double> advancedTimeVec;

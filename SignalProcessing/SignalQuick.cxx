@@ -18,6 +18,8 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
                               LocalOscillator lo, double sRate,
                               std::vector<GaussianNoise> noiseTerms)
     : localOsc(lo), antenna(ant), sampleRate(sRate), noiseVec(noiseTerms) {
+  grVITime = new TGraph();
+  grVQTime = new TGraph();
   setGraphAttr(grVITime);
   setGraphAttr(grVQTime);
   grVITime->GetYaxis()->SetTitle("V_{I}");
@@ -342,4 +344,24 @@ void rad::SignalQuick::AddNoise() {
     grVITime->SetPointY(i, vi);
     grVQTime->SetPointY(i, vq);
   }
+}
+
+TGraph* rad::SignalQuick::GetVIPowerPeriodogram(double loadResistance) {
+  TGraph* grTime = GetVITimeDomain();
+  TGraph* grOut = MakePowerSpectrumPeriodogram(grTime);
+  delete grTime;
+  setGraphAttr(grOut);
+  grOut->SetTitle("V_{I}; Frequency [Hz]; Power [W]");
+  ScaleGraph(grOut, 1 / loadResistance);
+  return grOut;
+}
+
+TGraph* rad::SignalQuick::GetVQPowerPeriodogram(double loadResistance) {
+  TGraph* grTime = GetVQTimeDomain();
+  TGraph* grOut = MakePowerSpectrumPeriodogram(grTime);
+  delete grTime;
+  setGraphAttr(grOut);
+  grOut->SetTitle("V_{Q}; Frequency [Hz]; Power [W]");
+  ScaleGraph(grOut, 1 / loadResistance);
+  return grOut;
 }
