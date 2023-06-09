@@ -347,9 +347,7 @@ void rad::SignalQuick::AddNoise() {
 }
 
 TGraph* rad::SignalQuick::GetVIPowerPeriodogram(double loadResistance) {
-  TGraph* grTime = GetVITimeDomain();
-  TGraph* grOut = MakePowerSpectrumPeriodogram(grTime);
-  delete grTime;
+  TGraph* grOut = MakePowerSpectrumPeriodogram(grVITime);
   setGraphAttr(grOut);
   grOut->SetTitle("V_{I}; Frequency [Hz]; Power [W]");
   ScaleGraph(grOut, 1 / loadResistance);
@@ -357,9 +355,7 @@ TGraph* rad::SignalQuick::GetVIPowerPeriodogram(double loadResistance) {
 }
 
 TGraph* rad::SignalQuick::GetVQPowerPeriodogram(double loadResistance) {
-  TGraph* grTime = GetVQTimeDomain();
-  TGraph* grOut = MakePowerSpectrumPeriodogram(grTime);
-  delete grTime;
+  TGraph* grOut = MakePowerSpectrumPeriodogram(grVQTime);
   setGraphAttr(grOut);
   grOut->SetTitle("V_{Q}; Frequency [Hz]; Power [W]");
   ScaleGraph(grOut, 1 / loadResistance);
