@@ -12,6 +12,7 @@
 #include "Antennas/IAntenna.h"
 #include "SignalProcessing/LocalOscillator.h"
 #include "SignalProcessing/NoiseFunc.h"
+#include "TFile.h"
 #include "TGraph.h"
 #include "TTree.h"
 
