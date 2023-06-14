@@ -24,6 +24,8 @@ void SetGraphAttr(TGraph &gr);
 
 void SetHistAttr(TH1 *h);
 
+void SetHistAttr(TH1 &h);
+
 void SetHistAttr(std::unique_ptr<TH1D> &h);
 
 void SetHistAttr(TH2 *h);

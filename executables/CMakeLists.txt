@@ -67,3 +67,9 @@ target_link_libraries(StartPositionPT PRIVATE BasicFunctions ElectronDynamics ${
 
 add_executable(NicePenningTraj NicePenningTraj.cxx)
 target_link_libraries(NicePenningTraj PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(ScatteringCheck ScatteringCheck.cxx)
+target_link_libraries(ScatteringCheck PRIVATE BasicFunctions ElectronDynamics Scattering ${ROOT_LIBRARIES})
+
+add_executable(LongTimeGeneration LongTimeGeneration.cxx)
+target_link_libraries(LongTimeGeneration PRIVATE BasicFunctions ElectronDynamics Scattering ${ROOT_LIBRARIES})
