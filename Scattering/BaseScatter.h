@@ -7,6 +7,8 @@
 #ifndef BASE_SCATTER_H
 #define BASE_SCATTER_H
 
+#include "TVector3.h"
+
 namespace rad {
 class BaseScatter {
  private:
@@ -31,10 +33,17 @@ class BaseScatter {
   /// @return Mean free path in metres
   double GetMeanFreePath(double N);
 
-  /// @brief
-  /// @param N
-  /// @return
+  /// @brief Calculates particle mean free time before scattering
+  /// @param N Number density of atoms/molecules
+  /// @return Mean free time in seconds
   double GetMeanFreeTime(double N);
+
+  /// @brief Calculate random vector after scattering
+  /// @param vel Unscattered velocity vector
+  /// @param outKE Kinetic energy of outgoing particle in eV
+  /// @param theta Known scattering angle in radians
+  /// @return Scattered velocity vector
+  TVector3 GetScatteredVector(TVector3 vel, double outKE, double theta);
 
   virtual ~BaseScatter(){};
 };
