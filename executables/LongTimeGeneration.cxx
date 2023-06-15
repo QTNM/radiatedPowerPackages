@@ -33,27 +33,6 @@ using namespace rad;
 using std::cout;
 using std::endl;
 
-/// @brief Rotate a vector to a coordinate frame
-/// @param v The vector to be rotated
-/// @param newX The x axis to be rotated to
-/// @param newY The y axis to be rotated to
-/// @param newZ The z axis to be rotated to
-/// @return The rotated vector
-TVector3 RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
-                        TVector3 newZ) {
-  // We are just transforming from the ROOT frame so our old axis coordinates
-  // are just the unit vectors
-  TVector3 oldX(1, 0, 0);
-  TVector3 oldY(0, 1, 0);
-  TVector3 oldZ(0, 0, 1);
-  double pXPrime{newX.X() * v.X() + newY.X() * v.Y() + newZ.X() * v.Z()};
-  double pYPrime{newX.Y() * v.X() + newY.Y() * v.Y() + newZ.Y() * v.Z()};
-  double pZPrime{newX.Z() * v.X() + newY.Z() * v.Y() + newZ.Z() * v.Z()};
-  TVector3 newVector(pXPrime, pYPrime, pZPrime);
-  newVector = newVector.Unit();
-  return newVector;
-}
-
 int main(int argc, char *argv[]) {
   int opt{};
   std::string outputStemStr{" "};

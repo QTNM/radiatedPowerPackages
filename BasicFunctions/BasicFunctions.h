@@ -224,6 +224,15 @@ double SkewedGaussian(double x, double A, double mu, double sigma,
 /// @param c Chirp rate [Hz s^-1]
 /// @return The chirp function at the supplied time
 double ChirpSignal(double A, double t, double phi0, double f0, double c);
+
+/// @brief Rotate vector to different coordinate system
+/// @param v
+/// @param newX
+/// @param newY
+/// @param newZ
+/// @return
+TVector3 RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
+                        TVector3 newZ);
 }  // namespace rad
 
 #endif
