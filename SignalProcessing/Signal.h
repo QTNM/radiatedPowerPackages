@@ -33,6 +33,14 @@ namespace rad
 			  std::vector<GaussianNoise> noiseTerms,
 			  double &firstSampleTime, double &firstSample10Time, bool firstVoltage=true);
     
+    /// Delays the signal voltage
+    /// \param grIn The voltage to be delayed
+    /// \param startTime The first time to start plotting
+    /// \return A graph of the delayed voltage
+    TGraph *DelayVoltage(TGraph *grIn, double startTime);
+
+    double timeDelay; // The time delay in seconds for this signal
+
   protected:
     TGraph* grVITime; // In phase component
     TGraph* grVQTime; // Quadrature component
@@ -90,16 +98,20 @@ namespace rad
     /// \param lo The local oscillator used to do the downmixing
     /// \param srate The sample rate of a hypothetical ADC
     /// \param noiseTerms A vector of noise terms to be added to the signal
+    /// \param maxTime The last time to process the signal
+    /// \param delay The delay (in seconds) to apply to this signal
     Signal(InducedVoltage iv, LocalOscillator lo, double srate,
-	   std::vector<GaussianNoise> noiseTerms={}, double maxTime=-1);
+           std::vector<GaussianNoise> noiseTerms={}, double maxTime=-1, double delay=0);
 
     /// Constructor for multiple induced voltages
     /// \param iv The vector of induced voltages
     /// \param lo The local oscillator used to do the downmixing
     /// \param srate The sample rate of a hypothetical ADC
     /// \param noiseTerms A vector of noise terms to be added to the signal
+    /// \param maxTime The last time to process the signal
+    /// \param delay The delay (in seconds) to apply to this signal
     Signal(std::vector<InducedVoltage> iv, LocalOscillator lo, double srate,
-	   std::vector<GaussianNoise> noiseTerms={}, double maxTime=-1);
+	         std::vector<GaussianNoise> noiseTerms={}, double maxTime=-1, double delay=0);
     
     /// Copy constructor
     Signal(const Signal &s1);

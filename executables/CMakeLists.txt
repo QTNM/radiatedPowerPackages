@@ -8,9 +8,6 @@ target_link_libraries(normTest PUBLIC ${EXTRA_LIBS} ${ROOT_LIBRARIES} ${ROOTFFTW
 add_executable(noiseTests noiseTests.cxx)
 target_link_libraries(noiseTests PUBLIC ${EXTRA_LIBS} ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
 
-#add_executable(polarPlots polarPlots.cxx)
-#target_link_libraries(polarPlots PUBLIC BasicFunctions ${ROOT_LIBRARIES})
-
 add_executable(signalSum signalSum.cxx)
 target_link_libraries(signalSum PUBLIC ${EXTRA_LIBS} ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
 
@@ -38,3 +35,38 @@ target_link_libraries(harmonicTrapDetectability PUBLIC Antennas SignalProcessing
 add_executable(WR42Jackson WR42Jackson.cxx)
 target_link_libraries(WR42Jackson PUBLIC BasicFunctions ElectronDynamics Waveguides ${ROOT_LIBRARIES})
 
+add_executable(PhasedArrayVariableField PhasedArrayVariableField.cxx)
+target_link_libraries(PhasedArrayVariableField PUBLIC Antennas SignalProcessing ElectronDynamics BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(RFBandwidth RFBandwidth.cxx)
+target_link_libraries(RFBandwidth PRIVATE ElectronDynamics BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(SingleAntennaPower SingleAntennaPower.cxx)
+target_link_libraries(SingleAntennaPower PRIVATE ElectronDynamics BasicFunctions Antennas SignalProcessing FieldClasses ${ROOT_LIBRARIES})
+
+add_executable(RadialEnergyResolution RadialEnergyResolution.cxx)
+target_link_libraries(RadialEnergyResolution PRIVATE ElectronDynamics BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(RealisticFields RealisticFields.cxx)
+target_link_libraries(RealisticFields PUBLIC Antennas SignalProcessing ElectronDynamics BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(RFBandwidthCRESDA RFBandwidthCRESDA.cxx)
+target_link_libraries(RFBandwidthCRESDA PRIVATE ElectronDynamics BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(SignalRequirements SignalRequirements.cxx)
+target_link_libraries(SignalRequirements PRIVATE BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(FakeTrackGen FakeTrackGen.cxx)
+target_link_libraries(FakeTrackGen PRIVATE BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(PenningTrapTraj PenningTrapTraj.cxx)
+target_link_libraries(PenningTrapTraj PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(AxialFreqPT AxialFreqPT.cxx)
+target_link_libraries(AxialFreqPT PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(StartPositionPT StartPositionPT.cxx)
+target_link_libraries(StartPositionPT PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(NicePenningTraj NicePenningTraj.cxx)
+target_link_libraries(NicePenningTraj PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})

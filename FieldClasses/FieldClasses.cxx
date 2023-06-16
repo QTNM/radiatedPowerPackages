@@ -456,6 +456,9 @@ TGraph* rad::FieldPoint::GetPoyntingMagTimeDomain(const bool kUseRetardedTime) {
     double smag = grEMag->GetPointY(i) * grBMag->GetPointY(i) / MU0;
     grSMag->SetPoint(grSMag->GetN(), grEMag->GetPointX(i), smag);
   }
+  delete grEMag;
+  delete grBMag;
+
   setGraphAttr(grSMag);
   grSMag->GetXaxis()->SetTitle("Time [s]");
   grSMag->GetYaxis()->SetTitle("|S| [W m^{-2}]");
@@ -492,7 +495,8 @@ TGraph* rad::FieldPoint::GetAntennaLoadVoltageTimeDomain(const bool kUseRetarded
   for (int i = 0; i < grEx->GetN(); i++) {
     TVector3 EField(grEx->GetPointY(i), grEy->GetPointY(i), grEz->GetPointY(i));
     TVector3 ePos(grPosx->GetPointY(i), grPosy->GetPointY(i), grPosz->GetPointY(i));
-    double voltage = (EField.Dot(myAntenna->GetETheta(ePos)) + EField.Dot(myAntenna->GetEPhi(ePos))) * myAntenna->GetHEff();
+    double voltage = (EField.Dot(myAntenna->GetETheta(ePos)) + 
+                      EField.Dot(myAntenna->GetEPhi(ePos))) * myAntenna->GetHEff();
     voltage /= 2.0; // Account for re-radiated power
     gr->SetPoint(gr->GetN(), grEx->GetPointX(i), voltage);
   }
@@ -505,6 +509,33 @@ TGraph* rad::FieldPoint::GetAntennaLoadVoltageTimeDomain(const bool kUseRetarded
   delete grPosz;
   
   return gr;
+}
+
+TGraph *rad::FieldPoint::GetAntennaPowerTimeDomain(bool kUseRetardedTime)
+{
+  // First of all get the Poynting vector at the point
+  TGraph *grS{GetPoyntingMagTimeDomain(kUseRetardedTime)};
+  // Get the graphs of the electron position
+  TGraph *grX{GetPositionTimeDomain(kX, kUseRetardedTime)};
+  TGraph *grY{GetPositionTimeDomain(kY, kUseRetardedTime)};
+  TGraph *grZ{GetPositionTimeDomain(kZ, kUseRetardedTime)};
+
+  TGraph *grPower = new TGraph();
+  setGraphAttr(grPower);
+  grPower->GetYaxis()->SetTitle("Collected power [W]");
+  grPower->GetXaxis()->SetTitle("Time [s]");
+  for (int n{0}; n < grS->GetN(); n++)
+  {
+    TVector3 ePos(grX->GetPointY(n), grY->GetPointY(n), grZ->GetPointY(n));
+    double AEff{myAntenna->GetAEff(ePos)};
+    grPower->SetPoint(n, grS->GetPointX(n), grS->GetPointY(n) * AEff);
+  }
+
+  delete grS;
+  delete grX;
+  delete grY;
+  delete grZ;
+  return grPower;
 }
 
 TGraph* rad::FieldPoint::GetAntennaLoadPowerTimeDomain(const double loadResistance,
@@ -624,8 +655,8 @@ double rad::FieldPoint::GetFinalTime() {
   double lastTime;
   tree->SetBranchAddress("time", &lastTime);
   tree->GetEntry(tree->GetEntries()-1);
-  fin->Close();
   delete tree;
+  fin->Close();
   delete fin;
   return lastTime;
 }

@@ -26,7 +26,22 @@ namespace rad {
     TVector3 GetETheta(const TVector3 electronPosition);
     TVector3 GetEPhi(const TVector3 electronPosition);
 
+    double GetETheta(double theta, double phi);
+
+    double GetEPhi(double theta, double phi);
+
     double GetHEff();
+
+    double GetHEff(TVector3 ePos);
+
+    /// Returns the effective area of a Hertzian dipole
+    /// \param ePos Electron position vector (in metres)
+    /// \return The antenna effective area (in metres squared)
+    double GetAEff(TVector3 ePos);
+
+    double GetAEffTheta(TVector3 ePos);
+
+    double GetAEffPhi(TVector3 ePos);
   };
 }
 

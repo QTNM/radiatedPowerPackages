@@ -1,6 +1,11 @@
 // rayleighDistributionChecks.cxx
 
 #include "BasicFunctions/BasicFunctions.h"
+#include "Antennas/HalfWaveDipole.h"
+#include "SignalProcessing/Signal.h"
+#include "SignalProcessing/InducedVoltage.h"
+#include "SignalProcessing/LocalOscillator.h"
+#include "SignalProcessing/NoiseFunc.h"
 
 #include "TFile.h"
 #include "TMath.h"
@@ -53,7 +58,6 @@ int main(int argc, char** argv)
     double noiseRoot = sqrt(grNoise->GetPointY(i)*bandwidth/(deltaT*0.5*N));
     hNoiseVals->Fill(noiseRoot);
   }
-  //hNoiseVals->Scale(1 / hNoiseVals->Integral(1, hNoiseVals->GetNbinsX()));
 		    
   const double sigma = TMath::Sqrt(TMath::K() * TEff * bandwidth);
   TF1* fCDF = new TF1("fCDF", RayleighCDFFunc, 0, 4*sigma, 1);
@@ -62,19 +66,69 @@ int main(int argc, char** argv)
   fCDF->GetHistogram()->GetXaxis()->SetTitle("#sqrt{k_{B}TB} [W^{0.5}]");
 
   TF1* fPDF = new TF1("fPDF", RayleighPDFFunc, 0, 4*sigma, 1);//rayleighNorm, 0, 25e-27, 1);
-  fPDF->SetParameter(0, sigma);
+  fPDF->SetParameter(0, sigma*sqrt(0.5));
   fPDF->SetTitle("PDF: Rayleigh distribution with T = 4 K, B = 18.5 kHz; x; f(x; #sigma)");
   fPDF->GetHistogram()->GetXaxis()->SetTitle("#sqrt{k_{B}TB} [W^{0.5}]");
+
+  TH1D* hRayleighSq = new TH1D("hRayleighSq", "", 200, 0, 1e-17);
+  for (int ii = 0; ii < 500000; ii++) {
+    hRayleighSq->Fill(pow(fPDF->GetRandom(), 2));
+  }
+
+  TVector3 antennaPoint1(0.05, 0, 0); 
+  TVector3 antennaDirZ1(0, 1, 0);
+  TVector3 antennaDirX1(1, 0, 0);
+  HalfWaveDipole* antenna1 = new HalfWaveDipole(antennaPoint1, antennaDirX1, antennaDirZ1, 27.01e9);
+
+  const double loadResistance = 70; // Ohms
+  const double downmixFreq = 26.75e9; // Hertz 
   
-  TFile* fout = new TFile(outputFile, "RECREATE");
+  InducedVoltage iv1("/home/sjones/work/qtnm/trajectories/electronTraj1ms90Deg.root", antenna1);
+  LocalOscillator myLO(downmixFreq * 2 * TMath::Pi());
+  GaussianNoise noise1(TEff, loadResistance);
+  Signal sig1(iv1, myLO, sampleRate, {noise1}, tAcq);
+  TGraph* grVI = sig1.GetVITimeDomain();
+  TGraph* grVQ = sig1.GetVQTimeDomain();
+  std::vector<TGraph*> vecV = {grVI, grVQ};
+  TGraph* grVIPgram = MakePowerSpectrumPeriodogram(grVI);
+  TGraph* grVQPgram = MakePowerSpectrumPeriodogram(grVQ);
+  grVIPgram->GetYaxis()->SetTitle("Power [W]");
+  grVQPgram->GetYaxis()->SetTitle("Power [W]");
+  ScaleGraph(grVIPgram, 1/loadResistance);
+  ScaleGraph(grVQPgram, 1/loadResistance);
+  double totalPowerVI = FFTtools::sumPower(grVIPgram) * 1e15;
+  double totalPowerVQ = FFTtools::sumPower(grVQPgram) * 1e15;  
+  grVIPgram->SetTitle(Form("Total power %.4f fW", totalPowerVI));
+  grVQPgram->SetTitle(Form("Total power %.4f fW", totalPowerVQ));
+  TGraph* grSum = SumGraphs(vecV);
+  TGraph* grSumPgram = MakePowerSpectrumPeriodogram(grSum);
+  double totalPowerSum = FFTtools::sumPower(grSumPgram) * 1e15;
+  ScaleGraph(grSumPgram, 1/loadResistance);
+  grSumPgram->SetTitle(Form("Total power %.4f fW", totalPowerSum));
+
+  auto hNoiseSqrtPower{std::make_unique<TH1D>("hNoiseSqrtPower", "#sqrt{P} in 18.5 kHz bins; #sqrt{P} [W^{0.5}]; N_{bins}", 70, 0, 5e-9)};
+  SetHistAttr(hNoiseSqrtPower);
+  auto hNoisePower{std::make_unique<TH1D>("hNoisePower", "P in 18.5 kHz bins; P [W]; N_{bins}", 70, 0, 2.5e-17)};
+  SetHistAttr(hNoisePower);
+  
+  for (int i = 0; i < grSumPgram->GetN(); i++) {
+    hNoiseSqrtPower->Fill(sqrt(grVIPgram->GetPointY(i)));
+    hNoisePower->Fill(grVIPgram->GetPointY(i));
+  }
+  
+  auto fout{std::make_unique<TFile>(outputFile, "RECREATE")};
   fout->cd();
+  grVIPgram->Write("grVIPgram");
+  grVQPgram->Write("grVQPgram");
+  grSumPgram->Write("grSumPgram");
   fCDF->Write();
   fPDF->Write();
   grNoise->Write("grNoise");
+  hRayleighSq->Write();  
   hNoiseVals->Write();
+  hNoisePower->Write();
+  hNoiseSqrtPower->Write();
   
-  fout->Close();
-  delete fout;
-  
+  fout->Close();  
   return 0;
 }

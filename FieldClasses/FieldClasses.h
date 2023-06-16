@@ -19,7 +19,7 @@ namespace rad
 {
   class FieldPoint
   {
-  private:
+  protected:
     // Input file name
     TString inputFile;
     
@@ -136,6 +136,13 @@ namespace rad
     TGraph* GetAntennaLoadVoltageTimeDomain(const bool kUseRetardedTime=false,
 					    int firstPoint=-1, int lastPoint=-1);
 
+    /// Calculate the power collected by the antenna over time
+    /// \param kUseRetardedTime Boolean to use retarded time
+    /// \param firstPoint The first point of the class members to return
+    /// \param lastPoint Last point of the class members to return 
+    /// \return The collected power as a function of time 
+    TGraph *GetAntennaPowerTimeDomain(bool kUseRetardedTime=false);
+
     /// Load power from the antenna as a function of time
     /// \param loadResistance The load resistance
     /// \param kUseRetardedTime Boolean to use retarded time
@@ -181,7 +188,6 @@ namespace rad
     double GetFinalTime();
     double GetSampleRate();
   };
-
 }
 
 #endif
