@@ -43,19 +43,25 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
   // Create some intermediate level graphs before final sampling
   auto grVIInter = new TGraph();
   auto grVQInter = new TGraph();
+  auto grVIBigFiltered = new TGraph();
+  auto grVQBigFiltered = new TGraph();
 
   // Loop through tree entries
   // Initially we are just doing the the higher frequency sampling
+  double printTime{0};  // seconds
+  double printInterval{5e-6};
   for (unsigned int iE{0}; iE < inputTree->GetEntries(); iE++) {
     inputTree->GetEntry(iE);
-    if (std::fmod(time, 1e-6) < 1e-12) {
-      std::cout << time * 1e6 << " us signal processed...\n";
+    const double entryTime{time};
+    if (entryTime >= printTime) {
+      std::cout << printTime * 1e6 << " us signal processed...\n";
+      printTime += printInterval;
     }
 
-    AddNewTimes(time, TVector3(xPos, yPos, zPos));
+    AddNewTimes(entryTime, TVector3(xPos, yPos, zPos));
 
     // Do we need to sample now?
-    if (time >= sample10Time) {
+    if (entryTime >= sample10Time) {
       // Yes we do
       // First get the retarded time to calculate the fields at
       double tr{GetRetardedTime(sample10Time)};
@@ -70,32 +76,66 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
 
       sample10Num++;
       sample10Time = double(sample10Num) * sample10StepSize;
-    } else {
-      continue;
+
+      // We want to filter this signal if it's long enough
+      // Pick a good number to do FFTs with
+      if (grVIInter->GetN() == 32768) {
+        auto grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
+        auto grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
+        // Now add these points to the existing graph
+        for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
+          grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
+                                    grVISmallFiltered->GetPointX(iF),
+                                    grVISmallFiltered->GetPointY(iF));
+          grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
+                                    grVQSmallFiltered->GetPointX(iF),
+                                    grVQSmallFiltered->GetPointY(iF));
+        }
+        delete grVISmallFiltered;
+        delete grVQSmallFiltered;
+        // Clear the current graphs and start again
+        delete grVIInter;
+        delete grVQInter;
+        grVIInter = new TGraph();
+        grVQInter = new TGraph();
+      }
     }
   }
 
   // Can now safely close the input file
   CloseInputFile();
 
-  std::cout << "Filtering the signal...\n";
-  auto grVIFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
-  auto grVQFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
-  delete grVIInter;
-  delete grVQInter;
+  // One last filter maybe
+  if (grVIInter->GetN() > 0) {
+    TGraph* grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
+    TGraph* grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
+    delete grVIInter;
+    delete grVQInter;
+    // Add these remaining points to the main filtered graph
+    for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
+      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
+                                grVISmallFiltered->GetPointX(iF),
+                                grVISmallFiltered->GetPointY(iF));
+      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
+                                grVQSmallFiltered->GetPointX(iF),
+                                grVQSmallFiltered->GetPointY(iF));
+    }
+    delete grVISmallFiltered;
+    delete grVQSmallFiltered;
+  }
 
   std::cout << "Second sampling...\n";
-  for (int i{0}; i < grVIFiltered->GetN(); i++) {
+  for (int i{0}; i < grVIBigFiltered->GetN(); i++) {
     // We need to sample every 10th point
     if (i % 10 == 0) {
-      grVITime->SetPoint(grVITime->GetN(), grVIFiltered->GetPointX(i),
-                         grVIFiltered->GetPointY(i));
-      grVQTime->SetPoint(grVQTime->GetN(), grVQFiltered->GetPointX(i),
-                         grVQFiltered->GetPointY(i));
+      grVITime->SetPoint(grVITime->GetN(), grVIBigFiltered->GetPointX(i),
+                         grVIBigFiltered->GetPointY(i));
+      grVQTime->SetPoint(grVQTime->GetN(), grVQBigFiltered->GetPointX(i),
+                         grVQBigFiltered->GetPointY(i));
     }
   }
-  delete grVIFiltered;
-  delete grVQFiltered;
+  delete grVIBigFiltered;
+  delete grVQBigFiltered;
 
   // Now need to add noise (if noise terms exist)
   if (!noiseTerms.empty()) {
