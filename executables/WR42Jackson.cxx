@@ -2,6 +2,7 @@
 
 #include <complex>
 #include <iostream>
+#include <memory>
 
 #include "BasicFunctions/BasicFunctions.h"
 #include "BasicFunctions/ComplexVector3.h"
@@ -144,13 +145,12 @@ double CalculatePowerPlus(RectangularWaveguide *wv, int m, int n, double freq,
 
 int main(int argc, char *argv[]) {
   TString outputFile{argv[1]};
-  TFile *fout = new TFile(outputFile, "RECREATE");
+  auto fout = std::make_unique<TFile>(outputFile, "RECREATE");
 
   // Generate the field
   // This is chosen so we get the correct frequency
   double rCoil{3e-3};
   double trapDepth{4e-3};
-  double iCoil{2.0 * trapDepth * rCoil / MU0};
   UniformField *field = new UniformField(0.964);
 
   TString trackFile{"/home/sjones/work/qtnm/outputs/WR42Jackson/track.root"};
@@ -226,11 +226,11 @@ int main(int argc, char *argv[]) {
 
     // Now read in the file again and calculate some mode amplitudes as a
     // function of time
-    TFile *fin = new TFile(trackFile, "READ");
+    auto fin = std::make_unique<TFile>(trackFile, "READ");
     TTree *tree = (TTree *)fin->Get("tree");
-    double time;
-    double xPos, yPos, zPos;
-    double xVel, yVel, zVel;
+    double time{};
+    double xPos{}, yPos{}, zPos{};
+    double xVel{}, yVel{}, zVel{};
     tree->SetBranchAddress("time", &time);
     tree->SetBranchAddress("xPos", &xPos);
     tree->SetBranchAddress("yPos", &yPos);
@@ -240,8 +240,6 @@ int main(int argc, char *argv[]) {
     tree->SetBranchAddress("zVel", &zVel);
 
     const double volumeLength{0.005};
-    double area{(WR42->GetLongDimension() / double(nSurfPnts)) *
-                (WR42->GetShortDimension() / double(nSurfPnts))};
 
     TGraph *grPowerPlus = new TGraph();
     setGraphAttr(grPowerPlus);
@@ -281,6 +279,7 @@ int main(int argc, char *argv[]) {
                             pow(abs(ampPlus), 2) / waveImp);
       grPowerPlus->SetPoint(grPowerPlus->GetN(), time, totalPowerPlus);
     }  // Loop over electron trajectory entries
+    fin->Close();
 
     fout->cd();
     grAPlus->Write(Form("grAPlus%d", iOffset));
@@ -319,6 +318,5 @@ int main(int argc, char *argv[]) {
   grCollectedFrac->Write("grCollectedFrac");
 
   fout->Close();
-  delete fout;
   return 0;
 }
