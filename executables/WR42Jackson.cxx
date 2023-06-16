@@ -200,13 +200,13 @@ int main(int argc, char *argv[]) {
   grCollectedPower->SetMarkerStyle(20);
   grCollectedPower->SetTitle(
       "Collected power (unscaled): WR42 waveguide; X [mm]; Collected power "
-      "[W]");
+      "[fW]");
   TGraph *grCollectedPowerCrude = new TGraph();
   setGraphAttr(grCollectedPowerCrude);
   grCollectedPowerCrude->SetMarkerStyle(20);
   grCollectedPowerCrude->SetTitle(
       "Collected power (unscaled): WR42 waveguide; X [mm]; Collected power "
-      "[W]");
+      "[fW]");
   TGraph *grCollectedFrac = new TGraph();
   setGraphAttr(grCollectedFrac);
   grCollectedFrac->SetMarkerStyle(20);
@@ -276,8 +276,8 @@ int main(int argc, char *argv[]) {
           WR42, 1, 0, centralFreq, thePos, theVel, volumeLength, nSurfPnts)};
       grAPlus->SetPoint(grAPlus->GetN(), time, ampPlus.real());
       grCrudePlus->SetPoint(grCrudePlus->GetN(), time,
-                            pow(abs(ampPlus), 2) / waveImp);
-      grPowerPlus->SetPoint(grPowerPlus->GetN(), time, totalPowerPlus);
+                            pow(abs(ampPlus), 2) * 1e15 / waveImp);
+      grPowerPlus->SetPoint(grPowerPlus->GetN(), time, totalPowerPlus * 1e15);
     }  // Loop over electron trajectory entries
     fin->Close();
 
