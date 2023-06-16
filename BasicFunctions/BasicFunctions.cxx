@@ -638,3 +638,18 @@ double rad::SkewedGaussian(double x, double A, double mu, double sigma,
 double rad::ChirpSignal(double A, double t, double phi0, double f0, double c) {
   return A * sin(phi0 + 2 * TMath::Pi() * (c * t * t / 2 + f0 * t));
 }
+
+TVector3 rad::RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
+                             TVector3 newZ) {
+  // We are just transforming from the ROOT frame so our old axis coordinates
+  // are just the unit vectors
+  TVector3 oldX(1, 0, 0);
+  TVector3 oldY(0, 1, 0);
+  TVector3 oldZ(0, 0, 1);
+  double pXPrime{newX.X() * v.X() + newY.X() * v.Y() + newZ.X() * v.Z()};
+  double pYPrime{newX.Y() * v.X() + newY.Y() * v.Y() + newZ.Y() * v.Z()};
+  double pZPrime{newX.Z() * v.X() + newY.Z() * v.Y() + newZ.Z() * v.Z()};
+  TVector3 newVector(pXPrime, pYPrime, pZPrime);
+  newVector = newVector.Unit();
+  return newVector;
+}

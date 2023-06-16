@@ -66,21 +66,6 @@ TVector3 GenDecayVelocity(pld &p, std::mt19937 &mt) {
                   v * sin(phiGen) * sin(thetaGen), v * cos(thetaGen));
 }
 
-TVector3 RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
-                        TVector3 newZ) {
-  // We are just transforming from the ROOT frame so our old axis coordinates
-  // are just the unit vectors
-  TVector3 oldX(1, 0, 0);
-  TVector3 oldY(0, 1, 0);
-  TVector3 oldZ(0, 0, 1);
-  double pXPrime{newX.X() * v.X() + newY.X() * v.Y() + newZ.X() * v.Z()};
-  double pYPrime{newX.Y() * v.X() + newY.Y() * v.Y() + newZ.Y() * v.Z()};
-  double pZPrime{newX.Z() * v.X() + newY.Z() * v.Y() + newZ.Z() * v.Z()};
-  TVector3 newVector(pXPrime, pYPrime, pZPrime);
-  newVector = newVector.Unit();
-  return newVector;
-}
-
 const unsigned int nMaxScatters{30};
 
 /// @brief Reset an array to nonsense
@@ -269,6 +254,8 @@ int main(int argc, char *argv[]) {
 
           scatterEl.at(nScatters) = 1;
           scatterInel.at(nScatters) = 0;
+
+          vel = scatEl2.GetScatteredVector(vel, ke, scatAngle);
         } else {
           // We have an inelastic scatter
           cout << "Inelastic scatter\n";
@@ -283,9 +270,9 @@ int main(int argc, char *argv[]) {
 
           scatterEl.at(nScatters) = 0;
           scatterInel.at(nScatters) = 1;
-        }
 
-        double speed = GetSpeedFromKE(ke, ME);
+          vel = scatInel2.GetScatteredVector(vel, ke, scatAngle);
+        }
 
         scatterAng.at(nScatters) = scatAngle;
         scatterELoss.at(nScatters) = eLoss;
@@ -293,24 +280,6 @@ int main(int argc, char *argv[]) {
         cout << "Scattering angle = " << scatAngle * 180 / TMath::Pi()
              << " degrees\t New KE = " << ke / 1e3
              << " keV\t Energy loss = " << eLoss << " eV\n";
-
-        // Now we have to calculate the new direction of the electron
-        // We have the polar angle already from sampling
-        // Azimuthal angle distributed uniformly
-        double phiSampled{uni(gen) * TMath::TwoPi()};
-        TVector3 originalDir{vel.Unit()};
-        // Define the new direction in the frame of the particle
-        TVector3 oldDir(0, 0, 1);
-        TVector3 newDir(sin(scatAngle) * cos(phiSampled),
-                        sin(scatAngle) * sin(phiSampled), cos(scatAngle));
-        TVector3 ax2(-originalDir.Y() / originalDir.X(), 1, 0);
-        ax2 = ax2.Unit();
-        TVector3 ax3{(ax2.Cross(originalDir)).Unit()};
-        // Now you can get the third axis we want to rotate to
-        TVector3 newDirection{RotateToCoords(newDir, ax2, ax3, originalDir)};
-
-        // Set the new velocity
-        vel = speed * newDirection;
 
         // Move onto the next scatter
         nScatters++;
