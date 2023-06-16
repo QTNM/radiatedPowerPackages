@@ -196,6 +196,7 @@ int main(int argc, char *argv[]) {
           cout << "Elastic scatter\n";
           // No energy loss so just get the scattering angle
           scatAngle = scatEl2.GetRandomScatteringAngle();
+          vel = scatEl2.GetScatteredVector(vel, eKE, scatAngle);
         } else {
           // We have an inelastic scatter
           cout << "Inelastic scatter\n";
@@ -206,29 +207,11 @@ int main(int argc, char *argv[]) {
           // Now calculate the energy and the scattering angle of the primary
           scatAngle = scatInel2.GetPrimaryScatteredAngle(wSample, theta2Sample);
           eKE = scatInel2.GetPrimaryScatteredE(wSample, theta2Sample);
+          vel = scatInel2.GetScatteredVector(vel, eKE, scatAngle);
         }
         cout << "Scattering angle = " << scatAngle * 180 / TMath::Pi()
              << " degrees\t New KE = " << eKE / 1e3 << " keV\n";
 
-        eSpeed = GetSpeedFromKE(eKE, ME);
-
-        // Now we have to calculate the new direction of the electron
-        // We have the polar angle already from sampling
-        // Azimuthal angle distributed uniformly
-        double phiSampled{uni1(gen) * TMath::TwoPi()};
-        TVector3 originalDir{vel.Unit()};
-        // Define the new direction in the frame of the particle
-        TVector3 oldDir(0, 0, 1);
-        TVector3 newDir(sin(scatAngle) * cos(phiSampled),
-                        sin(scatAngle) * sin(phiSampled), cos(scatAngle));
-        TVector3 ax2(-originalDir.Y() / originalDir.X(), 1, 0);
-        ax2 = ax2.Unit();
-        TVector3 ax3{(ax2.Cross(originalDir)).Unit()};
-        // Now you can get the third axis we want to rotate to
-        TVector3 newDirection{RotateToCoords(newDir, ax2, ax3, originalDir)};
-
-        // Set the new velocity
-        vel = eSpeed * newDirection;
         // Now calculate the new acceleration
         acc = solver.acc(pos, vel);
 
