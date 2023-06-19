@@ -121,15 +121,15 @@ class IWaveguide {
   virtual void CalculatePn(Mode_t modeType, unsigned int n, unsigned int m,
                            double omega, unsigned int nSurfPnts) = 0;
 
+  /// @brief Getter function for normalisation constant
+  /// @return Normalisation constant
+  double GetPn() { return Pn; }
+
  private:
   // Normalisation constant
   double Pn;
 
  protected:
-  /// @brief Getter function for normalisation constant
-  /// @return Normalisation constant
-  double GetPn() { return Pn; }
-
   /// @brief Setter function for normalisation constant
   /// @param val
   void SetPn(double val) { Pn = val; }
