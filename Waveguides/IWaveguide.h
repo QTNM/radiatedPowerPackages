@@ -111,16 +111,6 @@ class IWaveguide {
       Mode_t modeType, unsigned int n, unsigned int m, double omega,
       TVector3 ePos, TVector3 eVel, double normA, double normB) = 0;
 
-  /// @brief Calculate a normalisation constant
-  /// @param modeType TE or TM
-  /// @param n
-  /// @param m
-  /// @param omega Angular frequency of radiation
-  /// @param nSurfPnts Number of points to use for integration
-  /// @return Value of Pn
-  virtual void CalculatePn(Mode_t modeType, unsigned int n, unsigned int m,
-                           double omega, unsigned int nSurfPnts) = 0;
-
   /// @brief Getter function for normalisation constant
   /// @return Normalisation constant
   double GetPn() { return Pn; }

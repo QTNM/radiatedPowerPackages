@@ -142,6 +142,17 @@ class CircularWaveguide : public IWaveguide {
                                            unsigned int m, double omega,
                                            TVector3 ePos, TVector3 eVel,
                                            double normA, double normB) override;
+
+  /// @brief Calculate and set Pn for a given circular waveguide mode
+  /// @param modeType TE or TM mode
+  /// @param n Angular mode number
+  /// @param m Radial mode number
+  /// @param omega Angular frequency of chosen mode
+  /// @param A Constant 1
+  /// @param B Constant 2
+  /// @param nSurfPnts Number of points to use for integration
+  void CalculatePn(Mode_t modeType, unsigned int n, unsigned int m,
+                   double omega, unsigned int nSurfPnts, double A, double B);
 };
 }  // namespace rad
 
