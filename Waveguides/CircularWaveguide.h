@@ -128,20 +128,21 @@ class CircularWaveguide : public IWaveguide {
   double GetHFieldIntegral(Mode_t modeType, int n, int m, double omega,
                            double A, double B, int nSurfPnts);
 
-  /// Gets the field amplitude from a moving electron in the guide
-  /// \param modeType The mode type to get (TE, TM)
-  /// \param n The angular number of the mode
-  /// \param m The radial number of the mode
-  /// \param omega Angular frequency of the chosen wave
-  /// \param ePos The electron position vector
-  /// \param eVel The electron velocity vector
-  /// \param normA Normalisation of one polarisation
-  /// \param normB Normalisation of one polarisation
-  /// \Returns The field amplitude at a given time
-  std::complex<double> GetPositiveFieldAmp(Mode_t modeType, unsigned int n,
-                                           unsigned int m, double omega,
-                                           TVector3 ePos, TVector3 eVel,
-                                           double normA, double normB) override;
+  /// @brief Gets the field amplitude from a moving electron in the guide
+  /// @param modeType The mode type to get (TE, TM)
+  /// @param n The angular number of the mode
+  /// @param m The radial number of the mode
+  /// @param omega Angular frequency of the chosen wave
+  /// @param ePos The electron position vector
+  /// @param eVel The electron velocity vector
+  /// @param normA Normalisation of one polarisation
+  /// @param normB Normalisation of one polarisation
+  /// @param isPositive Do we want the positive or negative amplitude?
+  /// @return The field amplitude at a given time
+  std::complex<double> GetFieldAmp(Mode_t modeType, unsigned int n,
+                                   unsigned int m, double omega, TVector3 ePos,
+                                   TVector3 eVel, double normA, double normB,
+                                   bool isPositive) override;
 
   /// @brief Calculate and set Pn for a given circular waveguide mode
   /// @param modeType TE or TM mode

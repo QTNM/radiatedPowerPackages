@@ -339,9 +339,9 @@ double rad::RectangularWaveguide::GetResonantModeFrequency(Mode_t modeType,
   return freq;
 }
 
-std::complex<double> rad::RectangularWaveguide::GetPositiveFieldAmp(
+std::complex<double> rad::RectangularWaveguide::GetFieldAmp(
     Mode_t modeType, unsigned int m, unsigned int n, double omega,
-    TVector3 ePos, TVector3 eVel, double normA, double normB) {
+    TVector3 ePos, TVector3 eVel, double normA, double normB, bool isPositive) {
   double waveImp{GetModeImpedance(modeType, n, m, omega)};
   TVector3 j{-TMath::Qe() * eVel};
   ComplexVector3 jComplex{j};
@@ -351,10 +351,16 @@ std::complex<double> rad::RectangularWaveguide::GetPositiveFieldAmp(
   ComplexVector3 eAxial{GetNormalisedEField(modeType, m, n, ePos, omega)};
   eAxial.SetX(std::complex<double>{0.0, 0.0});
   eAxial.SetY(std::complex<double>{0.0, 0.0});
-  ComplexVector3 subVec{eTrans - eAxial};
 
-  std::complex<double> APlus = (subVec).Dot(jComplex) * (-waveImp / 2.0);
-  return APlus;
+  ComplexVector3 eField(0, 0, 0);
+  if (isPositive) {
+    eField = eTrans - eAxial;
+  } else {
+    eField = eTrans + eAxial;
+  }
+
+  std::complex<double> A{eField.Dot(jComplex) * (-waveImp / 2.0)};
+  return A;
 }
 
 void rad::RectangularWaveguide::CalculatePn(Mode_t modeType, unsigned int n,

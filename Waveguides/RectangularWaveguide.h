@@ -119,20 +119,21 @@ class RectangularWaveguide : public IWaveguide {
   double GetResonantModeFrequency(Mode_t modeType, int m, int n,
                                   int l) override;
 
-  /// Gets the field amplitude from a moving electron in the guide
-  /// \param modeType The mode type to get (TE, TM)
-  /// \param m The mode number in the x direction of the waveguide
-  /// \param n The mode number in the y direction of the waveguide
-  /// \param omega Angular frequency of the chosen wave
-  /// \param ePos The electron position vector
-  /// \param eVel The electron velocity vector
-  /// \param normA Normalisation of one polarisation (not used here)
-  /// \param normB Normalisation of one polarisation (not used here)
-  /// \Returns The field amplitude at a given time
-  std::complex<double> GetPositiveFieldAmp(Mode_t modeType, unsigned int m,
-                                           unsigned int n, double omega,
-                                           TVector3 ePos, TVector3 eVel,
-                                           double normA, double normB) override;
+  /// @brief Gets the field amplitude from a moving electron in the guide
+  /// @param modeType The mode type to get (TE, TM)
+  /// @param m The mode number in the x direction of the waveguide
+  /// @param n The mode number in the y direction of the waveguide
+  /// @param omega Angular frequency of the chosen wave
+  /// @param ePos The electron position vector
+  /// @param eVel The electron velocity vector
+  /// @param normA Normalisation of one polarisation (not used here)
+  /// @param normB Normalisation of one polarisation (not used here)
+  /// @param isPositive Do we want the positive or negative amplitude?
+  /// @return The field amplitude at a given time
+  std::complex<double> GetFieldAmp(Mode_t modeType, unsigned int m,
+                                   unsigned int n, double omega, TVector3 ePos,
+                                   TVector3 eVel, double normA, double normB,
+                                   bool isPositive) override;
 
   /// @brief Calculate and set Pn for a given mode
   /// @param modeType TE or TM mode

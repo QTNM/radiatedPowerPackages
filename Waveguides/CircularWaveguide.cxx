@@ -336,19 +336,21 @@ double rad::CircularWaveguide::GetResonantModeFrequency(Mode_t modeType, int n,
 double rad::CircularWaveguide::GetEFieldNormalisation(Mode_t modeType, int n,
                                                       int m, double omega,
                                                       double A, double B,
+
                                                       int nSurfPnts) {
-  double area{pow(a / double(nSurfPnts), 2)};
   double integral{0};
-  for (int ix = 0; ix < nSurfPnts; ix++) {
-    double thisx{-a / 2.0 + a / (2.0 * double(nSurfPnts)) +
-                 a * double(ix) / double(nSurfPnts)};
-    for (int iy = 0; iy < nSurfPnts; iy++) {
-      double thisy{-a / 2.0 + a / (2.0 * double(nSurfPnts)) +
-                   a * double(iy) / double(nSurfPnts)};
+  const double dRho{a / double(nSurfPnts)};
+  const double dPhi{TMath::TwoPi() / double(nSurfPnts)};
 
-      if (sqrt(thisx * thisx + thisy * thisy) > a) continue;
+  for (unsigned int iRho{0}; iRho < nSurfPnts; iRho++) {
+    double thisRho{a / (2.0 * double(nSurfPnts)) +
+                   a * double(iRho) / double(nSurfPnts)};
+    const double area{thisRho * dRho * dPhi};
+    for (unsigned int iPhi{0}; iPhi < nSurfPnts; iPhi++) {
+      double thisPhi{TMath::TwoPi() / (2.0 * double(nSurfPnts)) +
+                     TMath::TwoPi() * double(iPhi) / double(nSurfPnts)};
 
-      TVector3 surfacePos{thisx, thisy, 0.0};
+      TVector3 surfacePos{thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0.0};
       ComplexVector3 eTrans{
           GetModalEField(modeType, n, m, surfacePos, omega, A, B)};
       eTrans.SetZ(std::complex<double>{0, 0});
@@ -389,9 +391,9 @@ double rad::CircularWaveguide::GetHFieldIntegral(Mode_t modeType, int n, int m,
   return integral;
 }
 
-std::complex<double> rad::CircularWaveguide::GetPositiveFieldAmp(
+std::complex<double> rad::CircularWaveguide::GetFieldAmp(
     Mode_t modeType, unsigned int n, unsigned int m, double omega,
-    TVector3 ePos, TVector3 eVel, double normA, double normB) {
+    TVector3 ePos, TVector3 eVel, double normA, double normB, bool isPositive) {
   double waveImp{GetModeImpedance(modeType, n, m, omega)};
   TVector3 j{-TMath::Qe() * eVel};
   ComplexVector3 jComplex{j};
@@ -403,10 +405,15 @@ std::complex<double> rad::CircularWaveguide::GetPositiveFieldAmp(
       GetModalEField(modeType, n, m, ePos, omega, normA, normB)};
   eAxial.SetX(std::complex<double>{0.0, 0.0});
   eAxial.SetY(std::complex<double>{0.0, 0.0});
-  ComplexVector3 subVec{eTrans - eAxial};
+  ComplexVector3 eField(0, 0, 0);
+  if (isPositive) {
+    eField = eTrans - eAxial;
+  } else {
+    eField = eTrans + eAxial;
+  }
 
-  std::complex<double> APlus = (subVec).Dot(jComplex) * (-waveImp / 2.0);
-  return APlus;
+  std::complex<double> A{eField.Dot(jComplex) * (-waveImp / 2.0)};
+  return A;
 }
 
 void rad::CircularWaveguide::CalculatePn(Mode_t modeType, unsigned int n,
@@ -442,7 +449,9 @@ void rad::CircularWaveguide::CalculatePn(Mode_t modeType, unsigned int n,
           GetModalHField(modeType, n, m, sPos2, omega, A, B)};
       hTrans2.SetZ(0);
       sum += (eTrans1.Cross(hTrans1)).Z().real() * elArea;
+      // sum += abs((eTrans1.Cross(hTrans1)).Z()) * elArea;
       sum += (eTrans2.Cross(hTrans2)).Z().real() * elArea;
+      // sum += abs((eTrans2.Cross(hTrans2)).Z()) * elArea;
     }
   }
   SetPn(sum * 2);

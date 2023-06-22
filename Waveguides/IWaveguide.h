@@ -106,10 +106,13 @@ class IWaveguide {
   /// \param eVel The electron velocity vector
   /// \param normA Normalisation of one polarisation (circular guide only)
   /// \param normB Normalisation of one polarisation (circular guide only)
+  /// @param isPositive Do we want the positive or negative amplitude?
   /// \Returns The field amplitude at a given time
-  virtual std::complex<double> GetPositiveFieldAmp(
-      Mode_t modeType, unsigned int n, unsigned int m, double omega,
-      TVector3 ePos, TVector3 eVel, double normA, double normB) = 0;
+  virtual std::complex<double> GetFieldAmp(Mode_t modeType, unsigned int n,
+                                           unsigned int m, double omega,
+                                           TVector3 ePos, TVector3 eVel,
+                                           double normA, double normB,
+                                           bool isPositive) = 0;
 
   /// @brief Getter function for normalisation constant
   /// @return Normalisation constant
