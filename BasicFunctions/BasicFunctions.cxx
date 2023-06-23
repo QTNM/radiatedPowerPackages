@@ -622,3 +622,10 @@ double rad::SkewedGaussian(double x, double A, double mu, double sigma,
 double rad::ChirpSignal(double A, double t, double phi0, double f0, double c) {
   return A * sin(phi0 + 2 * TMath::Pi() * (c * t * t / 2 + f0 * t));
 }
+
+double rad::CalcLarmorPower(double ke, double B, double theta, double m) {
+  const double f0{TMath::Qe() * B / (m * TMath::TwoPi())};
+  const double beta{GetSpeedFromKE(ke, m) / TMath::C()};
+  return TMath::TwoPi() * pow(TMath::Qe() * f0 * beta * sin(theta), 2) /
+         ((3 * EPSILON0 * TMath::C()) * (1 - beta * beta));
+}

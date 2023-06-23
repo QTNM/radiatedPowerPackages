@@ -234,6 +234,14 @@ double HeavisideFunc(double x);
 /// \param m The zero of the derived function (must be > 0)
 /// \Returns The specified root of the derivative of the nth Bessel function
 double GetBesselPrimeZero(unsigned int n, unsigned int m);
+
+/// @brief Larmor radiated power
+/// @param ke Kinetic energy in eV
+/// @param B Magnetic field strength in tesla
+/// @param theta Pitch angle in radians
+/// @param m Particle mass in kg
+/// @return Larmor power in Watts
+double CalcLarmorPower(double ke, double B, double theta, double m = ME);
 }  // namespace rad
 
 #endif
