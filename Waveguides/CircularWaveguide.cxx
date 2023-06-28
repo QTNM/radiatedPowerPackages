@@ -357,7 +357,6 @@ double rad::CircularWaveguide::GetEFieldNormalisation(Mode_t modeType, int n,
       integral += (eTrans.Dot(eTrans)).real() * area;
     }
   }
-  std::cout << "integral = " << integral << std::endl;
 
   if (integral == 0) {
     return 0;
