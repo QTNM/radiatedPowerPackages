@@ -85,3 +85,20 @@ rad::ComplexVector3 rad::CircularCavity::GetModeHField(
     return ComplexVector3(0, 0, 0);
   }
 }
+
+double rad::CircularCavity::GetCutoffFrequency(Mode_t modeType, int n, int m) {
+  if (modeType == kTE) {
+    double pnmPrime{GetBesselPrimeZero(n, m)};
+    double k_c{pnmPrime / a};
+    double f_c{k_c * TMath::C() / (2 * TMath::Pi())};
+    return f_c;
+  } else if (modeType == kTM) {
+    double pnm{boost::math::cyl_bessel_j_zero(double(n), m)};
+    double k_c{pnm / a};
+    double f_c{k_c * TMath::C() / (2 * TMath::Pi())};
+    return f_c;
+  } else {
+    std::cout << "Unsupported mode type! Returning -1!\n";
+    return -1;
+  }
+}

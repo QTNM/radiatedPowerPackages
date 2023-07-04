@@ -29,6 +29,13 @@ class ICavity {
   /// @return Frequency in Hertz
   virtual double GetResonantModeF(Mode_t modeType, unsigned int n,
                                   unsigned int m, unsigned int l) = 0;
+
+  /// @brief Gets the cutoff frequency for a particular waveguide mode
+  /// @param modeType The mode type to get (TE, TM, TEM)
+  /// @param n The first mode index to get
+  /// @param m The second mode index to get
+  /// @return The cutoff frequency in Hertz
+  virtual double GetCutoffFrequency(Mode_t modeType, int n, int m) = 0;
 };
 }  // namespace rad
 

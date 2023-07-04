@@ -31,6 +31,13 @@ class CircularCavity : public ICavity {
   double GetResonantModeF(Mode_t modeType, unsigned int n, unsigned int m,
                           unsigned int l) override;
 
+  /// @brief Gets the cutoff frequency for a particular waveguide mode
+  /// @param modeType The mode type to get (TE, TM, TEM)
+  /// @param n The angular mode number
+  /// @param m The radial mode number
+  /// @return The cutoff frequency in Hertz
+  double GetCutoffFrequency(Mode_t modeType, int n, int m) override;
+
   /// @brief Calculate electric field for given mode
   /// @param rho Radial coordinate in metres
   /// @param phi Angular coordinate in radians
