@@ -9,6 +9,10 @@
 #ifndef ICAVITY_H
 #define ICAVITY_H
 
+#include <boost/math/special_functions/bessel.hpp>
+
+#include "BasicFunctions/ComplexVector3.h"
+
 namespace rad {
 class ICavity {
  public:
