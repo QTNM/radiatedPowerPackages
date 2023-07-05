@@ -57,6 +57,17 @@ rad::ComplexVector3 rad::CircularCavity::GetModeEField(
   }
 }
 
+rad::ComplexVector3 rad::CircularCavity::GetModeEField(TVector3 pos,
+                                                       Mode_t modeType,
+                                                       double A, unsigned int n,
+                                                       unsigned int m,
+                                                       unsigned int l) {
+  double rho{pos.Perp()};
+  double phi{atan2(pos.Y(), pos.X())};
+  double z{pos.Z() + d / 2};
+  return GetModeEField(rho, phi, z, modeType, A, n, m, l);
+}
+
 rad::ComplexVector3 rad::CircularCavity::GetModeHField(
     double rho, double phi, double z, Mode_t modeType, double A, unsigned int n,
     unsigned int m, unsigned int l) {
@@ -84,6 +95,17 @@ rad::ComplexVector3 rad::CircularCavity::GetModeHField(
   } else {
     return ComplexVector3(0, 0, 0);
   }
+}
+
+rad::ComplexVector3 rad::CircularCavity::GetModeHField(TVector3 pos,
+                                                       Mode_t modeType,
+                                                       double A, unsigned int n,
+                                                       unsigned int m,
+                                                       unsigned int l) {
+  double rho{pos.Perp()};
+  double phi{atan2(pos.Y(), pos.X())};
+  double z{pos.Z() + d / 2};
+  return GetModeHField(rho, phi, z, modeType, A, n, m, l);
 }
 
 double rad::CircularCavity::GetCutoffFrequency(Mode_t modeType, int n, int m) {

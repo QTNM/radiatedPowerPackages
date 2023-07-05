@@ -52,6 +52,17 @@ class CircularCavity : public ICavity {
                                Mode_t modeType, double A, unsigned int n,
                                unsigned int m, unsigned int l);
 
+  /// @brief Calculate electric field for given mode
+  /// @param pos Position vector (in metres)
+  /// @param modeType TE or TM
+  /// @param A Constant factor
+  /// @param n Angular mode number
+  /// @param m Radial mode number
+  /// @param l Axial mode number
+  /// @return Complex 3-vector of E field
+  ComplexVector3 GetModeEField(TVector3 pos, Mode_t modeType, double A,
+                               unsigned int n, unsigned int m, unsigned int l);
+
   /// @brief Calculate H field for given mode
   /// @param rho Radial coordinate in metres
   /// @param phi Angular coordinate in radians
@@ -65,6 +76,17 @@ class CircularCavity : public ICavity {
   ComplexVector3 GetModeHField(double rho, double phi, double z,
                                Mode_t modeType, double A, unsigned int n,
                                unsigned int m, unsigned int l);
+
+  /// @brief Calculate H field for given mode
+  /// @param pos Position vector (in metres)
+  /// @param modeType TE or TM
+  /// @param A Constant factor
+  /// @param n Angular mode number
+  /// @param m Radial mode number
+  /// @param l Axial mode number
+  /// @return Complex 3-vector of H field
+  ComplexVector3 GetModeHField(TVector3 pos, Mode_t modeType, double A,
+                               unsigned int n, unsigned int m, unsigned int l);
 };
 }  // namespace rad
 
