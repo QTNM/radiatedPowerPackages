@@ -22,6 +22,16 @@ class CircularCavity : public ICavity {
   /// @param length Cavity length in metres
   CircularCavity(double radius, double length) : a(radius), d(length) {}
 
+  /// @brief Getter function for radius
+  /// @return Cavity inner radius in metres
+  double GetRadius() { return a; }
+
+  /// @brief Getter function for length
+  /// @return Cavity length in metres
+  double GetLength() { return d; }
+
+  double GetVolume() { return TMath::Pi() * a * a * d; }
+
   /// @brief Calculate resonant frequency of given mode
   /// @param modeType TE or TM
   /// @param n Angular mode number
@@ -44,24 +54,27 @@ class CircularCavity : public ICavity {
   /// @param z Axial coordinate in metres
   /// @param modeType TE or TM
   /// @param A Constant factor
-  /// @param n Angular mode number
-  /// @param m Radial mode number
-  /// @param l Axial mode number
+  /// @param m Angular mode number
+  /// @param n Radial mode number
+  /// @param p Axial mode number
+  /// @param t Time in seconds
   /// @return Complex 3-vector of E field
   ComplexVector3 GetModeEField(double rho, double phi, double z,
-                               Mode_t modeType, double A, unsigned int n,
-                               unsigned int m, unsigned int l);
+                               Mode_t modeType, double A, unsigned int m,
+                               unsigned int n, unsigned int p, double t = 0);
 
   /// @brief Calculate electric field for given mode
   /// @param pos Position vector (in metres)
   /// @param modeType TE or TM
   /// @param A Constant factor
-  /// @param n Angular mode number
-  /// @param m Radial mode number
-  /// @param l Axial mode number
+  /// @param m Angular mode number
+  /// @param n Radial mode number
+  /// @param p Axial mode number
+  /// @param t Time in seconds
   /// @return Complex 3-vector of E field
   ComplexVector3 GetModeEField(TVector3 pos, Mode_t modeType, double A,
-                               unsigned int n, unsigned int m, unsigned int l);
+                               unsigned int m, unsigned int n, unsigned int p,
+                               double t = 0);
 
   /// @brief Calculate H field for given mode
   /// @param rho Radial coordinate in metres
