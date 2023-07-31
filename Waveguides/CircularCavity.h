@@ -58,10 +58,12 @@ class CircularCavity : public ICavity {
   /// @param n Radial mode number
   /// @param p Axial mode number
   /// @param t Time in seconds
+  /// @param state Choose polarisation state
   /// @return Complex 3-vector of E field
   ComplexVector3 GetModeEField(double rho, double phi, double z,
                                Mode_t modeType, double A, unsigned int m,
-                               unsigned int n, unsigned int p, double t = 0);
+                               unsigned int n, unsigned int p,
+                               bool state = true, double t = 0);
 
   /// @brief Calculate electric field for given mode
   /// @param pos Position vector (in metres)
@@ -71,10 +73,11 @@ class CircularCavity : public ICavity {
   /// @param n Radial mode number
   /// @param p Axial mode number
   /// @param t Time in seconds
+  /// @param state Choose polarisation state
   /// @return Complex 3-vector of E field
   ComplexVector3 GetModeEField(TVector3 pos, Mode_t modeType, double A,
                                unsigned int m, unsigned int n, unsigned int p,
-                               double t = 0);
+                               bool state = true, double t = 0);
 
   /// @brief Calculate H field for given mode
   /// @param rho Radial coordinate in metres

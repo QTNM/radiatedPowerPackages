@@ -33,84 +33,83 @@ double rad::CircularCavity::GetResonantModeF(Mode_t modeType, unsigned int n,
 
 rad::ComplexVector3 rad::CircularCavity::GetModeEField(
     double rho, double phi, double z, Mode_t modeType, double A, unsigned int m,
-    unsigned int n, unsigned int p, double t) {
+    unsigned int n, unsigned int p, bool state, double t) {
   const double f{GetResonantModeF(modeType, m, n, p)};
   const double omega{f * TMath::TwoPi()};
   const double z0{d / 2};
+
+  std::complex<double> EPhi{0};
+  std::complex<double> ERho{0};
+  std::complex<double> EZ{0};
   if (modeType == CircularCavity::kTE) {
     const double XmnPrime{GetBesselPrimeZero(m, n)};
-    std::complex<double> Ez{0};
     double prefactor{A * omega / TMath::C()};
     prefactor *= pow(a / XmnPrime, 2);
     prefactor *= sin(double(p) * TMath::PiOver2() * (z / z0 + 1));
 
-    std::complex<double> ERho1{
-        -(double(m) / rho) * boost::math::cyl_bessel_j(m, XmnPrime * rho / a) *
-        cos(omega * t - double(m) * phi)};
-    ERho1 *= prefactor;
-    std::complex<double> ERho2{
-        (double(m) / rho) * boost::math::cyl_bessel_j(m, XmnPrime * rho / a) *
-        cos(omega * t + double(m) * phi)};
-    ERho2 *= prefactor;
-    std::complex<double> EPhi1{
-        (-XmnPrime / a) *
-        boost::math::cyl_bessel_j_prime(m, XmnPrime * rho / a) *
-        sin(omega * t - double(m) * phi)};
-    EPhi1 *= prefactor;
-    std::complex<double> EPhi2{
-        (-XmnPrime / a) *
-        boost::math::cyl_bessel_j_prime(m, XmnPrime * rho / a) *
-        sin(omega * t + double(m) * phi)};
-    EPhi2 *= prefactor;
-
-    ComplexVector3 E1(ERho1 * cos(phi) - EPhi1 * sin(phi),
-                      ERho1 * sin(phi) + EPhi1 * cos(phi), Ez);
-    ComplexVector3 E2(ERho2 * cos(phi) - EPhi2 * sin(phi),
-                      ERho2 * sin(phi) + EPhi2 * cos(phi), Ez);
-    return /*E1+ */ E2;
+    if (state) {
+      ERho = -(double(m) / rho) *
+             boost::math::cyl_bessel_j(m, XmnPrime * rho / a) *
+             cos(omega * t - double(m) * phi);
+      ERho *= prefactor;
+      EPhi = (-XmnPrime / a) *
+             boost::math::cyl_bessel_j_prime(m, XmnPrime * rho / a) *
+             sin(omega * t - double(m) * phi);
+      EPhi *= prefactor;
+    } else {
+      ERho = (double(m) / rho) *
+             boost::math::cyl_bessel_j(m, XmnPrime * rho / a) *
+             cos(omega * t + double(m) * phi);
+      ERho *= prefactor;
+      EPhi = (-XmnPrime / a) *
+             boost::math::cyl_bessel_j_prime(m, XmnPrime * rho / a) *
+             sin(omega * t + double(m) * phi);
+      EPhi *= prefactor;
+    }
   } else if (modeType == CircularCavity::kTM) {
     const double Xmn{boost::math::cyl_bessel_j_zero(double(m), n)};
     double prefactor{-double(p) * TMath::PiOver2() / z0};
     prefactor *=
         pow(a / Xmn, 2) * sin(double(p) * TMath::PiOver2() * (z / z0 + 1));
-    std::complex<double> EPhi1{(double(m) / rho) *
-                               boost::math::cyl_bessel_j(m, Xmn * rho / a) *
-                               sin(omega * t - double(m) * phi)};
-    EPhi1 *= prefactor * A;
-    std::complex<double> EPhi2{(-double(m) / rho) *
-                               boost::math::cyl_bessel_j(m, Xmn * rho / a) *
-                               sin(omega * t + double(m) * phi)};
-    EPhi2 *= prefactor * A;
-    std::complex<double> ERho1{
-        (Xmn / a) * boost::math::cyl_bessel_j_prime(m, Xmn * rho / a) *
-        cos(omega * t - double(m) * phi)};
-    ERho1 *= prefactor * A;
-    std::complex<double> ERho2{
-        (Xmn / a) * boost::math::cyl_bessel_j_prime(m, Xmn * rho / a) *
-        cos(omega * t + double(m) * phi)};
-    ERho2 *= prefactor * A;
-    std::complex<double> Ez1{boost::math::cyl_bessel_j(m, Xmn * rho / a) *
-                             cos(double(p) * TMath::PiOver2() * (z / z0 + 1)) *
-                             cos(omega * t - double(m) * phi)};
-    Ez1 *= A;
-    std::complex<double> Ez2{boost::math::cyl_bessel_j(m, Xmn * rho / a) *
-                             cos(double(p) * TMath::PiOver2() * (z / z0 + 1)) *
-                             cos(omega * t + double(m) * phi)};
-    Ez2 *= A;
-    ComplexVector3 E1(ERho1 * cos(phi) - EPhi1 * sin(phi),
-                      ERho1 * sin(phi) + EPhi1 * cos(phi), Ez1);
-    ComplexVector3 E2(ERho2 * cos(phi) - EPhi2 * sin(phi),
-                      ERho2 * sin(phi) + EPhi2 * cos(phi), Ez2);
-    return E1;
+
+    if (state) {
+      EPhi = (double(m) / rho) * boost::math::cyl_bessel_j(m, Xmn * rho / a) *
+             sin(omega * t - double(m) * phi);
+      EPhi *= prefactor * A;
+      ERho = (Xmn / a) * boost::math::cyl_bessel_j_prime(m, Xmn * rho / a) *
+             cos(omega * t - double(m) * phi);
+      ERho *= prefactor * A;
+      EZ = boost::math::cyl_bessel_j(m, Xmn * rho / a) *
+           cos(double(p) * TMath::PiOver2() * (z / z0 + 1)) *
+           cos(omega * t - double(m) * phi);
+      EZ *= A;
+    } else {
+      EPhi = (-double(m) / rho) * boost::math::cyl_bessel_j(m, Xmn * rho / a) *
+             sin(omega * t + double(m) * phi);
+      EPhi *= prefactor * A;
+
+      ERho = (Xmn / a) * boost::math::cyl_bessel_j_prime(m, Xmn * rho / a) *
+             cos(omega * t + double(m) * phi);
+      ERho *= prefactor * A;
+
+      EZ = boost::math::cyl_bessel_j(m, Xmn * rho / a) *
+           cos(double(p) * TMath::PiOver2() * (z / z0 + 1)) *
+           cos(omega * t + double(m) * phi);
+      EZ *= A;
+    }
   } else {
     std::cout << "TEM modes not supported for circular cavities!\n";
-    return ComplexVector3(0, 0, 0);
   }
+
+  // Generate final field vector
+  ComplexVector3 E(ERho * cos(phi) - EPhi * sin(phi),
+                   ERho * sin(phi) + EPhi * cos(phi), EZ);
+  return E;
 }
 
 rad::ComplexVector3 rad::CircularCavity::GetModeEField(
     TVector3 pos, Mode_t modeType, double A, unsigned int n, unsigned int m,
-    unsigned int l, double t) {
+    unsigned int l, bool state, double t) {
   double rho{pos.Perp()};
   double phi{atan2(pos.Y(), pos.X())};
   double z{pos.Z()};
