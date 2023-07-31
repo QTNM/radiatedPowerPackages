@@ -85,24 +85,30 @@ class CircularCavity : public ICavity {
   /// @param z Axial coordinate in metres
   /// @param modeType TE or TM
   /// @param A Constant factor
-  /// @param n Angular mode number
-  /// @param m Radial mode number
-  /// @param l Axial mode number
+  /// @param m Angular mode number
+  /// @param n Radial mode number
+  /// @param p Axial mode number
+  /// @param state Polarisation state
+  /// @param t Time in seconds
   /// @return Complex 3-vector of H field
   ComplexVector3 GetModeHField(double rho, double phi, double z,
-                               Mode_t modeType, double A, unsigned int n,
-                               unsigned int m, unsigned int l);
+                               Mode_t modeType, double A, unsigned int m,
+                               unsigned int n, unsigned int p,
+                               bool state = true, double t = 0);
 
   /// @brief Calculate H field for given mode
   /// @param pos Position vector (in metres)
   /// @param modeType TE or TM
   /// @param A Constant factor
-  /// @param n Angular mode number
-  /// @param m Radial mode number
-  /// @param l Axial mode number
+  /// @param m Angular mode number
+  /// @param n Radial mode number
+  /// @param p Axial mode number
+  /// @param state Polarisation state
+  /// @param t Time in seconds
   /// @return Complex 3-vector of H field
   ComplexVector3 GetModeHField(TVector3 pos, Mode_t modeType, double A,
-                               unsigned int n, unsigned int m, unsigned int l);
+                               unsigned int m, unsigned int n, unsigned int p,
+                               bool state = true, double t = 0);
 };
 }  // namespace rad
 

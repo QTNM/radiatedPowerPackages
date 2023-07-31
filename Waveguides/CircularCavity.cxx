@@ -113,52 +113,92 @@ rad::ComplexVector3 rad::CircularCavity::GetModeEField(
   double rho{pos.Perp()};
   double phi{atan2(pos.Y(), pos.X())};
   double z{pos.Z()};
-  return GetModeEField(rho, phi, z, modeType, A, n, m, l, t);
+  return GetModeEField(rho, phi, z, modeType, A, n, m, l, state, t);
 }
 
 rad::ComplexVector3 rad::CircularCavity::GetModeHField(
-    double rho, double phi, double z, Mode_t modeType, double A, unsigned int n,
-    unsigned int m, unsigned int l) {
-  std::complex<double> j{0, 1};
-  const double eta{376.730313668};
-  const double f{GetResonantModeF(modeType, n, m, l)};
-  const double k{TMath::TwoPi() * f / TMath::C()};
+    double rho, double phi, double z, Mode_t modeType, double A, unsigned int m,
+    unsigned int n, unsigned int p, bool state, double t) {
+  const double f{GetResonantModeF(modeType, m, n, p)};
+  const double omega{f * TMath::TwoPi()};
+  const double z0{d / 2};
+
+  std::complex<double> HPhi{0};
+  std::complex<double> HRho{0};
+  std::complex<double> HZ{0};
 
   // Check we are inside the cavity
-  if (rho > a || z < 0 || z > d) {
-    return ComplexVector3(0, 0, 0);
-  } else {
-    if (modeType == CircularCavity::kTE) {
-      const double pnmPrime{GetBesselPrimeZero(n, m)};
-      std::complex<double> beta{sqrt(k * k - pow(pnmPrime / a, 2))};
-      std::complex<double> Hz{A *
-                              boost::math::cyl_bessel_j(n, pnmPrime * rho / a)};
-      Hz *= cos(double(n) * phi) * sin(double(l) * TMath::Pi() * z / d);
-      std::complex<double> HRho{beta * a * A / pnmPrime};
-      HRho *= boost::math::cyl_bessel_j_prime(double(n), pnmPrime * rho / a);
-      HRho *= cos(double(n) * phi) * cos(double(l) * TMath::Pi() * z / d);
-      std::complex<double> HPhi{-beta * a * a * double(n) * A /
-                                (pnmPrime * pnmPrime * rho)};
-      HPhi *= boost::math::cyl_bessel_j(double(n), pnmPrime * rho / a);
-      HPhi *= sin(double(n) * phi) * cos(double(l) * TMath::Pi() * z / d);
-      ComplexVector3 H(HRho * cos(phi) - HPhi * sin(phi),
-                       HRho * sin(phi) + HPhi * cos(phi), Hz);
-      return H;
+  if (modeType == CircularCavity::kTE) {
+    const double prefactor{A / (TMath::C() * MU0)};
+    const double XmnPrime{GetBesselPrimeZero(m, n)};
+    const double factor1{cos(double(p) * TMath::PiOver2() * (z / z0 + 1)) *
+                         pow(a / XmnPrime, 2) * double(p) * TMath::PiOver2() /
+                         z0};
+    if (state) {
+      HZ = boost::math::cyl_bessel_j(m, XmnPrime * rho / a) *
+           sin(double(p) * TMath::PiOver2() * (z / z0 + 1)) *
+           cos(omega * t - double(m) * phi);
+      HZ *= prefactor;
+      HRho = (XmnPrime / a) *
+             boost::math::cyl_bessel_j_prime(m, XmnPrime * rho / a) *
+             cos(omega * t - double(m) * phi);
+      HRho *= prefactor * factor1;
+      HPhi = (double(m) / rho) *
+             boost::math::cyl_bessel_j(m, XmnPrime * rho / a) *
+             sin(omega * t - double(m) * phi);
+      HPhi *= prefactor * factor1;
     } else {
-      return ComplexVector3(0, 0, 0);
+      HZ = boost::math::cyl_bessel_j(m, XmnPrime * rho / a) *
+           sin(double(p) * TMath::PiOver2() * (z / z0 + 1)) *
+           cos(omega * t + double(m) * phi);
+      HZ *= prefactor;
+      HRho = (XmnPrime / a) *
+             boost::math::cyl_bessel_j_prime(m, XmnPrime * rho / a) *
+             cos(omega * t + double(m) * phi);
+      HRho *= cos(double(p) * TMath::PiOver2() * (z / z0 + 1)) *
+              pow(a / XmnPrime, 2) * double(p) * TMath::PiOver2() / z0;
+      HRho *= prefactor;
+      HPhi = (-double(m) / rho) *
+             boost::math::cyl_bessel_j(m, XmnPrime * rho / a) *
+             sin(omega * t + double(m) * phi);
+      HPhi *= prefactor * factor1;
+    }
+  } else if (modeType == CircularCavity::kTM) {
+    const double Xmn{boost::math::cyl_bessel_j_zero(double(m), n)};
+    const double prefactor{(A * omega / (pow(TMath::C(), 2) * MU0)) *
+                           pow(a / Xmn, 2) *
+                           cos(double(p) * TMath::PiOver2() * (z / z0 + 1))};
+    // Choose polarisation state
+    if (state) {
+      HRho = (double(m) / rho) * boost::math::cyl_bessel_j(m, Xmn * rho / a) *
+             cos(omega * t - double(m) * phi);
+      HRho *= prefactor;
+      HPhi = (Xmn / a) * boost::math::cyl_bessel_j_prime(m, Xmn * rho / a) *
+             sin(omega * t - double(m) * phi);
+      HPhi *= prefactor;
+    } else {
+      HRho = (-double(m) / rho) * boost::math::cyl_bessel_j(m, Xmn * rho / a) *
+             cos(omega * t + double(m) * phi);
+      HRho *= prefactor;
+      HPhi = (Xmn / a) * boost::math::cyl_bessel_j_prime(m, Xmn * rho / a) *
+             sin(omega * t + double(m) * phi);
+      HPhi *= prefactor;
     }
   }
+
+  // Generate final field vector
+  ComplexVector3 H(HRho * cos(phi) - HPhi * sin(phi),
+                   HRho * sin(phi) + HPhi * cos(phi), HZ);
+  return H;
 }
 
-rad::ComplexVector3 rad::CircularCavity::GetModeHField(TVector3 pos,
-                                                       Mode_t modeType,
-                                                       double A, unsigned int n,
-                                                       unsigned int m,
-                                                       unsigned int l) {
+rad::ComplexVector3 rad::CircularCavity::GetModeHField(
+    TVector3 pos, Mode_t modeType, double A, unsigned int m, unsigned int n,
+    unsigned int p, bool state, double t) {
   double rho{pos.Perp()};
   double phi{atan2(pos.Y(), pos.X())};
-  double z{pos.Z() + d / 2};
-  return GetModeHField(rho, phi, z, modeType, A, n, m, l);
+  double z{pos.Z()};
+  return GetModeHField(rho, phi, z, modeType, A, m, n, p, state, t);
 }
 
 double rad::CircularCavity::GetCutoffFrequency(Mode_t modeType, int n, int m) {
