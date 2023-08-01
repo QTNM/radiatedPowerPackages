@@ -70,3 +70,9 @@ target_link_libraries(StartPositionPT PRIVATE BasicFunctions ElectronDynamics ${
 
 add_executable(NicePenningTraj NicePenningTraj.cxx)
 target_link_libraries(NicePenningTraj PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(Project8CCA Project8CCA.cxx)
+target_link_libraries(Project8CCA PRIVATE BasicFunctions Waveguides ${ROOT_LIBRARIES})
+
+add_executable(CRESDA0Cavity CRESDA0Cavity.cxx)
+target_link_libraries(CRESDA0Cavity PRIVATE BasicFunctions Waveguides ${ROOT_LIBRARIES})
