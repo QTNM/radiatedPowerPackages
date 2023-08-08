@@ -306,7 +306,7 @@ int main(int argc, char *argv[]) {
     grCollectedPowerCrude->SetPoint(grCollectedPowerCrude->GetN(),
                                     testOffset * 1e3, timeAvgPowerCrude);
     grCollectedFrac->SetPoint(grCollectedFrac->GetN(), testOffset * 1e3,
-                              timeAvgPower / radiatedPower);
+                              timeAvgPower / (radiatedPower * 1e15));
 
     delete fEnergyLoss;
     delete grEnergy;
