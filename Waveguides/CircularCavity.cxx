@@ -116,6 +116,24 @@ rad::ComplexVector3 rad::CircularCavity::GetModeEField(
   return GetModeEField(rho, phi, z, modeType, A, n, m, l, state, t);
 }
 
+rad::ComplexVector3 rad::CircularCavity::GetMaxEField(
+    TVector3 pos, Mode_t modeType, double A, unsigned int m, unsigned int n,
+    unsigned int p, bool state) {
+  if (modeType == kTE) {
+    // Calculate the resonant frequency
+    const double fRes{GetResonantModeF(CircularCavity::kTE, m, n, p)};
+    // Now calculate the time the field is at a maximum
+    const double tMax{1 / (4 * fRes)};
+    return GetModeEField(pos, kTE, A, m, n, p, state, tMax);
+  } else if (modeType == kTM) {
+    return GetModeEField(pos, kTM, A, m, n, p, state, 0);
+  } else {
+    std::cout << "TEM modes not supported for circular cavities! Returning "
+                 "null vector\n";
+    return ComplexVector3(0, 0, 0);
+  }
+}
+
 rad::ComplexVector3 rad::CircularCavity::GetModeHField(
     double rho, double phi, double z, Mode_t modeType, double A, unsigned int m,
     unsigned int n, unsigned int p, bool state, double t) {

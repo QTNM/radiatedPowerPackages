@@ -79,6 +79,19 @@ class CircularCavity : public ICavity {
                                unsigned int m, unsigned int n, unsigned int p,
                                bool state = true, double t = 0);
 
+  /// @brief Calculate electric field at maximum time
+  /// @param pos Position 3-vector (in metres)
+  /// @param modeType TE or TM
+  /// @param A Constant factor
+  /// @param m Angular mode number
+  /// @param n Radial mode number
+  /// @param p Axial mode number
+  /// @param state Choose polarisation state
+  /// @return Complex 3-vector or E field
+  ComplexVector3 GetMaxEField(TVector3 pos, Mode_t modeType, double A,
+                              unsigned int m, unsigned int n, unsigned int p,
+                              bool state);
+
   /// @brief Calculate H field for given mode
   /// @param rho Radial coordinate in metres
   /// @param phi Angular coordinate in radians
