@@ -38,6 +38,9 @@ rad::ComplexVector3 rad::CircularCavity::GetModeEField(
   const double omega{f * TMath::TwoPi()};
   const double z0{d / 2};
 
+  // If we're outside the cavity then the field should be 0
+  if (rho > a || abs(z) > z0) return ComplexVector3(0, 0, 0);
+
   std::complex<double> EPhi{0};
   std::complex<double> ERho{0};
   std::complex<double> EZ{0};
@@ -140,6 +143,9 @@ rad::ComplexVector3 rad::CircularCavity::GetModeHField(
   const double f{GetResonantModeF(modeType, m, n, p)};
   const double omega{f * TMath::TwoPi()};
   const double z0{d / 2};
+
+  // Check we're inside the cavity, return 0 if not
+  if (rho > a || abs(z) > z0) return ComplexVector3(0, 0, 0);
 
   std::complex<double> HPhi{0};
   std::complex<double> HRho{0};
