@@ -18,6 +18,10 @@ void setGraphAttr(TGraph *gr);
 
 void setGraphAttr(std::unique_ptr<TGraph> &gr);
 
+/// @brief Formatter for TGraph references
+/// @param gr Graph to be formatted
+void setGraphAttr(TGraph &gr);
+
 void SetHistAttr(TH1 *h);
 
 void SetHistAttr(std::unique_ptr<TH1D> &h);
