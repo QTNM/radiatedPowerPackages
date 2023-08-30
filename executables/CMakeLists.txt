@@ -76,3 +76,6 @@ target_link_libraries(Project8CCA PRIVATE BasicFunctions Waveguides ${ROOT_LIBRA
 
 add_executable(CRESDA0Cavity CRESDA0Cavity.cxx)
 target_link_libraries(CRESDA0Cavity PRIVATE BasicFunctions Waveguides ${ROOT_LIBRARIES})
+
+add_executable(CavityFieldAmps CavityFieldAmps.cxx)
+target_link_libraries(CavityFieldAmps PRIVATE BasicFunctions Waveguides ElectronDynamics ${ROOT_LIBRARIES})
