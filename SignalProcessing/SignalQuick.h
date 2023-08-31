@@ -20,13 +20,23 @@ namespace rad {
 class SignalQuick {
  public:
   /// @brief Parametrised constructor
-  /// @param trajectoryFilePath
-  /// @param ant
-  /// @param lo
-  /// @param sRate
+  /// @param trajectoryFilePath String to electron trajectory file
+  /// @param ant Pointer to antenna
+  /// @param lo Local oscillator
+  /// @param sRate Sample rate in Hertz
   /// @param noiseTerms Vector of noise terms
   SignalQuick(TString trajectoryFilePath, IAntenna* ant, LocalOscillator lo,
               double sRate, std::vector<GaussianNoise> noiseTerms = {});
+
+  /// @brief Parametrised constructor for multiple antennas
+  /// @param trajectoryFilePath String to electron trajectory file
+  /// @param ant Pointer to antenna
+  /// @param lo Local oscillator
+  /// @param sRate Sample rate in Hertz
+  /// @param noiseTerms Vector of noise terms
+  SignalQuick(TString trajectoryFilePath, std::vector<IAntenna*> ant,
+              LocalOscillator lo, double sRate,
+              std::vector<GaussianNoise> noiseTerms = {});
 
   /// Destructor
   ~SignalQuick();
@@ -129,6 +139,9 @@ class SignalQuick {
 
   /// @brief Adds noise to the signals
   void AddNoise();
+
+  /// @brief Sets up voltage graphs for class
+  void CreateVoltageGraphs();
 };
 
 }  // namespace rad

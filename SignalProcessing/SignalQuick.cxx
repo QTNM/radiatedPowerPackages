@@ -17,14 +17,7 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
                               LocalOscillator lo, double sRate,
                               std::vector<GaussianNoise> noiseTerms)
     : localOsc(lo), antenna(ant), sampleRate(sRate), noiseVec(noiseTerms) {
-  grVITime = new TGraph();
-  grVQTime = new TGraph();
-  setGraphAttr(grVITime);
-  setGraphAttr(grVQTime);
-  grVITime->GetYaxis()->SetTitle("V_{I}");
-  grVQTime->GetYaxis()->SetTitle("V_{Q}");
-  grVITime->GetXaxis()->SetTitle("Time [s]");
-  grVQTime->GetXaxis()->SetTitle("Time [s]");
+  CreateVoltageGraphs();
 
   antennaPos = ant->GetAntennaPosition();
 
@@ -399,4 +392,15 @@ TGraph* rad::SignalQuick::GetVQPowerPeriodogram(double loadResistance) {
   grOut->SetTitle("V_{Q}; Frequency [Hz]; Power [W]");
   ScaleGraph(grOut, 1 / loadResistance);
   return grOut;
+}
+
+void rad::SignalQuick::CreateVoltageGraphs() {
+  grVITime = new TGraph();
+  grVQTime = new TGraph();
+  setGraphAttr(grVITime);
+  setGraphAttr(grVQTime);
+  grVITime->GetYaxis()->SetTitle("V_{I}");
+  grVQTime->GetYaxis()->SetTitle("V_{Q}");
+  grVITime->GetXaxis()->SetTitle("Time [s]");
+  grVQTime->GetXaxis()->SetTitle("Time [s]");
 }
