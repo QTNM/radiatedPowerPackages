@@ -78,7 +78,7 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
       sample10Time = double(sample10Num) * sample10StepSize;
 
       // We want to filter this signal if it's long enough
-      // Pick a good number to do FFTs with
+      // Pick a good number to do FFTs with (2^n preferably)
       if (grVIInter->GetN() == 32768) {
         auto grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
         auto grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
