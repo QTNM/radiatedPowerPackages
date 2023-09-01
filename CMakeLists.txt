@@ -38,20 +38,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # Add libraries
 add_subdirectory(BasicFunctions)
-list(APPEND EXTRA_LIBS BasicFunctions)
-list(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/BasicFunctions")
 
 add_subdirectory(FieldClasses)
-list(APPEND EXTRA_LIBS FieldClasses)
-list(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/FieldClasses")
 
 add_subdirectory(SignalProcessing)
-list(APPEND EXTRA_LIBS SignalProcessing)
-list(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/SignalProcessing")
 
 add_subdirectory(Antennas)
-list(APPEND EXTRA_LIBS Antennas)
-list(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/Antennas")
 
 add_subdirectory(ElectronDynamics)
 

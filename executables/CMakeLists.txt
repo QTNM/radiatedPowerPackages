@@ -1,18 +1,18 @@
 # Add any executables
 add_executable(sineTest sineTest.cxx)
-target_link_libraries(sineTest PUBLIC ${EXTRA_LIBS} ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
+target_link_libraries(sineTest PRIVATE BasicFunctions ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
 
 add_executable(normTest normTest.cxx)
-target_link_libraries(normTest PUBLIC ${EXTRA_LIBS} ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
+target_link_libraries(normTest PRIVATE BasicFunctions FieldClasses ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
 
 add_executable(noiseTests noiseTests.cxx)
-target_link_libraries(noiseTests PUBLIC ${EXTRA_LIBS} ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
+target_link_libraries(noiseTests PRIVATE Antennas BasicFunctions SignalProcessing ${ROOT_LIBRARIES})
 
 add_executable(signalSum signalSum.cxx)
-target_link_libraries(signalSum PUBLIC ${EXTRA_LIBS} ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
+target_link_libraries(signalSum PRIVATE Antennas BasicFunctions SignalProcessing ${ROOT_LIBRARIES})
 
 add_executable(perpendicularAntenna perpendicularAntenna.cxx)
-target_link_libraries(perpendicularAntenna PUBLIC ${EXTRA_LIBS} ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
+target_link_libraries(perpendicularAntenna PRIVATE Antennas BasicFunctions SignalProcessing ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
 
 add_executable(rayleighDistributionChecks rayleighDistributionChecks.cxx)
 target_link_libraries(rayleighDistributionChecks PUBLIC BasicFunctions SignalProcessing Antennas ${ROOT_LIBRARIES})
