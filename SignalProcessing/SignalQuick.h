@@ -75,9 +75,7 @@ class SignalQuick {
   TGraph* grVQTime = 0;  // Quadrature component
 
   std::deque<double> timeVec;
-  std::deque<double> advancedTimeVec;
-
-  TVector3 antennaPos;
+  std::vector<std::deque<double>> advancedTimeVec;  // One deque per antenna
 
   // Input file details
   double fileStartTime{};
@@ -95,22 +93,24 @@ class SignalQuick {
   double xAcc{}, yAcc{}, zAcc{};
 
   // Pointer to the antenna
-  IAntenna* antenna = 0;
+  std::vector<IAntenna*> antenna;
 
   /// @brief Function to add new times to vectors
   /// @param time New time from file in seconds
   /// @param ePos Electron position vector in metres
+  /// @param ant Pointer to chosen antenna
   void AddNewTimes(double time, TVector3 ePos);
 
   /// @brief Calculate the retarded time
   /// @param ts Sample time in seconds
+  /// @param antInd
   /// @return Relevant retarded time in seconds
-  double GetRetardedTime(double ts);
+  double GetRetardedTime(double ts, unsigned int antInd);
 
   /// @brief Get a guess for the index to start at
   /// @param ts Sample time in seconds
   /// @return Index of guess
-  unsigned int GetFirstGuessPoint(double ts);
+  unsigned int GetFirstGuessPoint(double ts, unsigned int antInd);
 
   /// @brief Sets up the tree to be read in
   /// @param filePath Path to electron trajectory file
@@ -125,8 +125,9 @@ class SignalQuick {
 
   /// @brief Calculate the voltage at a given time
   /// @param tr Retarded time at which to calculate the voltage [seconds]
+  /// @param ant Pointer to chosen antenna
   /// @return Voltage in volts
-  double CalcVoltage(double tr);
+  double CalcVoltage(double tr, IAntenna* ant);
 
   /// @brief Function for downmixing voltages
   /// @param vi In phase voltage component

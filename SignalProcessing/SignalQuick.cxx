@@ -16,10 +16,10 @@
 rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
                               LocalOscillator lo, double sRate,
                               std::vector<GaussianNoise> noiseTerms)
-    : localOsc(lo), antenna(ant), sampleRate(sRate), noiseVec(noiseTerms) {
-  CreateVoltageGraphs();
+    : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms) {
+  antenna.push_back(ant);
 
-  antennaPos = ant->GetAntennaPosition();
+  CreateVoltageGraphs();
 
   // Check if input file opens properly
   SetUpTree(trajectoryFilePath);
@@ -27,11 +27,13 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
   // Set file info
   GetFileInfo();
 
-  // Set TTree up to be read out
   double sampleTime{0};    // Second sample time in seconds
   double sample10Time{0};  // First sample time in seconds
   unsigned int sample10Num{0};
   double sample10StepSize{1 / (10 * sRate)};
+
+  // Create just one deque
+  advancedTimeVec.push_back(std::deque<double>());
 
   // Create some intermediate level graphs before final sampling
   auto grVIInter = new TGraph();
@@ -57,9 +59,9 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
     if (entryTime >= sample10Time) {
       // Yes we do
       // First get the retarded time to calculate the fields at
-      double tr{GetRetardedTime(sample10Time)};
+      double tr{GetRetardedTime(sample10Time, 0)};
 
-      double vi{CalcVoltage(tr)};
+      double vi{CalcVoltage(tr, antenna[0])};
       double vq{vi};
 
       DownmixVoltages(vi, vq, sample10Time);
@@ -92,6 +94,142 @@ rad::SignalQuick::SignalQuick(TString trajectoryFilePath, IAntenna* ant,
         grVIInter = new TGraph();
         grVQInter = new TGraph();
       }
+    } else {
+      continue;
+    }
+  }
+
+  // Can now safely close the input file
+  CloseInputFile();
+
+  // One last filter maybe
+  if (grVIInter->GetN() > 0) {
+    TGraph* grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
+    TGraph* grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
+    delete grVIInter;
+    delete grVQInter;
+    // Add these remaining points to the main filtered graph
+    for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
+      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
+                                grVISmallFiltered->GetPointX(iF),
+                                grVISmallFiltered->GetPointY(iF));
+      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
+                                grVQSmallFiltered->GetPointX(iF),
+                                grVQSmallFiltered->GetPointY(iF));
+    }
+    delete grVISmallFiltered;
+    delete grVQSmallFiltered;
+  }
+
+  std::cout << "Second sampling...\n";
+  for (int i{0}; i < grVIBigFiltered->GetN(); i++) {
+    // We need to sample every 10th point
+    if (i % 10 == 0) {
+      grVITime->SetPoint(grVITime->GetN(), grVIBigFiltered->GetPointX(i),
+                         grVIBigFiltered->GetPointY(i));
+      grVQTime->SetPoint(grVQTime->GetN(), grVQBigFiltered->GetPointX(i),
+                         grVQBigFiltered->GetPointY(i));
+    }
+  }
+  delete grVIBigFiltered;
+  delete grVQBigFiltered;
+
+  // Now need to add noise (if noise terms exist)
+  if (!noiseTerms.empty()) {
+    std::cout << "Adding noise...\n";
+    AddNoise();
+  }
+}
+
+rad::SignalQuick::SignalQuick(TString trajectoryFilePath,
+                              std::vector<IAntenna*> ant, LocalOscillator lo,
+                              double sRate,
+                              std::vector<GaussianNoise> noiseTerms)
+    : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms), antenna(ant) {
+  CreateVoltageGraphs();
+
+  // Check if input file opens properly
+  SetUpTree(trajectoryFilePath);
+
+  // Set file info
+  GetFileInfo();
+
+  double sampleTime{0};    // Second sample time in seconds
+  double sample10Time{0};  // First sample time in seconds
+  unsigned int sample10Num{0};
+  double sample10StepSize{1 / (10 * sRate)};
+
+  // Create number of deques equal to number of antennas
+  for (size_t i{0}; i < antenna.size(); i++) {
+    advancedTimeVec.push_back(std::deque<double>());
+  }
+
+  // Create some intermediate level graphs before final sampling
+  auto grVIInter = new TGraph();
+  auto grVQInter = new TGraph();
+  auto grVIBigFiltered = new TGraph();
+  auto grVQBigFiltered = new TGraph();
+
+  // Loop through tree entries
+  // Initially we are just doing the the higher frequency sampling
+  double printTime{0};  // seconds
+  double printInterval{5e-6};
+  for (unsigned int iE{0}; iE < inputTree->GetEntries(); iE++) {
+    inputTree->GetEntry(iE);
+    const double entryTime{time};
+    if (entryTime >= printTime) {
+      std::cout << printTime * 1e6 << " us signal processed...\n";
+      printTime += printInterval;
+    }
+
+    AddNewTimes(entryTime, TVector3(xPos, yPos, zPos));
+
+    // Do we need to sample now?
+    if (entryTime >= sample10Time) {
+      // Yes we do
+      // Loop through antennas and calculate a voltage at each
+      double vi{0};
+      double vq{0};
+      for (size_t iAnt{0}; iAnt < antenna.size(); iAnt++) {
+        // Yes we do
+        // First get the retarded time to calculate the fields at
+        double tr{GetRetardedTime(sample10Time, iAnt)};
+        double v{CalcVoltage(tr, antenna[iAnt])};
+        vi += v;
+        vq += v;
+      }
+      DownmixVoltages(vi, vq, sample10Time);
+
+      grVIInter->SetPoint(grVIInter->GetN(), sample10Time, vi);
+      grVQInter->SetPoint(grVQInter->GetN(), sample10Time, vq);
+
+      sample10Num++;
+      sample10Time = double(sample10Num) * sample10StepSize;
+
+      // We want to filter this signal if it's long enough
+      // Pick a good number to do FFTs with (2^n preferably)
+      if (grVIInter->GetN() == 32768) {
+        auto grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
+        auto grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
+        // Now add these points to the existing graph
+        for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
+          grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
+                                    grVISmallFiltered->GetPointX(iF),
+                                    grVISmallFiltered->GetPointY(iF));
+          grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
+                                    grVQSmallFiltered->GetPointX(iF),
+                                    grVQSmallFiltered->GetPointY(iF));
+        }
+        delete grVISmallFiltered;
+        delete grVQSmallFiltered;
+        // Clear the current graphs and start again
+        delete grVIInter;
+        delete grVQInter;
+        grVIInter = new TGraph();
+        grVQInter = new TGraph();
+      }
+    } else {
+      continue;
     }
   }
 
@@ -151,7 +289,7 @@ void rad::SignalQuick::GetFileInfo() {
       double(inputTree->GetEntries()) / (fileEndTime - fileStartTime);
 }
 
-double rad::SignalQuick::CalcVoltage(double tr) {
+double rad::SignalQuick::CalcVoltage(double tr, IAntenna* ant) {
   if (tr == -1) {
     // The voltage is from before the signal has reached the antenna
     return 0;
@@ -169,11 +307,12 @@ double rad::SignalQuick::CalcVoltage(double tr) {
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       TVector3 acc(xAcc, yAcc, zAcc);
-      ROOT::Math::XYZVector eField{CalcEField(antennaPos, pos, vel, acc)};
+      ROOT::Math::XYZVector eField{
+          CalcEField(ant->GetAntennaPosition(), pos, vel, acc)};
       TVector3 eField2(eField.X(), eField.Y(), eField.Z());
-      double voltage{(eField2.Dot(antenna->GetETheta(pos)) +
-                      eField2.Dot(antenna->GetEPhi(pos))) *
-                     antenna->GetHEff()};
+      double voltage{(eField2.Dot(antenna[0]->GetETheta(pos)) +
+                      eField2.Dot(antenna[0]->GetEPhi(pos))) *
+                     antenna[0]->GetHEff()};
       voltage /= 2.0;
       return voltage;
     } else if (firstGuessTime < tr) {
@@ -214,11 +353,12 @@ double rad::SignalQuick::CalcVoltage(double tr) {
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       TVector3 acc(xAcc, yAcc, zAcc);
-      ROOT::Math::XYZVector eField{CalcEField(antennaPos, pos, vel, acc)};
+      ROOT::Math::XYZVector eField{
+          CalcEField(antenna[0]->GetAntennaPosition(), pos, vel, acc)};
       TVector3 eField2(eField.X(), eField.Y(), eField.Z());
-      double voltage{(eField2.Dot(antenna->GetETheta(pos)) +
-                      eField2.Dot(antenna->GetEPhi(pos))) *
-                     antenna->GetHEff()};
+      double voltage{(eField2.Dot(antenna[0]->GetETheta(pos)) +
+                      eField2.Dot(antenna[0]->GetEPhi(pos))) *
+                     antenna[0]->GetHEff()};
       voltage /= 2.0;
       vVals.at(0) = voltage;
     }
@@ -230,11 +370,12 @@ double rad::SignalQuick::CalcVoltage(double tr) {
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       TVector3 acc(xAcc, yAcc, zAcc);
-      ROOT::Math::XYZVector eField{CalcEField(antennaPos, pos, vel, acc)};
+      ROOT::Math::XYZVector eField{
+          CalcEField(antenna[0]->GetAntennaPosition(), pos, vel, acc)};
       TVector3 eField2(eField.X(), eField.Y(), eField.Z());
-      double voltage{(eField2.Dot(antenna->GetETheta(pos)) +
-                      eField2.Dot(antenna->GetEPhi(pos))) *
-                     antenna->GetHEff()};
+      double voltage{(eField2.Dot(antenna[0]->GetETheta(pos)) +
+                      eField2.Dot(antenna[0]->GetEPhi(pos))) *
+                     antenna[0]->GetHEff()};
       voltage /= 2.0;
       vVals.at(iEl) = voltage;
     }
@@ -247,33 +388,47 @@ double rad::SignalQuick::CalcVoltage(double tr) {
 
 void rad::SignalQuick::AddNewTimes(double time, TVector3 ePos) {
   timeVec.push_back(time);
-  // Now calculate advanced time for this point
-  double ta{time + (ePos - antennaPos).Mag() / TMath::C()};
-  advancedTimeVec.push_back(ta);
 
-  // If the vectors are getting too long, get rid of the first element
+  // Now calculate advanced time for each antenna point
+  for (size_t i{0}; i < antenna.size(); i++) {
+    double ta{time +
+              (ePos - antenna.at(i)->GetAntennaPosition()).Mag() / TMath::C()};
+    advancedTimeVec.at(i).push_back(ta);
+  }
+  /*
+  double ta{time +
+            (ePos - antenna.at(0)->GetAntennaPosition()).Mag() / TMath::C()};
+  advancedTimeVec1.push_back(ta);
+  */
+
+  // If the deques are getting too long, get rid of the first element
   if (timeVec.size() > 10000) {
     timeVec.pop_front();
-    advancedTimeVec.pop_front();
+    for (size_t i{0}; i < antenna.size(); i++) {
+      advancedTimeVec.at(i).pop_front();
+    }
+    // advancedTimeVec1.pop_front();
   }
 }
 
-double rad::SignalQuick::GetRetardedTime(double ts) {
+double rad::SignalQuick::GetRetardedTime(double ts, unsigned int antInd) {
   unsigned int chosenInd{0};
 
   // Check if the sample time is before the signal has reached the antenna
-  if (ts < advancedTimeVec.at(0)) {
+  if (ts < advancedTimeVec.at(antInd).at(0)) {
     return -1;
   } else {
     // Find the values which the sample time lives in between
     // Firstly get a good first guess of where to start looking
-    unsigned int firstGuess{GetFirstGuessPoint(ts)};
+    unsigned int firstGuess{GetFirstGuessPoint(ts, antInd)};
     // Check which direction to search in
-    if (advancedTimeVec.at(firstGuess) < ts) {
+    if (advancedTimeVec.at(antInd).at(firstGuess) < ts) {
       // We are searching upwards
-      for (size_t i{firstGuess}; i < advancedTimeVec.size() - 2; i++) {
+      for (size_t i{firstGuess}; i < advancedTimeVec.at(antInd).size() - 2;
+           i++) {
         // Aim to find the advanced time values the ssample point lies between
-        if (ts > advancedTimeVec.at(i) && ts < advancedTimeVec.at(i + 1)) {
+        if (ts > advancedTimeVec.at(antInd).at(i) &&
+            ts < advancedTimeVec.at(antInd).at(i + 1)) {
           chosenInd = i;
           break;
         }
@@ -281,7 +436,8 @@ double rad::SignalQuick::GetRetardedTime(double ts) {
     } else {
       // We are searching downwards
       for (size_t i{firstGuess}; i >= 0; i--) {
-        if (ts > advancedTimeVec.at(i) && ts < advancedTimeVec.at(i + 1)) {
+        if (ts > advancedTimeVec.at(antInd).at(i) &&
+            ts < advancedTimeVec.at(antInd).at(i + 1)) {
           chosenInd = i;
           break;
         }
@@ -298,14 +454,14 @@ double rad::SignalQuick::GetRetardedTime(double ts) {
       advancedTimeVals.at(0) = 0;
     } else {
       timeVals.at(0) = timeVec.at(chosenInd - 1);
-      advancedTimeVals.at(0) = advancedTimeVec.at(chosenInd - 1);
+      advancedTimeVals.at(0) = advancedTimeVec.at(antInd).at(chosenInd - 1);
     }
     timeVals.at(1) = timeVec.at(chosenInd);
     timeVals.at(2) = timeVec.at(chosenInd + 1);
     timeVals.at(3) = timeVec.at(chosenInd + 2);
-    advancedTimeVals.at(1) = advancedTimeVec.at(chosenInd);
-    advancedTimeVals.at(2) = advancedTimeVec.at(chosenInd + 1);
-    advancedTimeVals.at(3) = advancedTimeVec.at(chosenInd + 2);
+    advancedTimeVals.at(1) = advancedTimeVec.at(antInd).at(chosenInd);
+    advancedTimeVals.at(2) = advancedTimeVec.at(antInd).at(chosenInd + 1);
+    advancedTimeVals.at(3) = advancedTimeVec.at(antInd).at(chosenInd + 2);
     return CubicInterpolation(advancedTimeVals, timeVals, ts);
   }
 }
@@ -336,14 +492,15 @@ void rad::SignalQuick::OpenInputFile(TString filePath) {
   }
 }
 
-unsigned int rad::SignalQuick::GetFirstGuessPoint(double ts) {
-  const size_t taVecSize{advancedTimeVec.size()};
-  const double pntsPerTime{
-      double(taVecSize) /
-      (advancedTimeVec.at(taVecSize - 1) - advancedTimeVec.at(0))};
+unsigned int rad::SignalQuick::GetFirstGuessPoint(double ts,
+                                                  unsigned int antInd) {
+  const size_t taVecSize{advancedTimeVec.at(antInd).size()};
+  const double pntsPerTime{double(taVecSize) /
+                           (advancedTimeVec.at(antInd).at(taVecSize - 1) -
+                            advancedTimeVec.at(antInd).at(0))};
 
   size_t firstGuessPnt{
-      size_t(round(pntsPerTime * (ts - advancedTimeVec.at(0))))};
+      size_t(round(pntsPerTime * (ts - advancedTimeVec.at(antInd).at(0))))};
   if (firstGuessPnt < 0) firstGuessPnt = 0;
   return firstGuessPnt;
 }
