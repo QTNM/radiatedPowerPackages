@@ -15,7 +15,7 @@
 
 rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
                     LocalOscillator lo, double sRate,
-                    std::vector<GaussianNoise> noiseTerms)
+                    std::vector<GaussianNoise> noiseTerms, double tAcq)
     : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms) {
   antenna.push_back(ant);
 
@@ -26,6 +26,10 @@ rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
 
   // Set file info
   GetFileInfo();
+
+  // Figure out where we're going to generate the signal up to
+  // By default, just do the whole electron trajectory file
+  if (tAcq < 0) tAcq = fileEndTime;
 
   double sampleTime{0};    // Second sample time in seconds
   double sample10Time{0};  // First sample time in seconds
@@ -48,6 +52,10 @@ rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
   for (unsigned int iE{0}; iE < inputTree->GetEntries(); iE++) {
     inputTree->GetEntry(iE);
     const double entryTime{time};
+
+    // Check we are still within the acquisition time, stop otherwise
+    if (entryTime > tAcq) break;
+
     if (entryTime >= printTime) {
       std::cout << printTime * 1e6 << " us signal processed...\n";
       printTime += printInterval;
@@ -143,7 +151,7 @@ rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
 
 rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
                     LocalOscillator lo, double sRate,
-                    std::vector<GaussianNoise> noiseTerms)
+                    std::vector<GaussianNoise> noiseTerms, double tAcq)
     : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms), antenna(ant) {
   CreateVoltageGraphs();
 

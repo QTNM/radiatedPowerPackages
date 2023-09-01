@@ -27,8 +27,10 @@ class Signal {
   /// @param lo Local oscillator
   /// @param sRate Sample rate in Hertz
   /// @param noiseTerms Vector of noise terms
+  /// @param tAcq Acquisition time for signal in seconds
   Signal(TString trajectoryFilePath, IAntenna* ant, LocalOscillator lo,
-         double sRate, std::vector<GaussianNoise> noiseTerms = {});
+         double sRate, std::vector<GaussianNoise> noiseTerms = {},
+         double tAcq = -1);
 
   /// @brief Parametrised constructor for multiple antennas
   /// @param trajectoryFilePath String to electron trajectory file
@@ -36,9 +38,10 @@ class Signal {
   /// @param lo Local oscillator
   /// @param sRate Sample rate in Hertz
   /// @param noiseTerms Vector of noise terms
+  /// @param tAcq Acquisition time for signal in seconds
   Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
          LocalOscillator lo, double sRate,
-         std::vector<GaussianNoise> noiseTerms = {});
+         std::vector<GaussianNoise> noiseTerms = {}, double tAcq = -1);
 
   /// Destructor
   ~Signal();
