@@ -170,9 +170,7 @@ int main(int argc, char *argv[]) {
   const double noiseTemp{4.0};  // Kelvin
   GaussianNoise noiseFunc(noiseTemp, loadResistance);
 
-  InducedVoltage ivSig(trackFile, antennaArray, true);
-
-  Signal sig(ivSig, lo, sampleRate, {noiseFunc}, tAcq);
+  Signal sig(trackFile, antennaArray, lo, sampleRate, {noiseFunc});
   std::cout << "Created the signal with noise" << std::endl;
   TGraph *grVSig = sig.GetVITimeDomain();
   TGraph *grVSigPgram = sig.GetVIPowerPeriodogram(loadResistance);
@@ -182,7 +180,7 @@ int main(int argc, char *argv[]) {
   delete grVSig;
   delete grVSigPgram;
 
-  Signal sigNoNoise(ivSig, lo, sampleRate, {}, tAcq);
+  Signal sigNoNoise(trackFile, antennaArray, lo, sampleRate, {});
   std::cout << "Created the signal with no noise" << std::endl;
   TGraph *grVSigNoNoise = sigNoNoise.GetVITimeDomain();
   TGraph *grVSigNoNoisePgram = sigNoNoise.GetVIPowerPeriodogram(loadResistance);

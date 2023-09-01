@@ -20,9 +20,6 @@ target_link_libraries(rayleighDistributionChecks PUBLIC BasicFunctions SignalPro
 add_executable(writeTrajectory writeTrajectory.cxx)
 target_link_libraries(writeTrajectory PUBLIC ElectronDynamics ${ROOT_LIBRARIES})
 
-add_executable(idealCaseSpectrogram idealCaseSpectrogram.cxx)
-target_link_libraries(idealCaseSpectrogram PUBLIC SignalProcessing Antennas ${ROOT_LIBRARIES})
-
 add_executable(singleBinPower singleBinPower.cxx)
 target_link_libraries(singleBinPower PUBLIC SignalProcessing Antennas BasicFunctions ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
 
@@ -67,3 +64,9 @@ target_link_libraries(StartPositionPT PRIVATE BasicFunctions ElectronDynamics ${
 
 add_executable(NicePenningTraj NicePenningTraj.cxx)
 target_link_libraries(NicePenningTraj PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(ScatteringCheck ScatteringCheck.cxx)
+target_link_libraries(ScatteringCheck PRIVATE BasicFunctions ElectronDynamics Scattering ${ROOT_LIBRARIES})
+
+add_executable(LongTimeGeneration LongTimeGeneration.cxx)
+target_link_libraries(LongTimeGeneration PRIVATE BasicFunctions ElectronDynamics Scattering ${ROOT_LIBRARIES})

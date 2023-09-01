@@ -1,212 +1,155 @@
 /*
   Signal.h
-  Class for a signal detected on an antenna or antennas
+
+  Rewritten 01/09/23 by S. Jones
 */
 
 #ifndef SIGNAL_H
 #define SIGNAL_H
 
-#include "SignalProcessing/InducedVoltage.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/NoiseFunc.h"
-#include "FieldClasses/FieldClasses.h"
-#include "BasicFunctions/BasicFunctions.h"
-
+#include <deque>
+#include <memory>
 #include <vector>
 
+#include "Antennas/IAntenna.h"
+#include "SignalProcessing/LocalOscillator.h"
+#include "SignalProcessing/NoiseFunc.h"
+#include "TFile.h"
 #include "TGraph.h"
-#include "TH2.h"
+#include "TTree.h"
 
-namespace rad
-{
-  /// Signal base class
-  /// Class members are:
-  /// grVITime In phase processed voltage component
-  /// grVQTime Quadrature processed voltage component
-  /// sampleRate Hypothetical sample rate of a digitiser
-  
-  class Signal
-  {
-  private:
-    /// Function to actually do the signal processing for a given time chunk
-    void ProcessTimeChunk(InducedVoltage iv, LocalOscillator lo, double thisChunk, double lastChunk,
-			  std::vector<GaussianNoise> noiseTerms,
-			  double &firstSampleTime, double &firstSample10Time, bool firstVoltage=true);
-    
-    /// Delays the signal voltage
-    /// \param grIn The voltage to be delayed
-    /// \param startTime The first time to start plotting
-    /// \return A graph of the delayed voltage
-    TGraph *DelayVoltage(TGraph *grIn, double startTime);
+namespace rad {
+class Signal {
+ public:
+  /// @brief Parametrised constructor
+  /// @param trajectoryFilePath String to electron trajectory file
+  /// @param ant Pointer to antenna
+  /// @param lo Local oscillator
+  /// @param sRate Sample rate in Hertz
+  /// @param noiseTerms Vector of noise terms
+  /// @param tAcq Acquisition time for signal in seconds
+  Signal(TString trajectoryFilePath, IAntenna* ant, LocalOscillator lo,
+         double sRate, std::vector<GaussianNoise> noiseTerms = {},
+         double tAcq = -1);
 
-    double timeDelay; // The time delay in seconds for this signal
+  /// @brief Parametrised constructor for multiple antennas
+  /// @param trajectoryFilePath String to electron trajectory file
+  /// @param ant Pointer to antenna
+  /// @param lo Local oscillator
+  /// @param sRate Sample rate in Hertz
+  /// @param noiseTerms Vector of noise terms
+  /// @param tAcq Acquisition time for signal in seconds
+  Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
+         LocalOscillator lo, double sRate,
+         std::vector<GaussianNoise> noiseTerms = {}, double tAcq = -1);
 
-  protected:
-    TGraph* grVITime; // In phase component
-    TGraph* grVQTime; // Quadrature component
-    double sampleRate;
+  /// Destructor
+  ~Signal();
 
-    /// Function for performing downsampling on a time domain wave using the class sample rate
-    /// \param grInput The input time domain waveform
-    /// Returns the downsampled waveform    
-    TGraph* SampleWaveform(TGraph* grInput);
+  /// @brief Getter function for in-phase voltage component
+  /// @return Time domain voltage graph
+  TGraph* GetVITimeDomain() { return grVITime; }
 
-    /// Function for performing downsampling on a time domain wave
-    /// \param grInput The input time domain waveform
-    /// \param sRate The designated sample rate
-    /// Returns the downsampled waveform
-    TGraph* SampleWaveform(TGraph* grInput, const double sRate);
+  /// @brief Getter function for quadrature voltage component
+  /// @return Time domain voltage graph
+  TGraph* GetVQTimeDomain() { return grVQTime; }
 
-    /// Function for performing downsampling on a time domain wave
-    /// Allows for the specification of the first sample time
-    /// \param grInput The input time domain waveform
-    /// \param sRate The designated sample rate
-    /// \param firstSampleTime The first time to sample
-    /// Returns the downsampled waveform
-    TGraph* SampleWaveform(TGraph* grInput, const double sRate, const double firstSampleTime);
+  /// @brief Returns the power spectrum of the in-phase voltage component after
+  /// all signal processing Power spectrum in this case is the periodogram
+  /// @param loadResistance The load resistance used for the power calculation
+  /// @return Pointer to power spectrum
+  TGraph* GetVIPowerPeriodogram(double loadResistance);
 
-    /// Adds Gaussian white noise to a time series of voltage values
-    /// \param grInput The input TGraph
-    /// \param noiseTerms Vector containing the various noise contributions
-    /// \param IsComponent Are we adding noise to in phase and voltage components?
-    void AddGaussianNoise(TGraph* grInput, std::vector<GaussianNoise> noiseTerms,
-			  bool IsComponent=true);
+  /// @brief Returns the power spectrum of the quadrature voltage component
+  /// after all signal processing Power spectrum in this case is the periodogram
+  /// @param loadResistance The load resistance used for the power calculation
+  /// @return Pointer to power spectrum
+  TGraph* GetVQPowerPeriodogram(double loadResistance);
 
-    /// Default constructor
-    Signal();
-    
-  public:
-    ~Signal();
-    
-    /// \param fp The field points where the antenna is located
-    /// \param lo The local oscillator used to do the downmixing
-    /// \param srate The sample rate of a hypothetical ADC
-    /// \param noiseTerms A vector of noise terms to be added to the signal
-    /// \param kUseRetardedTime Boolean on whether or not to use the retarded time
-    Signal(std::vector<FieldPoint> fp, LocalOscillator lo, double srate, std::vector<GaussianNoise> noiseTerms={}, const bool kUseRetardedTime=false);
+ private:
+  // Oscillator for the downmixing
+  LocalOscillator localOsc;
 
-    /// Constructor for a single field point
-    /// \param fp The field point where the antenna is located
-    /// \param lo The local oscillator used to do the downmixing
-    /// \param srate The sample rate of a hypothetical ADC
-    /// \param noiseTerms A vector of noise terms to be added to the signal
-    /// \param kUseRetardedTime Boolean on whether or not to use the retarded time
-    Signal(FieldPoint fp, LocalOscillator lo, double srate, std::vector<GaussianNoise> noiseTerms={}, const bool kUseRetardedTime=false);
+  // Sample rate
+  double sampleRate;
 
-    /// Constructor for a single induced voltage
-    /// \param iv The induced voltage at a particular field point
-    /// \param lo The local oscillator used to do the downmixing
-    /// \param srate The sample rate of a hypothetical ADC
-    /// \param noiseTerms A vector of noise terms to be added to the signal
-    /// \param maxTime The last time to process the signal
-    /// \param delay The delay (in seconds) to apply to this signal
-    Signal(InducedVoltage iv, LocalOscillator lo, double srate,
-           std::vector<GaussianNoise> noiseTerms={}, double maxTime=-1, double delay=0);
+  // Noise terms
+  std::vector<GaussianNoise> noiseVec;
 
-    /// Constructor for multiple induced voltages
-    /// \param iv The vector of induced voltages
-    /// \param lo The local oscillator used to do the downmixing
-    /// \param srate The sample rate of a hypothetical ADC
-    /// \param noiseTerms A vector of noise terms to be added to the signal
-    /// \param maxTime The last time to process the signal
-    /// \param delay The delay (in seconds) to apply to this signal
-    Signal(std::vector<InducedVoltage> iv, LocalOscillator lo, double srate,
-	         std::vector<GaussianNoise> noiseTerms={}, double maxTime=-1, double delay=0);
-    
-    /// Copy constructor
-    Signal(const Signal &s1);
+  TGraph* grVITime = 0;  // In phase component
+  TGraph* grVQTime = 0;  // Quadrature component
 
-    /// Returns the summed in-phase voltage component after all signal processing
-    TGraph* GetVITimeDomain(int firstPoint=-1, int lastPoint=-1);
-    /// Returns the summed quadrature voltage component after all signal processing
-    TGraph* GetVQTimeDomain(int firstPoint=-1, int lastPoint=-1);
+  std::deque<double> timeVec;
+  std::vector<std::deque<double>> advancedTimeVec;  // One deque per antenna
 
-    /// Returns the power spectrum of the in-phase voltage component after all signal processing
-    /// \param loadResistance The load resistance used for the power calculation
-    /// \param firstPoint The first point in the time series to use
-    /// \param lastPoint The last point in the time series to use
-    TGraph* GetVIPowerNorm(const double loadResistance, int firstPoint=-1, int lastPoint=-1);
+  // Input file details
+  double fileStartTime{};
+  double fileEndTime{};
+  double filePntsPerTime{};
 
-    /// Returns the power spectrum of the quadrature voltage component after all signal processing
-    /// \param loadResistance The load resistance used for the power calculation
-    /// \param firstPoint The first point in the time series to use
-    /// \param lastPoint The last point in the time series to use
-    TGraph* GetVQPowerNorm(const double loadResistance, int firstPoint=-1, int lastPoint=-1);
+  // Pointer to input file
+  std::unique_ptr<TFile> inputFile = 0;
+  // Pointer to input tree from file
+  TTree* inputTree = 0;
+  // Variables for input tree
+  double time{};
+  double xPos{}, yPos{}, zPos{};
+  double xVel{}, yVel{}, zVel{};
+  double xAcc{}, yAcc{}, zAcc{};
 
-    /// Returns the power spectrum of the in-phase voltage component after all signal processing
-    /// Power spectrum in this case is the periodogram
-    /// \param loadResistance The load resistance used for the power calculation
-    /// \param firstPoint The first point in the time series to use
-    /// \param lastPoint The last point in the time series to use
-    TGraph* GetVIPowerPeriodogram(const double loadResistance, int firstPoint=-1, int lastPoint=-1);
+  // Pointer to the antenna
+  std::vector<IAntenna*> antenna;
 
-    /// Returns the power spectrum of the quadrature voltage component after all signal processing
-    /// Power spectrum in this case is the periodogram
-    /// \param loadResistance The load resistance used for the power calculation
-    /// \param firstPoint The first point in the time series to use
-    /// \param lastPoint The last point in the time series to use
-    TGraph* GetVQPowerPeriodogram(const double loadResistance, int firstPoint=-1, int lastPoint=-1);
+  /// @brief Function to add new times to vectors
+  /// @param time New time from file in seconds
+  /// @param ePos Electron position vector in metres
+  /// @param ant Pointer to chosen antenna
+  void AddNewTimes(double time, TVector3 ePos);
 
-    /// Returns the 2D spectrogram made using the in-phase voltage component
-    /// \param loadResistance The load resistance used for the power calculation
-    /// \param NSamplesPerTimeBin The number of time samples used to make each time bin
-    TH2D* GetVISpectrogram(const double loadResistance, const int NSamplesPerTimeBin);
+  /// @brief Calculate the retarded time
+  /// @param ts Sample time in seconds
+  /// @param antInd
+  /// @return Relevant retarded time in seconds
+  double GetRetardedTime(double ts, unsigned int antInd);
 
-    /// Returns the 2D spectrogram made using the quadrature voltage component
-    /// \param loadResistance The load resistance used for the power calculation
-    /// \param NSamplesPerTimeBin The number of time samples used to make each time bin
-    TH2D* GetVQSpectrogram(const double loadResistance, const int NSamplesPerTimeBin);
+  /// @brief Get a guess for the index to start at
+  /// @param ts Sample time in seconds
+  /// @return Index of guess
+  unsigned int GetFirstGuessPoint(double ts, unsigned int antInd);
 
-    /// Returns a 2D sparse spectrogram made using the in-phase voltage component
-    /// along with a threshold for considering a pixel as a hit
-    /// \param loadResistance The load resistance used for power calculation
-    /// \param NSamplesPerTimeBin The number of time samples used to make each time bin
-    /// \param ThresholdPower The power (in Watts) above which a pixel is considered a hit
-    TH2D* GetVISparseSpectrogram(const double loadResistance, const int NSamplesPerTimeBin, const double ThresholdPower);
+  /// @brief Sets up the tree to be read in
+  /// @param filePath Path to electron trajectory file
+  void SetUpTree(TString filePath);
 
-    /// Returns a 2D sparse spectrogram made using the quadrature voltage component
-    /// along with a threshold for considering a pixel as a hit
-    /// \param loadResistance The load resistance used for power calculation
-    /// \param NSamplesPerTimeBin The number of time samples used to make each time bin
-    /// \param ThresholdPower The power (in Watts) above which a pixel is considered a hit
-    TH2D* GetVQSparseSpectrogram(const double loadResistance, const int NSamplesPerTimeBin, const double ThresholdPower);
-    
-    /// Returns the 2D spectrogram made using the in-phase voltage component
-    /// \param loadResistance The load resistance used for the power calculation
-    /// \param NSamplesPerTimeBin The number of time samples used to make each time bin
-    TH2D* GetVISpectrogramNorm(const double loadResistance, const int NSamplesPerTimeBin);
+  /// @brief Safely open the input
+  /// @param filePath Path to electron trajectory file
+  void OpenInputFile(TString filePath);
 
-    /// Returns the 2D spectrogram made using the quadrature voltage component
-    /// \param loadResistance The load resistance used for the power calculation
-    /// \param NSamplesPerTimeBin The number of time samples used to make each time bin
-    TH2D* GetVQSpectrogramNorm(const double loadResistance, const int NSamplesPerTimeBin);
+  /// @brief Safely closes the input file
+  void CloseInputFile();
 
-    /// Downmixes the inputted signal with given local oscillator
-    /// \param grInput The input time domain signal
-    /// \param lo The local oscillator used to do the downmixing
-    /// \Returns The in-phase voltage component in the time domain
-    TGraph* DownmixInPhase(TGraph* grInput, LocalOscillator lo);
+  /// @brief Calculate the voltage at a given time
+  /// @param tr Retarded time at which to calculate the voltage [seconds]
+  /// @param ant Pointer to chosen antenna
+  /// @return Voltage in volts
+  double CalcVoltage(double tr, IAntenna* ant);
 
-    /// Downmixes the inputted signal with given local oscillator
-    /// \param grInput The input time domain signal
-    /// \param lo The local oscillator used to do the downmixing
-    /// \Returns The quadrature voltage component in the time domain
-    TGraph* DownmixQuadrature(TGraph* grInput, LocalOscillator lo);
+  /// @brief Function for downmixing voltages
+  /// @param vi In phase voltage component
+  /// @param vq Quadrature voltage component
+  /// @param t Time in seconds
+  void DownmixVoltages(double& vi, double& vq, double t);
 
-    /// Returns a signal with the dechirping operator applied
-    /// \param alpha Parameter defining the strength of the chirp (units of s^-2)
-    /// \param firstPoint The first point in the time series to return
-    /// \param lastPoint The last point in the time series to return
-    /// \Returns The voltage signal after the operator has been applied
-    TGraph* GetDechirpedSignalTimeDomain(const double alpha, int firstPoint=-1, int lastPoint=-1);
+  /// @brief Sets some key parameters about the input file
+  void GetFileInfo();
 
-    /// Returns the 2D spectrogram made using the dechirped voltage signal
-    /// \param loadResistance The load resistance used for the power calculation
-    /// \param NSamplesPerTimeBin The number of time samples used to make each time bin
-    /// \param alpha Parameter defining the strength of the dechirp (units of s^-2)
-    /// \Returns The spectrogram with the dechirping operator applied
-    TH2D* GetDechirpedSpectrogram(const double loadResistance, const int NSamplesPerTimeBin, const double alpha);
-  };
-}
+  /// @brief Adds noise to the signals
+  void AddNoise();
+
+  /// @brief Sets up voltage graphs for class
+  void CreateVoltageGraphs();
+};
+
+}  // namespace rad
 
 #endif
