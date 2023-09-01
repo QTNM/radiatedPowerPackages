@@ -1,777 +1,555 @@
-// Signal.cxx
+/*
+  SignalQUick.cxx
+*/
 
 #include "SignalProcessing/Signal.h"
-#include "SignalProcessing/InducedVoltage.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "FieldClasses/FieldClasses.h"
-#include "BasicFunctions/BasicFunctions.h"
 
-#include <vector>
 #include <iostream>
-#include <cassert>
-#include <cmath>
 
-#include "TGraph.h"
-#include "TH2.h"
-#include "TRandom3.h"
-#include "TAxis.h"
+#include "BasicFunctions/BasicFunctions.h"
+#include "BasicFunctions/EMFunctions.h"
 #include "TMath.h"
-#include "TSpline.h"
+#include "TTreeReader.h"
+#include "TTreeReaderValue.h"
+#include "TVector3.h"
 
-#include "FFTtools.h"
+rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
+                    LocalOscillator lo, double sRate,
+                    std::vector<GaussianNoise> noiseTerms)
+    : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms) {
+  antenna.push_back(ant);
+
+  CreateVoltageGraphs();
+
+  // Check if input file opens properly
+  SetUpTree(trajectoryFilePath);
+
+  // Set file info
+  GetFileInfo();
+
+  double sampleTime{0};    // Second sample time in seconds
+  double sample10Time{0};  // First sample time in seconds
+  unsigned int sample10Num{0};
+  double sample10StepSize{1 / (10 * sRate)};
+
+  // Create just one deque
+  advancedTimeVec.push_back(std::deque<double>());
+
+  // Create some intermediate level graphs before final sampling
+  auto grVIInter = new TGraph();
+  auto grVQInter = new TGraph();
+  auto grVIBigFiltered = new TGraph();
+  auto grVQBigFiltered = new TGraph();
+
+  // Loop through tree entries
+  // Initially we are just doing the the higher frequency sampling
+  double printTime{0};  // seconds
+  double printInterval{5e-6};
+  for (unsigned int iE{0}; iE < inputTree->GetEntries(); iE++) {
+    inputTree->GetEntry(iE);
+    const double entryTime{time};
+    if (entryTime >= printTime) {
+      std::cout << printTime * 1e6 << " us signal processed...\n";
+      printTime += printInterval;
+    }
+
+    AddNewTimes(entryTime, TVector3(xPos, yPos, zPos));
+
+    // Do we need to sample now?
+    if (entryTime >= sample10Time) {
+      // Yes we do
+      // First get the retarded time to calculate the fields at
+      double tr{GetRetardedTime(sample10Time, 0)};
+
+      double vi{CalcVoltage(tr, antenna[0])};
+      double vq{vi};
+
+      DownmixVoltages(vi, vq, sample10Time);
+
+      grVIInter->SetPoint(grVIInter->GetN(), sample10Time, vi);
+      grVQInter->SetPoint(grVQInter->GetN(), sample10Time, vq);
+
+      sample10Num++;
+      sample10Time = double(sample10Num) * sample10StepSize;
+
+      // We want to filter this signal if it's long enough
+      // Pick a good number to do FFTs with (2^n preferably)
+      if (grVIInter->GetN() == 32768) {
+        auto grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
+        auto grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
+        // Now add these points to the existing graph
+        for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
+          grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
+                                    grVISmallFiltered->GetPointX(iF),
+                                    grVISmallFiltered->GetPointY(iF));
+          grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
+                                    grVQSmallFiltered->GetPointX(iF),
+                                    grVQSmallFiltered->GetPointY(iF));
+        }
+        delete grVISmallFiltered;
+        delete grVQSmallFiltered;
+        // Clear the current graphs and start again
+        delete grVIInter;
+        delete grVQInter;
+        grVIInter = new TGraph();
+        grVQInter = new TGraph();
+      }
+    } else {
+      continue;
+    }
+  }
+
+  // Can now safely close the input file
+  CloseInputFile();
+
+  // One last filter maybe
+  if (grVIInter->GetN() > 0) {
+    TGraph* grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
+    TGraph* grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
+    delete grVIInter;
+    delete grVQInter;
+    // Add these remaining points to the main filtered graph
+    for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
+      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
+                                grVISmallFiltered->GetPointX(iF),
+                                grVISmallFiltered->GetPointY(iF));
+      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
+                                grVQSmallFiltered->GetPointX(iF),
+                                grVQSmallFiltered->GetPointY(iF));
+    }
+    delete grVISmallFiltered;
+    delete grVQSmallFiltered;
+  }
+
+  std::cout << "Second sampling...\n";
+  for (int i{0}; i < grVIBigFiltered->GetN(); i++) {
+    // We need to sample every 10th point
+    if (i % 10 == 0) {
+      grVITime->SetPoint(grVITime->GetN(), grVIBigFiltered->GetPointX(i),
+                         grVIBigFiltered->GetPointY(i));
+      grVQTime->SetPoint(grVQTime->GetN(), grVQBigFiltered->GetPointX(i),
+                         grVQBigFiltered->GetPointY(i));
+    }
+  }
+  delete grVIBigFiltered;
+  delete grVQBigFiltered;
+
+  // Now need to add noise (if noise terms exist)
+  if (!noiseTerms.empty()) {
+    std::cout << "Adding noise...\n";
+    AddNoise();
+  }
+}
+
+rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
+                    LocalOscillator lo, double sRate,
+                    std::vector<GaussianNoise> noiseTerms)
+    : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms), antenna(ant) {
+  CreateVoltageGraphs();
+
+  // Check if input file opens properly
+  SetUpTree(trajectoryFilePath);
+
+  // Set file info
+  GetFileInfo();
+
+  double sampleTime{0};    // Second sample time in seconds
+  double sample10Time{0};  // First sample time in seconds
+  unsigned int sample10Num{0};
+  double sample10StepSize{1 / (10 * sRate)};
+
+  // Create number of deques equal to number of antennas
+  for (size_t i{0}; i < antenna.size(); i++) {
+    advancedTimeVec.push_back(std::deque<double>());
+  }
+
+  // Create some intermediate level graphs before final sampling
+  auto grVIInter = new TGraph();
+  auto grVQInter = new TGraph();
+  auto grVIBigFiltered = new TGraph();
+  auto grVQBigFiltered = new TGraph();
+
+  // Loop through tree entries
+  // Initially we are just doing the the higher frequency sampling
+  double printTime{0};  // seconds
+  double printInterval{5e-6};
+  for (unsigned int iE{0}; iE < inputTree->GetEntries(); iE++) {
+    inputTree->GetEntry(iE);
+    const double entryTime{time};
+    if (entryTime >= printTime) {
+      std::cout << printTime * 1e6 << " us signal processed...\n";
+      printTime += printInterval;
+    }
+
+    AddNewTimes(entryTime, TVector3(xPos, yPos, zPos));
+
+    // Do we need to sample now?
+    if (entryTime >= sample10Time) {
+      // Yes we do
+      // Loop through antennas and calculate a voltage at each
+      double vi{0};
+      double vq{0};
+      for (size_t iAnt{0}; iAnt < antenna.size(); iAnt++) {
+        // Yes we do
+        // First get the retarded time to calculate the fields at
+        double tr{GetRetardedTime(sample10Time, iAnt)};
+        double v{CalcVoltage(tr, antenna[iAnt])};
+        vi += v;
+        vq += v;
+      }
+      DownmixVoltages(vi, vq, sample10Time);
+
+      grVIInter->SetPoint(grVIInter->GetN(), sample10Time, vi);
+      grVQInter->SetPoint(grVQInter->GetN(), sample10Time, vq);
+
+      sample10Num++;
+      sample10Time = double(sample10Num) * sample10StepSize;
+
+      // We want to filter this signal if it's long enough
+      // Pick a good number to do FFTs with (2^n preferably)
+      if (grVIInter->GetN() == 32768) {
+        auto grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
+        auto grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
+        // Now add these points to the existing graph
+        for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
+          grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
+                                    grVISmallFiltered->GetPointX(iF),
+                                    grVISmallFiltered->GetPointY(iF));
+          grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
+                                    grVQSmallFiltered->GetPointX(iF),
+                                    grVQSmallFiltered->GetPointY(iF));
+        }
+        delete grVISmallFiltered;
+        delete grVQSmallFiltered;
+        // Clear the current graphs and start again
+        delete grVIInter;
+        delete grVQInter;
+        grVIInter = new TGraph();
+        grVQInter = new TGraph();
+      }
+    } else {
+      continue;
+    }
+  }
+
+  // Can now safely close the input file
+  CloseInputFile();
+
+  // One last filter maybe
+  if (grVIInter->GetN() > 0) {
+    TGraph* grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
+    TGraph* grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
+    delete grVIInter;
+    delete grVQInter;
+    // Add these remaining points to the main filtered graph
+    for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
+      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
+                                grVISmallFiltered->GetPointX(iF),
+                                grVISmallFiltered->GetPointY(iF));
+      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
+                                grVQSmallFiltered->GetPointX(iF),
+                                grVQSmallFiltered->GetPointY(iF));
+    }
+    delete grVISmallFiltered;
+    delete grVQSmallFiltered;
+  }
+
+  std::cout << "Second sampling...\n";
+  for (int i{0}; i < grVIBigFiltered->GetN(); i++) {
+    // We need to sample every 10th point
+    if (i % 10 == 0) {
+      grVITime->SetPoint(grVITime->GetN(), grVIBigFiltered->GetPointX(i),
+                         grVIBigFiltered->GetPointY(i));
+      grVQTime->SetPoint(grVQTime->GetN(), grVQBigFiltered->GetPointX(i),
+                         grVQBigFiltered->GetPointY(i));
+    }
+  }
+  delete grVIBigFiltered;
+  delete grVQBigFiltered;
+
+  // Now need to add noise (if noise terms exist)
+  if (!noiseTerms.empty()) {
+    std::cout << "Adding noise...\n";
+    AddNoise();
+  }
+}
 
 rad::Signal::~Signal() {
   delete grVITime;
   delete grVQTime;
 }
 
-rad::Signal::Signal()
-{
-  sampleRate = 0;
-  grVITime = 0;
-  grVQTime = 0;
+void rad::Signal::GetFileInfo() {
+  inputTree->GetEntry(0);
+  fileStartTime = time;
+  inputTree->GetEntry(inputTree->GetEntries() - 1);
+  fileEndTime = time;
+  filePntsPerTime =
+      double(inputTree->GetEntries()) / (fileEndTime - fileStartTime);
 }
 
-rad::Signal::Signal(std::vector<FieldPoint> fp, LocalOscillator lo, double srate,
-		    std::vector<GaussianNoise> noiseTerms, const bool kUseRetardedTime) {
-  assert(fp.size() > 0);
-  
-  sampleRate = srate;
-  timeDelay = 0;
-  
-  // Make sure the noise terms are all set up correctly
-  for (int iNoise = 0; iNoise < noiseTerms.size(); iNoise++) {
-    (noiseTerms.at(iNoise)).SetSampleFreq(sampleRate);
-    (noiseTerms.at(iNoise)).SetSigma();
-  }
+double rad::Signal::CalcVoltage(double tr, IAntenna* ant) {
+  if (tr == -1) {
+    // The voltage is from before the signal has reached the antenna
+    return 0;
+  } else {
+    // We actually have to calculate the voltage
+    // Start off with a first guess
+    int firstGuessTInd{int(round(filePntsPerTime * (tr - fileStartTime)))};
 
-  // The actual output graphs
-  grVITime = new TGraph();
-  grVQTime = new TGraph();  
-  setGraphAttr(grVITime);
-  setGraphAttr(grVQTime);
-  grVITime->GetXaxis()->SetTitle("Time [s]");
-  grVQTime->GetXaxis()->SetTitle("Time [s]");
-  
-  std::vector<TGraph*> vecVITime;
-  std::vector<TGraph*> vecVQTime;
-  
-  // For each antenna point generate the field and do the signal processing
-  for (int point = 0; point < fp.size(); point++) {
-    TGraph* grInputVoltageTemp = fp[point].GetAntennaLoadVoltageTimeDomain(kUseRetardedTime, -1, -1);
-    
-    std::cout<<"Performing the downmixing..."<<std::endl;
-    TGraph* grVITimeUnfiltered = DownmixInPhase(grInputVoltageTemp, lo);
-    TGraph* grVQTimeUnfiltered = DownmixQuadrature(grInputVoltageTemp, lo);
-    delete grInputVoltageTemp;
-    
-    std::cout<<"First downsampling..."<<std::endl;
-    TGraph* grVITimeFirstSample = SampleWaveform(grVITimeUnfiltered, 10*sampleRate);
-    TGraph* grVQTimeFirstSample = SampleWaveform(grVQTimeUnfiltered, 10*sampleRate);
-
-    delete grVITimeUnfiltered;
-    delete grVQTimeUnfiltered;
-    
-    // Now we need to filter and then sample these signals
-    std::cout<<"Filtering.."<<std::endl;
-    TGraph* grVITimeUnsampled = BandPassFilter(grVITimeFirstSample, 0.0, sampleRate/2.0);
-    TGraph* grVQTimeUnsampled = BandPassFilter(grVQTimeFirstSample, 0.0, sampleRate/2.0);
-
-    delete grVITimeFirstSample;
-    delete grVQTimeFirstSample;
-    
-    // Now do sampling
-    // Use simple linear interpolation for the job
-    std::cout<<"Sampling..."<<std::endl;
-    TGraph* grVITimeTemp = SampleWaveform(grVITimeUnsampled);
-    TGraph* grVQTimeTemp = SampleWaveform(grVQTimeUnsampled);
-
-    delete grVITimeUnsampled;
-    delete grVQTimeUnsampled;
-    
-    std::cout<<"Adding noise..."<<std::endl;
-    AddGaussianNoise(grVITimeTemp, noiseTerms);
-    AddGaussianNoise(grVQTimeTemp, noiseTerms);
-
-    vecVITime.push_back(grVITimeTemp);
-    vecVQTime.push_back(grVQTimeTemp);
-  } // Generate individual waveforms
-
-  std::cout<<"Summing fields"<<std::endl;
-  const int nSampledTimePoints = vecVITime[0]->GetN();
-  for (int t = 0; t < nSampledTimePoints; t++) {
-    // Loop over the signals from each individual antenna and sum
-    double sumVI = 0;
-    double sumVQ = 0;
-    for (int field = 0; field < vecVITime.size(); field++) {
-      sumVI += vecVITime[field]->GetPointY(t);
-      sumVQ += vecVQTime[field]->GetPointY(t);     
-    }
-    grVITime->SetPoint(t, vecVITime[0]->GetPointX(t), sumVI);
-    grVQTime->SetPoint(t, vecVQTime[0]->GetPointX(t), sumVQ);
-  }
-  
-  // Remaining cleanup
-  // for (auto p : vecVITime) {
-  //    delete p;
-  // }
-  // vecVITime.clear();
-  
-  // for (auto p : vecVQTime) {
-  //    delete p;
-  // }
-  // vecVQTime.clear();
-  
-  std::cout<<"Constructor completed"<<std::endl;
-  
-}
-
-rad::Signal::Signal(FieldPoint fp, LocalOscillator lo, double srate,
-		    std::vector<GaussianNoise> noiseTerms, const bool kUseRetardedTime) {
-  sampleRate = srate;
-  timeDelay = 0;
-  
-  // Make sure the noise terms are all set up correctly
-  for (int iNoise = 0; iNoise < noiseTerms.size(); iNoise++) {
-    (noiseTerms.at(iNoise)).SetSampleFreq(sampleRate);
-    (noiseTerms.at(iNoise)).SetSigma();
-  }
-
-  // The actual output graphs
-  grVITime = new TGraph();
-  grVQTime = new TGraph();  
-  setGraphAttr(grVITime);
-  setGraphAttr(grVQTime);
-  grVITime->GetXaxis()->SetTitle("Time [s]");
-  grVQTime->GetXaxis()->SetTitle("Time [s]");
-
-  TGraph* grInputVoltageTemp = fp.GetAntennaLoadVoltageTimeDomain(kUseRetardedTime, -1, -1);
-    
-  std::cout<<"Performing the downmixing..."<<std::endl;
-  TGraph* grVITimeUnfiltered = DownmixInPhase(grInputVoltageTemp, lo);
-  TGraph* grVQTimeUnfiltered = DownmixQuadrature(grInputVoltageTemp, lo);
-  delete grInputVoltageTemp;
-  
-  std::cout<<"First downsampling..."<<std::endl;
-  TGraph* grVITimeFirstSample = SampleWaveform(grVITimeUnfiltered, 10*sampleRate);
-  TGraph* grVQTimeFirstSample = SampleWaveform(grVQTimeUnfiltered, 10*sampleRate);
-
-  delete grVITimeUnfiltered;
-  delete grVQTimeUnfiltered;
-  
-  // Now we need to filter and then sample these signals
-  std::cout<<"Filtering.."<<std::endl;
-  TGraph* grVITimeUnsampled = BandPassFilter(grVITimeFirstSample, 0.0, sampleRate/2.0);
-  TGraph* grVQTimeUnsampled = BandPassFilter(grVQTimeFirstSample, 0.0, sampleRate/2.0);
-
-  delete grVITimeFirstSample;
-  delete grVQTimeFirstSample;
-  
-  // Now do sampling
-  // Use simple linear interpolation for the job
-  std::cout<<"Sampling..."<<std::endl;
-  grVITime = SampleWaveform(grVITimeUnsampled);
-  grVQTime = SampleWaveform(grVQTimeUnsampled);
-
-  delete grVITimeUnsampled;
-  delete grVQTimeUnsampled; 
-  
-  std::cout<<"Adding noise..."<<std::endl;
-  AddGaussianNoise(grVITime, noiseTerms);
-  AddGaussianNoise(grVQTime, noiseTerms);  
-}
-
-void rad::Signal::ProcessTimeChunk(InducedVoltage iv, LocalOscillator lo,
-				   double thisChunk, double lastChunk,
-				   std::vector<GaussianNoise> noiseTerms, 
-				   double &firstSampleTime, double &firstSample10Time,
-				   bool firstVoltage)
-{
-  iv.ResetVoltage();
-  iv.GenerateVoltage(lastChunk - timeDelay, thisChunk);
-
-  TGraph* grInputVoltageTemp = iv.GetVoltageGraph();
-
-  std::cout<<"Performing the downmixing..."<<std::endl;
-  TGraph* grVITimeUnfiltered = DownmixInPhase(grInputVoltageTemp, lo);
-  TGraph* grVQTimeUnfiltered = DownmixQuadrature(grInputVoltageTemp, lo);
-  delete grInputVoltageTemp;
-  
-  std::cout<<"First downsampling"<<std::endl;
-  TGraph* grVITimeFirstSample = SampleWaveform(grVITimeUnfiltered, 10*sampleRate, firstSample10Time);
-  TGraph* grVQTimeFirstSample = SampleWaveform(grVQTimeUnfiltered, 10*sampleRate, firstSample10Time);
-  delete grVITimeUnfiltered;
-  delete grVQTimeUnfiltered;
-  firstSample10Time = grVITimeFirstSample->GetPointX(grVITimeFirstSample->GetN()-1) + 1/(10*sampleRate);
-
-  // Check that the graph contains points
-  if (grVITimeFirstSample->GetN() == 0) {
-    std::cout<<"We have produced a graph with no sampled points! Finishing this signal chunk."<<std::endl;
-    delete grVITimeFirstSample;
-    delete grVQTimeFirstSample;    
-  }
-  else {  
-    // Now we need to filter and then sample these signals
-    std::cout<<"Filtering.."<<std::endl;
-    TGraph* grVITimeUnsampled = BandPassFilter(grVITimeFirstSample, 0.0, sampleRate/2.0);
-    TGraph* grVQTimeUnsampled = BandPassFilter(grVQTimeFirstSample, 0.0, sampleRate/2.0);
-
-    delete grVITimeFirstSample;
-    delete grVQTimeFirstSample;
-
-    TGraph *grVIDelayed = 0;
-    TGraph *grVQDelayed = 0;
-    if (timeDelay > 0)
-    {
-      grVIDelayed = DelayVoltage(grVITimeUnsampled, grVITimeUnsampled->GetPointX(0));
-      grVQDelayed = DelayVoltage(grVQTimeUnsampled, grVQTimeUnsampled->GetPointX(0));
-    }
-    else
-    {
-      grVIDelayed = (TGraph*)grVITimeUnsampled->Clone();
-      grVQDelayed = (TGraph*)grVQTimeUnsampled->Clone();
-    }
-    delete grVITimeUnsampled;
-    delete grVQTimeUnsampled;
-
-    // Now do sampling  
-    // Use simple linear interpolation for the job
-    std::cout<<"Sampling..."<<std::endl;
-    TGraph* grVITimeTemp = SampleWaveform(grVIDelayed, sampleRate, firstSampleTime);
-    TGraph* grVQTimeTemp = SampleWaveform(grVQDelayed, sampleRate, firstSampleTime);
-    delete grVIDelayed;
-    delete grVQDelayed;
-
-    firstSampleTime = grVITimeTemp->GetPointX(grVITimeTemp->GetN()-1) + 1/sampleRate;
-  
-    if (iv.GetLowerAntennaBandwidth() != -DBL_MAX || iv.GetUpperAntennaBandwidth() != DBL_MAX) {
-      std::cout<<"Implementing antenna bandwidth..."<<std::endl;
-      grVITimeTemp = BandPassFilter(grVITimeTemp, iv.GetLowerAntennaBandwidth()-lo.GetFrequency(), iv.GetUpperAntennaBandwidth()-lo.GetFrequency());
-      grVQTimeTemp = BandPassFilter(grVQTimeTemp, iv.GetLowerAntennaBandwidth()-lo.GetFrequency(), iv.GetUpperAntennaBandwidth()-lo.GetFrequency());
-    }
-
-    // Now add the information from these temporary graphs to the larger ones
-    if (firstVoltage) {
-      // We are filling this graph or a new section of the graph for the first time
-      for (int i = 0; i < grVITimeTemp->GetN(); i++) {
-	grVITime->SetPoint(grVITime->GetN(), grVITimeTemp->GetPointX(i), grVITimeTemp->GetPointY(i));
-	grVQTime->SetPoint(grVQTime->GetN(), grVQTimeTemp->GetPointX(i), grVQTimeTemp->GetPointY(i));
+    // Find the appropriate time
+    inputTree->GetEntry(firstGuessTInd);
+    double firstGuessTime{time};
+    unsigned int correctIndex{0};
+    if (firstGuessTime == tr) {
+      // Easy, no need for interpolation
+      TVector3 pos(xPos, yPos, zPos);
+      TVector3 vel(xVel, yVel, zVel);
+      TVector3 acc(xAcc, yAcc, zAcc);
+      ROOT::Math::XYZVector eField{
+          CalcEField(ant->GetAntennaPosition(), pos, vel, acc)};
+      TVector3 eField2(eField.X(), eField.Y(), eField.Z());
+      double voltage{(eField2.Dot(antenna[0]->GetETheta(pos)) +
+                      eField2.Dot(antenna[0]->GetEPhi(pos))) *
+                     antenna[0]->GetHEff()};
+      voltage /= 2.0;
+      return voltage;
+    } else if (firstGuessTime < tr) {
+      // We are searching upwards
+      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
+        inputTree->GetEntry(i);
+        double lowerPoint{time};
+        inputTree->GetEntry(i + 1);
+        double upperPoint{time};
+        if (tr > lowerPoint && tr < upperPoint) {
+          correctIndex = i;
+          break;
+        }
+      }
+    } else if (firstGuessTime > tr) {
+      // We are searching downwards
+      for (int i{firstGuessTInd}; i >= 0; i--) {
+        inputTree->GetEntry(i);
+        double lowerPoint{time};
+        inputTree->GetEntry(i + 1);
+        double upperPoint{time};
+        if (tr > lowerPoint && tr < upperPoint) {
+          correctIndex = i;
+          break;
+        }
       }
     }
-    else {
-      double tempStartTime = grVITimeTemp->GetPointX(0);
-      int startPnt = -1;
-      // Loop through main graph to find start points
-      for (int iMain = 0; iMain < grVITime->GetN(); iMain++) {
-	if (abs(tempStartTime - grVITime->GetPointX(iMain)) < 1e-11) {
-	  startPnt = iMain;
-	  break;
-	}
+
+    // We have the relevant index so we can now do some interpolation
+    std::vector<double> timeVals(4);
+    std::vector<double> vVals(4);
+    if (correctIndex == 0) {
+      timeVals.at(0) = 0;
+      vVals.at(0) = 0;
+    } else {
+      inputTree->GetEntry(correctIndex - 1);
+      timeVals.at(0) = time;
+      TVector3 pos(xPos, yPos, zPos);
+      TVector3 vel(xVel, yVel, zVel);
+      TVector3 acc(xAcc, yAcc, zAcc);
+      ROOT::Math::XYZVector eField{
+          CalcEField(antenna[0]->GetAntennaPosition(), pos, vel, acc)};
+      TVector3 eField2(eField.X(), eField.Y(), eField.Z());
+      double voltage{(eField2.Dot(antenna[0]->GetETheta(pos)) +
+                      eField2.Dot(antenna[0]->GetEPhi(pos))) *
+                     antenna[0]->GetHEff()};
+      voltage /= 2.0;
+      vVals.at(0) = voltage;
+    }
+
+    // Add the rest of the elements of the vectors
+    for (unsigned int iEl{1}; iEl <= 3; iEl++) {
+      inputTree->GetEntry(correctIndex + iEl - 1);
+      timeVals.at(iEl) = time;
+      TVector3 pos(xPos, yPos, zPos);
+      TVector3 vel(xVel, yVel, zVel);
+      TVector3 acc(xAcc, yAcc, zAcc);
+      ROOT::Math::XYZVector eField{
+          CalcEField(antenna[0]->GetAntennaPosition(), pos, vel, acc)};
+      TVector3 eField2(eField.X(), eField.Y(), eField.Z());
+      double voltage{(eField2.Dot(antenna[0]->GetETheta(pos)) +
+                      eField2.Dot(antenna[0]->GetEPhi(pos))) *
+                     antenna[0]->GetHEff()};
+      voltage /= 2.0;
+      vVals.at(iEl) = voltage;
+    }
+
+    // Now actually do the cubic interpolation
+    double vInterp{CubicInterpolation(timeVals, vVals, tr)};
+    return vInterp;
+  }
+}
+
+void rad::Signal::AddNewTimes(double time, TVector3 ePos) {
+  timeVec.push_back(time);
+
+  // Now calculate advanced time for each antenna point
+  for (size_t i{0}; i < antenna.size(); i++) {
+    double ta{time +
+              (ePos - antenna.at(i)->GetAntennaPosition()).Mag() / TMath::C()};
+    advancedTimeVec.at(i).push_back(ta);
+  }
+
+  // If the deques are getting too long, get rid of the first element
+  if (timeVec.size() > 10000) {
+    timeVec.pop_front();
+    for (size_t i{0}; i < antenna.size(); i++) {
+      advancedTimeVec.at(i).pop_front();
+    }
+  }
+}
+
+double rad::Signal::GetRetardedTime(double ts, unsigned int antInd) {
+  unsigned int chosenInd{0};
+
+  // Check if the sample time is before the signal has reached the antenna
+  if (ts < advancedTimeVec.at(antInd).at(0)) {
+    return -1;
+  } else {
+    // Find the values which the sample time lives in between
+    // Firstly get a good first guess of where to start looking
+    unsigned int firstGuess{GetFirstGuessPoint(ts, antInd)};
+    // Check which direction to search in
+    if (advancedTimeVec.at(antInd).at(firstGuess) < ts) {
+      // We are searching upwards
+      for (size_t i{firstGuess}; i < advancedTimeVec.at(antInd).size() - 2;
+           i++) {
+        // Aim to find the advanced time values the ssample point lies between
+        if (ts > advancedTimeVec.at(antInd).at(i) &&
+            ts < advancedTimeVec.at(antInd).at(i + 1)) {
+          chosenInd = i;
+          break;
+        }
       }
-    
-      // Now add the points to the main graph
-      for (int i = 0; i < grVITimeTemp->GetN(); i++) {
-	// We are adding to existing voltages
-	double viTmp = grVITime->GetPointY(startPnt + i);
-	double vqTmp = grVQTime->GetPointY(startPnt + i);
-	viTmp += grVITimeTemp->GetPointY(i);
-	vqTmp += grVQTimeTemp->GetPointY(i);
-	grVITime->SetPointY(startPnt + i, viTmp);
-	grVQTime->SetPointY(startPnt + i, vqTmp);
+    } else {
+      // We are searching downwards
+      for (size_t i{firstGuess}; i >= 0; i--) {
+        if (ts > advancedTimeVec.at(antInd).at(i) &&
+            ts < advancedTimeVec.at(antInd).at(i + 1)) {
+          chosenInd = i;
+          break;
+        }
       }
     }
-      
-    delete grVITimeTemp;
-    delete grVQTimeTemp;
-  } // Sampled graph has non-zero size
-}
 
-rad::Signal::Signal(InducedVoltage iv, LocalOscillator lo, double srate,
-		                std::vector<GaussianNoise> noiseTerms, 
-                    double maxTime, double delay) 
-{
-  sampleRate = srate;
-  timeDelay = delay;
+    // Now we have the relevant index, we need to interpolate
+    // This should be the retarded time
 
-  // Make sure the noise terms are all set up correctly
-  for (int iNoise = 0; iNoise < noiseTerms.size(); iNoise++) {
-    (noiseTerms.at(iNoise)).SetSampleFreq(sampleRate);
-    (noiseTerms.at(iNoise)).SetSigma();
-  }
-
-  // The actual output graphs
-  grVITime = new TGraph();
-  grVQTime = new TGraph();  
-  setGraphAttr(grVITime);
-  setGraphAttr(grVQTime);
-  grVITime->GetYaxis()->SetTitle("V_{I}");
-  grVQTime->GetYaxis()->SetTitle("V_{Q}");
-  grVITime->GetXaxis()->SetTitle("Time [s]");
-  grVQTime->GetXaxis()->SetTitle("Time [s]");
-
-  // Split the signal up into chunks to avoid memory issues
-  if (maxTime < 0) maxTime = iv.GetFinalTime();
-  
-  double lastChunk = 0;
-  double thisChunk = lastChunk + iv.GetChunkSize();
-  if (thisChunk > maxTime) thisChunk = maxTime;
-
-  double thisSample = 0;
-  double this10Sample = 0;
-  
-  while (thisChunk <= maxTime && thisChunk != lastChunk) {
-    ProcessTimeChunk(iv, lo, thisChunk, lastChunk, noiseTerms, thisSample, this10Sample);
-    lastChunk = thisChunk;
-    thisChunk += iv.GetChunkSize();
-    if (thisChunk > maxTime) thisChunk = maxTime;
-  }
-
-  if (noiseTerms.size() > 0) {
-    std::cout<<"Adding noise..."<<std::endl;
-    AddGaussianNoise(grVITime, noiseTerms);
-    AddGaussianNoise(grVQTime, noiseTerms);
-  }
-}
-
-rad::Signal::Signal(std::vector<InducedVoltage> iv, LocalOscillator lo, double srate,
-		                std::vector<GaussianNoise> noiseTerms, 
-                    double maxTime, double delay)
-{
-  sampleRate = srate;
-  timeDelay = delay;
-
-  // Make sure the noise terms are all set up correctly
-  for (int iNoise = 0; iNoise < noiseTerms.size(); iNoise++) {
-    (noiseTerms.at(iNoise)).SetSampleFreq(sampleRate);
-    (noiseTerms.at(iNoise)).SetSigma();
-  }
-
-  // The actual output graphs
-  grVITime = new TGraph();
-  grVQTime = new TGraph();  
-  setGraphAttr(grVITime);
-  setGraphAttr(grVQTime);
-  grVITime->GetYaxis()->SetTitle("V_{I}");
-  grVQTime->GetYaxis()->SetTitle("V_{Q}");
-  grVITime->GetXaxis()->SetTitle("Time [s]");
-  grVQTime->GetXaxis()->SetTitle("Time [s]");
-
-  // Process each voltage one at a time
-  for (int iVolt = 0; iVolt < iv.size(); iVolt++) {
-  
-    if (maxTime < 0) maxTime = iv[iVolt].GetFinalTime();
-
-    // Split the signal up into chunks to avoid memory issues
-    double lastChunk = 0;
-    double thisChunk = lastChunk + iv[iVolt].GetChunkSize();
-    if (thisChunk > maxTime) thisChunk = maxTime;
-
-    double thisSample = 0;
-    double this10Sample = 0;
-
-    while (thisChunk <= maxTime && thisChunk != lastChunk) {
-      bool firstVoltage = (iVolt == 0);
-      ProcessTimeChunk(iv[iVolt], lo, thisChunk, lastChunk, noiseTerms, thisSample, this10Sample, firstVoltage);
-      lastChunk = thisChunk;
-      thisChunk += iv[iVolt].GetChunkSize();
-      if (thisChunk > maxTime) thisChunk = maxTime;
-    }    
-  } // Loop over InducedVoltage vector
-
-  if (noiseTerms.size() > 0) {
-    std::cout<<"Adding noise..."<<std::endl;
-    AddGaussianNoise(grVITime, noiseTerms);
-    AddGaussianNoise(grVQTime, noiseTerms);
-  }
-}
-
-rad::Signal::Signal(const Signal &s1) {
-  sampleRate = s1.sampleRate;
-  grVITime = (TGraph*)s1.grVITime->Clone();
-  grVQTime = (TGraph*)s1.grVQTime->Clone();
-}
-
-TGraph* rad::Signal::GetVITimeDomain(int firstPoint, int lastPoint) {
-  if (firstPoint < 0) firstPoint = 0;
-  if (lastPoint < 0 ) lastPoint = grVITime->GetN() - 1;
-  
-  TGraph* gr = new TGraph();
-  setGraphAttr(gr);
-  gr->GetXaxis()->SetTitle("Time [s]");
-  gr->GetYaxis()->SetTitle("V_{I} [V]");
-
-  for (int i = firstPoint; i <= lastPoint; i++) {
-    gr->SetPoint(gr->GetN(), grVITime->GetPointX(i), grVITime->GetPointY(i));
-  }
-  return gr;
-}
-
-TGraph* rad::Signal::GetVQTimeDomain(int firstPoint, int lastPoint) {
-  if (firstPoint < 0) firstPoint = 0;
-  if (lastPoint < 0 ) lastPoint = grVQTime->GetN() - 1;
-  
-  TGraph* gr = new TGraph();
-  setGraphAttr(gr);
-  gr->GetXaxis()->SetTitle("Time [s]");
-  gr->GetYaxis()->SetTitle("V_{Q} [V]");
-
-  for (int i = firstPoint; i <= lastPoint; i++) {
-    gr->SetPoint(gr->GetN(), grVQTime->GetPointX(i), grVQTime->GetPointY(i));
-  }
-  return gr;
-}
-
-TGraph* rad::Signal::DownmixInPhase(TGraph* grInput, LocalOscillator lo) {
-  TGraph* grOut = new TGraph();
-  for (int i = 0; i < grInput->GetN(); i++) {
-    grOut->SetPoint(i, grInput->GetPointX(i), grInput->GetPointY(i)*lo.GetInPhaseComponent(grInput->GetPointX(i)));
-  }
-  return grOut;
-}
-
-TGraph* rad::Signal::DownmixQuadrature(TGraph* grInput, LocalOscillator lo) {
-  TGraph* grOut = new TGraph();
-  for (int i = 0; i < grInput->GetN(); i++) {
-    grOut->SetPoint(i, grInput->GetPointX(i), grInput->GetPointY(i)*lo.GetQuadratureComponent(grInput->GetPointX(i)));
-  }
-  return grOut;
-}
-
-TGraph* rad::Signal::SampleWaveform(TGraph* grInput) {
-  TGraph* grOut = new TGraph();
-  double sampleSpacing = 1.0 / sampleRate;
-  double sampleTime = grInput->GetPointX(0);
-
-  for (int i = 0; i < grInput->GetN(); i++) {
-    double time = grInput->GetPointX(i);
-    if (time < sampleTime) continue;
-    else if (i == 0) {
-      double calcV = grInput->GetPointY(0);
-      grOut->SetPoint(grOut->GetN(), sampleTime, calcV);
-      sampleTime += sampleSpacing;
+    std::vector<double> timeVals(4);
+    std::vector<double> advancedTimeVals(4);
+    if (chosenInd == 0) {
+      timeVals.at(0) = 0;
+      advancedTimeVals.at(0) = 0;
+    } else {
+      timeVals.at(0) = timeVec.at(chosenInd - 1);
+      advancedTimeVals.at(0) = advancedTimeVec.at(antInd).at(chosenInd - 1);
     }
-    else {
-      // Sample the distribution using linear interpolation
-      std::vector<double> tVals{grInput->GetPointX(i - 3), grInput->GetPointX(i - 2),
-                                grInput->GetPointX(i - 1), grInput->GetPointX(i)};
-      std::vector<double> vVals{grInput->GetPointY(i - 3), grInput->GetPointY(i - 2),
-                                grInput->GetPointY(i - 1), grInput->GetPointY(i)};
-      double calcV{CubicInterpolation(tVals, vVals, sampleTime)};
-      grOut->SetPoint(grOut->GetN(), sampleTime, calcV);
-      sampleTime += sampleSpacing;      
-    }
-  }
-  
-  return grOut;
-}
-
-TGraph* rad::Signal::SampleWaveform(TGraph* grInput, const double sRate) {
-  TGraph* grOut = new TGraph();
-  double sampleSpacing = 1.0 / sRate;
-  double sampleTime = grInput->GetPointX(0);
-  
-  for (int i = 0; i < grInput->GetN(); i++) {
-    double time = grInput->GetPointX(i);
-    if (time < sampleTime) continue;
-    else if (i == 0) {
-      double calcV = grInput->GetPointY(0);
-      grOut->SetPoint(grOut->GetN(), sampleTime, calcV);
-      sampleTime += sampleSpacing;
-    }
-    else {
-      // Sample the distribution using linear interpolation
-      double calcV = grInput->GetPointY(i-1) + (sampleTime - grInput->GetPointX(i-1)) * (grInput->GetPointY(i) - grInput->GetPointY(i-1)) / (time - grInput->GetPointX(i-1));
-      grOut->SetPoint(grOut->GetN(), sampleTime, calcV);
-      sampleTime += sampleSpacing;      
-    }
-  }
-
-  return grOut;
-}
-
-TGraph* rad::Signal::SampleWaveform(TGraph* grInput, const double sRate, const double firstSampleTime) {
-  TGraph* grOut = new TGraph();
-  double sampleSpacing = 1.0 / sRate;
-  double sampleTime = firstSampleTime;
- 
-  for (int i = 0; i < grInput->GetN(); i++) {
-    double time = grInput->GetPointX(i);
-    if (time < sampleTime) continue;
-    else if (i == 0) {
-      double calcV = grInput->GetPointY(0);
-      grOut->SetPoint(grOut->GetN(), sampleTime, calcV);
-      sampleTime += sampleSpacing;
-    }
-    else {
-      // Sample the distribution using linear interpolation
-      double calcV = grInput->GetPointY(i-1) + (sampleTime - grInput->GetPointX(i-1)) * (grInput->GetPointY(i) - grInput->GetPointY(i-1)) / (time - grInput->GetPointX(i-1));
-      grOut->SetPoint(grOut->GetN(), sampleTime, calcV);
-      sampleTime += sampleSpacing;      
-    }
-  }
-
-  return grOut;
-}
-
-TGraph *rad::Signal::DelayVoltage(TGraph *grIn, double startTime)
-{
-  TGraph *grOut = new TGraph();
-  TSpline3 *sp = new TSpline3("sp", grIn);
-  for (int iPnt{0}; iPnt < grIn->GetN(); iPnt++)
-  {
-    if (grIn->GetPointX(0) < startTime || 
-        grIn->GetPointX(iPnt) - timeDelay < grIn->GetPointX(0)) 
-    {
-      continue;
-    }
-    else
-    {
-      double theTime{grIn->GetPointX(iPnt)};
-      grOut->SetPoint(grOut->GetN(), theTime, sp->Eval(theTime - timeDelay));
-    }
-  }
-
-  delete sp;
-  return grOut;
-}
-
-void rad::Signal::AddGaussianNoise(TGraph* grInput, std::vector<GaussianNoise> noiseTerms,
-				   bool IsComponent) {
-  double sampleFreqCalc = 1 / (grInput->GetPointX(1) - grInput->GetPointX(0));
-  for (int noise = 0; noise < noiseTerms.size(); noise++) {
-    (noiseTerms.at(noise)).SetSampleFreq(sampleFreqCalc);
-    (noiseTerms.at(noise)).SetSigma();
-  }
-  
-  for (int i = 0; i < grInput->GetN(); i++) {
-    double voltage = grInput->GetPointY(i);
-    for (int noise = 0; noise < noiseTerms.size(); noise++) {
-      voltage += (noiseTerms.at(noise)).GetNoiseVoltage(IsComponent);  
-    }
-    grInput->SetPointY(i, voltage);
+    timeVals.at(1) = timeVec.at(chosenInd);
+    timeVals.at(2) = timeVec.at(chosenInd + 1);
+    timeVals.at(3) = timeVec.at(chosenInd + 2);
+    advancedTimeVals.at(1) = advancedTimeVec.at(antInd).at(chosenInd);
+    advancedTimeVals.at(2) = advancedTimeVec.at(antInd).at(chosenInd + 1);
+    advancedTimeVals.at(3) = advancedTimeVec.at(antInd).at(chosenInd + 2);
+    return CubicInterpolation(advancedTimeVals, timeVals, ts);
   }
 }
 
-TGraph* rad::Signal::GetVIPowerNorm(const double loadResistance, int firstPoint, int lastPoint) {
-  TGraph* grTime = GetVITimeDomain(firstPoint, lastPoint);
-  TGraph* grOut = MakePowerSpectrumNorm(grTime);
-  delete grTime;
-  ScaleGraph(grOut, 1/loadResistance);
-  setGraphAttr(grOut);
-  grOut->GetXaxis()->SetTitle("Frequency [Hz]");
-  grOut->GetYaxis()->SetTitle("#frac{V_{I}^{2}}{R} #times (#Deltat)^{2} [W s^{2}]");
-  return grOut;
+void rad::Signal::SetUpTree(TString filePath) {
+  // Open the input file
+  OpenInputFile(filePath);
+
+  inputTree = (TTree*)inputFile->Get("tree");
+  inputTree->SetBranchAddress("time", &time);
+  inputTree->SetBranchAddress("xPos", &xPos);
+  inputTree->SetBranchAddress("yPos", &yPos);
+  inputTree->SetBranchAddress("zPos", &zPos);
+  inputTree->SetBranchAddress("xVel", &xVel);
+  inputTree->SetBranchAddress("yVel", &yVel);
+  inputTree->SetBranchAddress("zVel", &zVel);
+  inputTree->SetBranchAddress("xAcc", &xAcc);
+  inputTree->SetBranchAddress("yAcc", &yAcc);
+  inputTree->SetBranchAddress("zAcc", &zAcc);
 }
 
-TGraph* rad::Signal::GetVQPowerNorm(const double loadResistance, int firstPoint, int lastPoint) {
-  TGraph* grTime = GetVQTimeDomain(firstPoint, lastPoint);
-  TGraph* grOut = MakePowerSpectrumNorm(grTime);
-  delete grTime;
-  ScaleGraph(grOut, 1/loadResistance);
-  setGraphAttr(grOut);
-  grOut->GetXaxis()->SetTitle("Frequency [Hz]");
-  grOut->GetYaxis()->SetTitle("#frac{V_{Q}^{2}}{R} #times (#Deltat)^{2} [W s^{2}]");
-  return grOut;
+void rad::Signal::OpenInputFile(TString filePath) {
+  // Check if input file opens properly
+  inputFile = std::make_unique<TFile>(filePath, "READ");
+  if (!inputFile->IsOpen()) {
+    std::cout << "Couldn't open file! Exiting.\n";
+    exit(1);
+  }
 }
 
-TGraph* rad::Signal::GetVIPowerPeriodogram(const double loadResistance, int firstPoint, int lastPoint) {
-  TGraph* grTime = GetVITimeDomain(firstPoint, lastPoint);
-  TGraph* grOut = MakePowerSpectrumPeriodogram(grTime);
-  delete grTime;
+unsigned int rad::Signal::GetFirstGuessPoint(double ts, unsigned int antInd) {
+  const size_t taVecSize{advancedTimeVec.at(antInd).size()};
+  const double pntsPerTime{double(taVecSize) /
+                           (advancedTimeVec.at(antInd).at(taVecSize - 1) -
+                            advancedTimeVec.at(antInd).at(0))};
+
+  size_t firstGuessPnt{
+      size_t(round(pntsPerTime * (ts - advancedTimeVec.at(antInd).at(0))))};
+  if (firstGuessPnt < 0) firstGuessPnt = 0;
+  return firstGuessPnt;
+}
+
+void rad::Signal::CloseInputFile() {
+  delete inputTree;
+  inputFile->Close();
+}
+
+void rad::Signal::DownmixVoltages(double& vi, double& vq, double t) {
+  vi *= localOsc.GetInPhaseComponent(t);
+  vq *= localOsc.GetQuadratureComponent(t);
+}
+
+void rad::Signal::AddNoise() {
+  // Set up the noise terms
+  for (auto& n : noiseVec) {
+    n.SetSampleFreq(sampleRate);
+    n.SetSigma();
+  }
+
+  // Now actually add the noise
+  for (int i{0}; i < grVITime->GetN(); i++) {
+    double vi{grVITime->GetPointY(i)};
+    double vq{grVQTime->GetPointY(i)};
+    for (auto& n : noiseVec) {
+      vi += n.GetNoiseVoltage(true);
+      vq += n.GetNoiseVoltage(true);
+    }
+    grVITime->SetPointY(i, vi);
+    grVQTime->SetPointY(i, vq);
+  }
+}
+
+TGraph* rad::Signal::GetVIPowerPeriodogram(double loadResistance) {
+  TGraph* grOut = MakePowerSpectrumPeriodogram(grVITime);
   setGraphAttr(grOut);
   grOut->SetTitle("V_{I}; Frequency [Hz]; Power [W]");
-  ScaleGraph(grOut, 1/loadResistance);
+  ScaleGraph(grOut, 1 / loadResistance);
   return grOut;
 }
 
-TGraph* rad::Signal::GetVQPowerPeriodogram(const double loadResistance, int firstPoint, int lastPoint) {
-  TGraph* grTime = GetVQTimeDomain(firstPoint, lastPoint);
-  TGraph* grOut = MakePowerSpectrumPeriodogram(grTime);
-  delete grTime;
+TGraph* rad::Signal::GetVQPowerPeriodogram(double loadResistance) {
+  TGraph* grOut = MakePowerSpectrumPeriodogram(grVQTime);
   setGraphAttr(grOut);
   grOut->SetTitle("V_{Q}; Frequency [Hz]; Power [W]");
-  ScaleGraph(grOut, 1/loadResistance);
+  ScaleGraph(grOut, 1 / loadResistance);
   return grOut;
 }
 
-TH2D* rad::Signal::GetVISpectrogram(const double loadResistance, const int NSamplesPerTimeBin) {
-  // Get the number of time bins given the specified NSamplesPerTimeBin
-  const int nTimeBins = int(floor(double(grVITime->GetN()) / double(NSamplesPerTimeBin)));
-  const double firstTime = grVITime->GetPointX(0);
-  const double lastTime  = grVITime->GetPointX(nTimeBins * NSamplesPerTimeBin - 1);
-  const int nFreqBins = (NSamplesPerTimeBin/2)+1;
-  const double deltaF = 1.0 / ((1.0/sampleRate) * NSamplesPerTimeBin);
-  const double lastFreq = nFreqBins * deltaF;
-
-  TH2D* h2 = new TH2D("h2", "Spectrogram V_{I}; Time [s]; Frequency [Hz]; Power [W]", nTimeBins, firstTime, lastTime, nFreqBins, 0, lastFreq);
-  SetHistAttr(h2);
-  // Loop through the time bins and generate the power spectrum at each point
-  for (int t = 1; t <= nTimeBins; t++) {
-    TGraph* grPower = GetVIPowerPeriodogram(loadResistance, (t-1)*NSamplesPerTimeBin, t*NSamplesPerTimeBin-1);
-    // Add this data to the histogram
-    for (int i = 0; i < grPower->GetN(); i++) {
-      h2->SetBinContent(t, i+1, grPower->GetPointY(i));
-    }
-    delete grPower;
-  }
-  
-  return h2;
-}
-
-TH2D* rad::Signal::GetVQSpectrogram(const double loadResistance, const int NSamplesPerTimeBin) {
-  // Get the number of time bins given the specified NSamplesPerTimeBin
-  const int nTimeBins = int(floor(double(grVQTime->GetN()) / double(NSamplesPerTimeBin)));
-  const double firstTime = grVQTime->GetPointX(0);
-  const double lastTime  = grVQTime->GetPointX(nTimeBins * NSamplesPerTimeBin - 1);
-  const int nFreqBins = (NSamplesPerTimeBin/2)+1;
-  const double deltaF = 1.0 / ((1.0/sampleRate) * NSamplesPerTimeBin);
-  const double lastFreq = nFreqBins * deltaF;
-
-  TH2D* h2 = new TH2D("h2", "Spectrogram V_{I}; Time [s]; Frequency [Hz]; Power [W]", nTimeBins, firstTime, lastTime, nFreqBins, 0, lastFreq);
-  SetHistAttr(h2);
-  // Loop through the time bins and generate the power spectrum at each point
-  for (int t = 1; t <= nTimeBins; t++) {
-    TGraph* grPower = GetVQPowerPeriodogram(loadResistance, (t-1)*NSamplesPerTimeBin, t*NSamplesPerTimeBin-1);
-    // Add this data to the histogram
-    for (int i = 0; i < grPower->GetN(); i++) {
-      h2->SetBinContent(t, i+1, grPower->GetPointY(i));
-    }
-    delete grPower;
-  }
-  
-  return h2;
-}
-
-TH2D* rad::Signal::GetVISparseSpectrogram(const double loadResistance, const int NSamplesPerTimeBin, const double ThresholdPower) {
-  TH2D* hSpec = GetVISpectrogram(loadResistance, NSamplesPerTimeBin);
-  TH2D* h2 = new TH2D("h2", "Sparse spectrogram V_{I}; Time [s]; Frequency [Hz]", hSpec->GetNbinsX(), hSpec->GetXaxis()->GetBinLowEdge(1), hSpec->GetXaxis()->GetBinUpEdge(hSpec->GetNbinsX()), hSpec->GetNbinsY(), hSpec->GetYaxis()->GetBinLowEdge(1), hSpec->GetYaxis()->GetBinUpEdge(hSpec->GetNbinsY()));
-
-  for (int x = 1; x <= hSpec->GetNbinsX(); x++) {
-    for (int y = 1; y <= hSpec->GetNbinsY(); y++) {
-      double binPower = hSpec->GetBinContent(x, y);
-      (binPower > ThresholdPower) ? h2->SetBinContent(x, y, 1) : h2->SetBinContent(x, y, 0);  
-    }
-  }
-  delete hSpec;
-  
-  return h2;
-}
-
-TH2D* rad::Signal::GetVQSparseSpectrogram(const double loadResistance, const int NSamplesPerTimeBin, const double ThresholdPower) {
-  TH2D* hSpec = GetVQSpectrogram(loadResistance, NSamplesPerTimeBin);
-  TH2D* h2 = new TH2D("h2", "Sparse spectrogram V_{Q}; Time [s]; Frequency [Hz]", hSpec->GetNbinsX(), hSpec->GetXaxis()->GetBinLowEdge(1), hSpec->GetXaxis()->GetBinUpEdge(hSpec->GetNbinsX()), hSpec->GetNbinsY(), hSpec->GetYaxis()->GetBinLowEdge(1), hSpec->GetYaxis()->GetBinUpEdge(hSpec->GetNbinsY()));
-
-  for (int x = 1; x <= hSpec->GetNbinsX(); x++) {
-    for (int y = 1; y <= hSpec->GetNbinsY(); y++) {
-      double binPower = hSpec->GetBinContent(x, y);
-      (binPower > ThresholdPower) ? h2->SetBinContent(x, y, 1) : h2->SetBinContent(x, y, 0);  
-    }
-  }
-  delete hSpec;
-  
-  return h2;
-}
-
-TH2D* rad::Signal::GetVISpectrogramNorm(const double loadResistance, const int NSamplesPerTimeBin) {
-  // Get the number of time bins given the specified NSamplesPerTimeBin
-  const int nTimeBins = int(floor(double(grVITime->GetN()) / double(NSamplesPerTimeBin)));
-  const double firstTime = grVITime->GetPointX(0);
-  const double lastTime  = grVITime->GetPointX(nTimeBins * NSamplesPerTimeBin - 1);
-  const int nFreqBins = (NSamplesPerTimeBin/2)+1;
-  const double deltaF = 1.0 / ((1.0/sampleRate) * NSamplesPerTimeBin);
-  const double lastFreq = nFreqBins * deltaF;
-
-  TH2D* h2 = new TH2D("h2", "Spectrogram V_{I}; Time [s]; Frequency [Hz]; #frac{V_{I}^{2}}{R} #times (#Delta t)^{2} [W s^{2}]", nTimeBins, firstTime, lastTime, nFreqBins, 0, lastFreq);
-  SetHistAttr(h2);
-  // Loop through the time bins and generate the power spectrum at each point
-  for (int t = 1; t <= nTimeBins; t++) {
-    TGraph* grPower = GetVIPowerNorm(loadResistance, (t-1)*NSamplesPerTimeBin, t*NSamplesPerTimeBin-1);
-    // Add this data to the histogram
-    for (int i = 0; i < grPower->GetN(); i++) {
-      h2->SetBinContent(t, i+1, grPower->GetPointY(i));
-    }
-    delete grPower;
-  }
-  
-  return h2;
-}
-
-TH2D* rad::Signal::GetVQSpectrogramNorm(const double loadResistance, const int NSamplesPerTimeBin) {
-  // Get the number of time bins given the specified NSamplesPerTimeBin
-  const int nTimeBins = int(floor(double(grVQTime->GetN()) / double(NSamplesPerTimeBin)));
-  const double firstTime = grVQTime->GetPointX(0);
-  const double lastTime  = grVQTime->GetPointX(nTimeBins * NSamplesPerTimeBin - 1);
-  const int nFreqBins = (NSamplesPerTimeBin/2)+1;
-  const double deltaF = 1.0 / ((1.0/sampleRate) * NSamplesPerTimeBin);
-  const double lastFreq = nFreqBins * deltaF;
-
-  TH2D* h2 = new TH2D("h2", "Spectrogram V_{Q}; Time [s]; Frequency [Hz]; #frac{V_{Q}^{2}}{R} #times (#Delta t)^{2} [W s^{2}]", nTimeBins, firstTime, lastTime, nFreqBins, 0, lastFreq);
-  SetHistAttr(h2);
-  // Loop through the time bins and generate the power spectrum at each point
-  for (int t = 1; t <= nTimeBins; t++) {
-    TGraph* grPower = GetVQPowerNorm(loadResistance, (t-1)*NSamplesPerTimeBin, t*NSamplesPerTimeBin-1);
-    // Add this data to the histogram
-    for (int i = 0; i < grPower->GetN(); i++) {
-      h2->SetBinContent(t, i+1, grPower->GetPointY(i));
-    }
-    delete grPower;
-  }
-  
-  return h2;
-}
-
-TGraph* rad::Signal::GetDechirpedSignalTimeDomain(const double alpha, int firstPoint, int lastPoint)
-{
-  TGraph* vi = GetVITimeDomain(firstPoint, lastPoint);
-  TGraph* vq = GetVQTimeDomain(firstPoint, lastPoint);
-
-  TGraph* gr = new TGraph();
-  setGraphAttr(gr);
-  gr->GetXaxis()->SetTitle("Time [s]");
-  gr->GetYaxis()->SetTitle("Voltage [V]");
-
-  for (int i = 0; i < vi->GetN(); i++) {
-    double time = vi->GetPointX(i);
-    double dechirpRe = TMath::Cos( -alpha*time*time/2 );
-    double dechirpIm = TMath::Sin( -alpha*time*time/2 );
-    double dechirpedSignal = vi->GetPointY(i)*dechirpRe - vq->GetPointY(i)*dechirpIm;
-    gr->SetPoint(gr->GetN(), time, dechirpedSignal);
-  }
-  delete vi;
-  delete vq;
-  
-  return gr;
-}
-
-TH2D* rad::Signal::GetDechirpedSpectrogram(const double loadResistance, const int NSamplesPerTimeBin, const double alpha)
-{  
-  // Get the number of time bins given the specified NSamplesPerTimeBin
-  TGraph* grTimeTest = GetVITimeDomain();
-  const int nTimeBins = int(floor(double(grTimeTest->GetN()) / double(NSamplesPerTimeBin)));
-  const double firstTime = grTimeTest->GetPointX(0);
-  const double lastTime  = grTimeTest->GetPointX(nTimeBins * NSamplesPerTimeBin - 1);
-  const int nFreqBins = (NSamplesPerTimeBin/2)+1;
-  const double deltaF = 1.0 / ((1.0/sampleRate) * NSamplesPerTimeBin);
-  const double lastFreq = nFreqBins * deltaF;
-  delete grTimeTest;
-  
-  TH2D* h2 = new TH2D("h2", "Dechirped spectrogram; Time [s]; Frequency [Hz]; Power [W]", nTimeBins, firstTime, lastTime, nFreqBins, 0, lastFreq);
-  SetHistAttr(h2);
-
-  // Loop through the time bins and generate the power spectrum at each point
-  for (int t = 1; t <= nTimeBins; t++) {
-    // First get the dechirped time domain signal
-    TGraph* grTime = GetDechirpedSignalTimeDomain(alpha, (t-1)*NSamplesPerTimeBin, t*NSamplesPerTimeBin-1);
-    TGraph* grPower = MakePowerSpectrumPeriodogram(grTime);
-    delete grTime;
-    ScaleGraph(grPower, 1.0 / loadResistance);
-    
-    // Add this data to the histogram
-    for (int i = 0; i < grPower->GetN(); i++) {
-      h2->SetBinContent(t, i+1, grPower->GetPointY(i));
-    }
-    delete grPower;
-  }
-  
-  return h2;
+void rad::Signal::CreateVoltageGraphs() {
+  grVITime = new TGraph();
+  grVQTime = new TGraph();
+  setGraphAttr(grVITime);
+  setGraphAttr(grVQTime);
+  grVITime->GetYaxis()->SetTitle("V_{I}");
+  grVQTime->GetYaxis()->SetTitle("V_{Q}");
+  grVITime->GetXaxis()->SetTitle("Time [s]");
+  grVQTime->GetXaxis()->SetTitle("Time [s]");
 }

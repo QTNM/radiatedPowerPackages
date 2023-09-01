@@ -164,9 +164,7 @@ int main(int argc, char *argv[]) {
   LocalOscillator lo(2 * TMath::Pi() * loFreq);
   GaussianNoise noiseFunc(noiseTemp, loadResistance);
 
-  InducedVoltage ivSig(trackFile, antennaArray, true);
-
-  Signal sig(ivSig, lo, sampleRate, {noiseFunc}, tAcq);
+  Signal sig(trackFile, antennaArray, lo, sampleRate, {noiseFunc});
   std::cout << "Created the signal with noise" << std::endl;
   TGraph *grVSig = sig.GetVITimeDomain();
   TGraph *grVSigPgram = sig.GetVIPowerPeriodogram(loadResistance);

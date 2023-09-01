@@ -20,9 +20,6 @@ target_link_libraries(rayleighDistributionChecks PUBLIC BasicFunctions SignalPro
 add_executable(writeTrajectory writeTrajectory.cxx)
 target_link_libraries(writeTrajectory PUBLIC ElectronDynamics ${ROOT_LIBRARIES})
 
-add_executable(idealCaseSpectrogram idealCaseSpectrogram.cxx)
-target_link_libraries(idealCaseSpectrogram PUBLIC SignalProcessing Antennas ${ROOT_LIBRARIES})
-
 add_executable(singleBinPower singleBinPower.cxx)
 target_link_libraries(singleBinPower PUBLIC SignalProcessing Antennas BasicFunctions ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
 
