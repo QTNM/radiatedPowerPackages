@@ -57,5 +57,7 @@ add_subdirectory(ElectronDynamics)
 
 add_subdirectory(Waveguides)
 
+add_subdirectory(Scattering)
+
 add_subdirectory(executables)
 

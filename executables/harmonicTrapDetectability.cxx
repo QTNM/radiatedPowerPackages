@@ -171,8 +171,8 @@ int main(int argc, char* argv[]) {
   GaussianNoise noise1(noiseTemp, loadResistance);
 
   InducedVoltage iv(trackFilePath, antennaArray, true);
-  Signal sig(iv, lo, sampleRate, {noise1}, tAcq);
-  Signal sigNoNoise(iv, lo, sampleRate, {}, tAcq);
+  Signal sig(trackFilePath, antennaArray, lo, sampleRate, {noise1});
+  Signal sigNoNoise(trackFilePath, antennaArray, lo, sampleRate, {});
 
   TGraph* grVSig = sig.GetVITimeDomain();
   TGraph* grVSigPgram = sig.GetVIPowerPeriodogram(loadResistance);

@@ -24,6 +24,8 @@ void setGraphAttr(TGraph &gr);
 
 void SetHistAttr(TH1 *h);
 
+void SetHistAttr(TH1 &h);
+
 void SetHistAttr(std::unique_ptr<TH1D> &h);
 
 void SetHistAttr(TH2 *h);
@@ -75,6 +77,11 @@ TGraph *MakePowerSpectrumNorm(const TGraph *grWave);
 // Produdces power spectrum normalised to the mean squared amplitude of the time
 // domain
 TGraph *MakePowerSpectrumPeriodogram(const TGraph *grWave);
+
+/// @brief Produces power spectrum
+/// @param grWave Input time series graph
+/// @return TGraph of periodogram
+TGraph MakePowerSpectrumPeriodogram(const TGraph &grWave);
 
 // Integrate the power spectrum
 double IntegratePowerNorm(const TGraph *grFFT, Int_t firstBin = -1,
@@ -246,6 +253,15 @@ double GetBesselPrimeZero(unsigned int n, unsigned int m);
 /// @param m Particle mass in kg
 /// @return Larmor power in Watts
 double CalcLarmorPower(double ke, double B, double theta, double m = ME);
+
+/// @brief Rotate vector to different coordinate system
+/// @param v Vector to be rotated
+/// @param newX X axis of frame to be rotated to
+/// @param newY Y axis of frame to be rotated to
+/// @param newZ Z axis of frame to be rotated to
+/// @return 3-vector of rotated vector
+TVector3 RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
+                        TVector3 newZ);
 }  // namespace rad
 
 #endif

@@ -40,6 +40,9 @@ void rad::setGraphAttr(TGraph &gr) {
   gr.GetXaxis()->SetLabelSize(0.05);
   gr.GetYaxis()->SetLabelSize(0.05);
   gr.SetLineWidth(2);
+  gr.SetLineColor(kBlack);
+  gr.SetMarkerStyle(20);
+  gr.SetMarkerColor(kBlack);
 }
 
 void rad::SetHistAttr(TH1 *h) {
@@ -48,6 +51,14 @@ void rad::SetHistAttr(TH1 *h) {
   h->GetXaxis()->SetLabelSize(0.05);
   h->GetYaxis()->SetLabelSize(0.05);
   h->SetLineWidth(2);
+}
+
+void rad::SetHistAttr(TH1 &h) {
+  h.GetXaxis()->SetTitleSize(0.05);
+  h.GetYaxis()->SetTitleSize(0.05);
+  h.GetXaxis()->SetLabelSize(0.05);
+  h.GetYaxis()->SetLabelSize(0.05);
+  h.SetLineWidth(2);
 }
 
 void rad::SetHistAttr(std::unique_ptr<TH1D> &h) {
@@ -199,6 +210,39 @@ TGraph *rad::MakePowerSpectrumPeriodogram(const TGraph *grWave) {
   TGraph *grPower = new TGraph(newLength, newX, newY);
   setGraphAttr(grPower);
   grPower->GetXaxis()->SetTitle("Frequency [Hz]");
+  delete[] theFFT;
+  delete[] newY;
+  delete[] newX;
+  return grPower;
+}
+
+TGraph rad::MakePowerSpectrumPeriodogram(const TGraph &grWave) {
+  double *oldY = grWave.GetY();
+  double *oldX = grWave.GetX();
+  double deltaT = oldX[1] - oldX[0];
+  int length = grWave.GetN();
+  FFTWComplex *theFFT = FFTtools::doFFT(length, oldY);
+  double lengthDub = (double)length;
+  int newLength = (length / 2) + 1;
+  double *newY = new double[newLength];
+  double *newX = new double[newLength];
+
+  double deltaF = 1 / (deltaT * length);
+
+  double tempF = 0;
+  for (int i = 0; i < newLength; i++) {
+    float power = pow(FFTtools::getAbs(theFFT[i]), 2);
+    if (i > 0 && i < newLength - 1) power *= 2;  // account for symmetry
+    double scale = lengthDub * lengthDub;
+    power /= scale;
+    newX[i] = tempF;
+    newY[i] = power;
+    tempF += deltaF;
+  }
+
+  TGraph grPower(newLength, newX, newY);
+  setGraphAttr(grPower);
+  grPower.GetXaxis()->SetTitle("Frequency [Hz]");
   delete[] theFFT;
   delete[] newY;
   delete[] newX;
@@ -636,4 +680,19 @@ double rad::CalcLarmorPower(double ke, double B, double theta, double m) {
   const double beta{GetSpeedFromKE(ke, m) / TMath::C()};
   return TMath::TwoPi() * pow(TMath::Qe() * f0 * beta * sin(theta), 2) /
          ((3 * EPSILON0 * TMath::C()) * (1 - beta * beta));
+}
+
+TVector3 rad::RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
+                             TVector3 newZ) {
+  // We are just transforming from the ROOT frame so our old axis coordinates
+  // are just the unit vectors
+  TVector3 oldX(1, 0, 0);
+  TVector3 oldY(0, 1, 0);
+  TVector3 oldZ(0, 0, 1);
+  double pXPrime{newX.X() * v.X() + newY.X() * v.Y() + newZ.X() * v.Z()};
+  double pYPrime{newX.Y() * v.X() + newY.Y() * v.Y() + newZ.Y() * v.Z()};
+  double pZPrime{newX.Z() * v.X() + newY.Z() * v.Y() + newZ.Z() * v.Z()};
+  TVector3 newVector(pXPrime, pYPrime, pZPrime);
+  newVector = newVector.Unit();
+  return newVector;
 }
