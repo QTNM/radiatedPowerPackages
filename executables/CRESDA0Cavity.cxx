@@ -33,7 +33,8 @@ int main() {
   const double d5mm_TE111{1 * TMath::Pi() /
                           sqrt(pow(TMath::TwoPi() * cycFreq / TMath::C(), 2) -
                                pow(p11Prime / cavityRadius, 2))};
-  CircularCavity cav(cavityRadius, d5mm_TE111);
+  TVector3 probePosition(cavityRadius, 0, 0);
+  CircularCavity cav(cavityRadius, d5mm_TE111, probePosition);
 
   // Calculate resonant mode frequencies
   ////////////// TE //////////////

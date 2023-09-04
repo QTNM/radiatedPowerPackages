@@ -56,7 +56,8 @@ int main() {
                          pow(p11Prime / cavityRadius, 2))};
   std::cout << "Cavity length = " << cavityLength * 1e3 << " mm\n";
   // Define the actual cavity
-  CircularCavity cav(cavityRadius, cavityLength);
+  TVector3 probePosition(cavityRadius, 0, 0);
+  CircularCavity cav(cavityRadius, cavityLength, probePosition);
   const double fTE111{cav.GetResonantModeF(CircularCavity::kTE, 1, 1, 1)};
   const double kTE111{TMath::TwoPi() * fTE111 / TMath::C()};
   const double tTE111{1 / fTE111};

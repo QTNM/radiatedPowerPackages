@@ -29,12 +29,13 @@ int main(int argc, char* argv[]) {
   const double lengthMin{10e-2};                // metres
   const double lengthMax{15e-2};                // metres
 
-  const double energyKr83mLine{32.1e3};         // eV
-  const double bFieldMag{1.0};                  // Tesla
+  const double energyKr83mLine{32.1e3};  // eV
+  const double bFieldMag{1.0};           // Tesla
   const double cycFreq{CalcCyclotronFreq(energyKr83mLine, bFieldMag)};
   std::cout << "Cyclotron frequency = " << cycFreq / 1e9 << " GHz\n";
 
-  CircularCavity cavMin(innerRadius, lengthMin);
+  TVector3 probePosition(innerRadius, 0, 0);
+  CircularCavity cavMin(innerRadius, lengthMin, probePosition);
   const double fTE011Min{cavMin.GetResonantModeF(CircularCavity::kTE, 0, 1, 1)};
   const double fTE012Min{cavMin.GetResonantModeF(CircularCavity::kTE, 0, 1, 2)};
   auto grCavMinTE01p = new TGraph();
@@ -128,7 +129,7 @@ int main(int argc, char* argv[]) {
 
   std::cout << "\n";
 
-  CircularCavity cavMax(innerRadius, lengthMax);
+  CircularCavity cavMax(innerRadius, lengthMax, probePosition);
   const double fTE011Max{cavMax.GetResonantModeF(CircularCavity::kTE, 0, 1, 1)};
   const double fTE012Max{cavMax.GetResonantModeF(CircularCavity::kTE, 0, 1, 2)};
   auto grCavMaxTE01p = new TGraph();
