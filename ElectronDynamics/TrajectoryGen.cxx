@@ -79,14 +79,16 @@ rad::ElectronTrajectoryGen::ElectronTrajectoryGen(
 
   double nTimeSteps{round(simTime / simStepSize)};
   // Advance through the time steps
-  const double printoutTime{1e-6};  // seconds
+  const double printoutInterval{1e-6};    // seconds
+  double printoutTime{printoutInterval};  // seconds
   for (int i = 1; i < nTimeSteps; i++) {
     time = initialSimTime + double(i) * simStepSize;
     std::tuple<TVector3, TVector3> outputStep =
         solver.advance_step(simStepSize, ePos, eVel);
 
-    if (std::fmod(time, printoutTime) < simStepSize) {
-      std::cout << time << " seconds of trajectory simulated..." << std::endl;
+    if (time >= printoutTime) {
+      std::cout << printoutTime << " seconds of trajectory simulated...\n";
+      printoutTime += printoutInterval;
     }
 
     ePos = std::get<0>(outputStep);
