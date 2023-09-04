@@ -125,6 +125,62 @@ rad::ComplexVector3 rad::CircularCavity::GetModeEField(
   return GetModeEField(rho, phi, z, modeType, A, n, m, l, state, t);
 }
 
+rad::ComplexVector3 rad::CircularCavity::GetModalEField(
+    TVector3 pos, Mode_t modeType, double A, unsigned int m, unsigned int n,
+    unsigned int p, bool state) {
+  // Get variables for calculation in terms of the formular
+  const double z{pos.Z() + d / 2};
+  const double phi{atan2(pos.Y(), pos.X())};
+  double rho{pos.Perp()};
+
+  // If we're outside the cavity then the field should be 0
+  if (rho > a || z > d || z < 0) return ComplexVector3(0, 0, 0);
+
+  std::complex<double> EPhi{0};
+  std::complex<double> ERho{0};
+  std::complex<double> EZ{0};
+
+  const double beta{double(p) * TMath::Pi() / d};
+  if (modeType == CircularCavity::kTE) {
+    const double XmnPrime{GetBesselPrimeZero(m, n)};
+    ERho = (-A * double(m) / rho) * sin(beta * z) *
+           boost::math::cyl_bessel_j(m, XmnPrime * rho / a);
+    EPhi = (A * XmnPrime / a) * sin(beta * z) *
+           boost::math::cyl_bessel_j_prime(m, XmnPrime * rho / a);
+    if (state) {
+      ERho *= -sin(double(m) * phi);
+      EPhi *= cos(double(m) * phi);
+    } else {
+      ERho *= cos(double(m) * phi);
+      EPhi *= sin(double(m) * phi);
+    }
+  } else if (modeType == CircularCavity::kTM) {
+    const double Xmn{boost::math::cyl_bessel_j_zero(double(m), n)};
+    const double kc{Xmn / a};
+    EZ = A * cos(beta * z) * boost::math::cyl_bessel_j(m, Xmn * rho / a);
+    ERho = (-beta * Xmn / (a * kc * kc)) * sin(beta * z) *
+           boost::math::cyl_bessel_j_prime(m, Xmn * rho / a);
+    EPhi = (-A * beta * double(m) / (rho * kc * kc)) * sin(beta * z) *
+           boost::math::cyl_bessel_j(m, Xmn * rho / a);
+    if (state) {
+      EZ *= cos(double(m) * phi);
+      ERho *= cos(double(m) * phi);
+      EPhi *= -sin(double(m) * phi);
+    } else {
+      EZ *= sin(double(m) * phi);
+      ERho *= sin(double(m) * phi);
+      EPhi *= cos(double(m) * phi);
+    }
+  } else {
+    std::cout << "TEM modes not supported for circular cavities!\n";
+  }
+
+  // Generate final field vector
+  ComplexVector3 E(ERho * cos(phi) - EPhi * sin(phi),
+                   ERho * sin(phi) + EPhi * cos(phi), EZ);
+  return E;
+}
+
 rad::ComplexVector3 rad::CircularCavity::GetMaxEField(
     TVector3 pos, Mode_t modeType, double A, unsigned int m, unsigned int n,
     unsigned int p, bool state) {

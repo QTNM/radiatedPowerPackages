@@ -80,6 +80,19 @@ class CircularCavity : public ICavity {
                                unsigned int m, unsigned int n, unsigned int p,
                                bool state = true, double t = 0);
 
+  /// @brief Get mode electric field with no time variation
+  /// @param pos Position to evaluate field at
+  /// @param modeType Select TE or TM
+  /// @param A Normalisation factor
+  /// @param m Angular mode number
+  /// @param n Radial mode number
+  /// @param p Axial mode number
+  /// @param state Choose from two polarisation states
+  /// @return Complex vector of electric field
+  ComplexVector3 GetModalEField(TVector3 pos, Mode_t modeType, double A,
+                                unsigned int m, unsigned int n, unsigned int p,
+                                bool state) override;
+
   /// @brief Calculate electric field at maximum time
   /// @param pos Position 3-vector (in metres)
   /// @param modeType TE or TM

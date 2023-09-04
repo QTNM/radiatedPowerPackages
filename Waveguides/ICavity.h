@@ -38,6 +38,19 @@ class ICavity {
   /// @return The cutoff frequency in Hertz
   virtual double GetCutoffFrequency(Mode_t modeType, int n, int m) = 0;
 
+  /// @brief Get mode electric field with no time variation
+  /// @param pos Position to evaluate field at
+  /// @param modeType Select TE, TM, or TEM
+  /// @param A Normalisation factor
+  /// @param i First mode index
+  /// @param j Second mode index
+  /// @param k Third mode index
+  /// @param state Choose from two polarisation states
+  /// @return Complex vector of field
+  virtual ComplexVector3 GetModalEField(TVector3 pos, Mode_t modeType, double A,
+                                        unsigned int i, unsigned int j,
+                                        unsigned int k, bool state) = 0;
+
  private:
   TVector3 probePos;
 
