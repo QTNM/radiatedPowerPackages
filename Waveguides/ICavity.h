@@ -12,6 +12,7 @@
 #include <boost/math/special_functions/bessel.hpp>
 
 #include "BasicFunctions/ComplexVector3.h"
+#include "TVector3.h"
 
 namespace rad {
 class ICavity {
@@ -36,6 +37,18 @@ class ICavity {
   /// @param m The second mode index to get
   /// @return The cutoff frequency in Hertz
   virtual double GetCutoffFrequency(Mode_t modeType, int n, int m) = 0;
+
+ private:
+  TVector3 probePos;
+
+ protected:
+  /// @brief Getter function for probe position
+  /// @return 3-vector of probe position
+  TVector3 GetProbePosition() { return probePos; }
+
+  /// @brief Probe position setter
+  /// @param probe 3-vector of desired probe position
+  void SetProbePosition(TVector3 probe) { probePos = probe; }
 };
 }  // namespace rad
 

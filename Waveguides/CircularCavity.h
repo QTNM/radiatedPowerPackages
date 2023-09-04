@@ -20,7 +20,8 @@ class CircularCavity : public ICavity {
   /// @brief Parametrised constructor
   /// @param radius Cavity radius in metres
   /// @param length Cavity length in metres
-  CircularCavity(double radius, double length) : a(radius), d(length) {}
+  /// @param probe Desired probe position
+  CircularCavity(double radius, double length, TVector3 probe);
 
   /// @brief Getter function for radius
   /// @return Cavity inner radius in metres

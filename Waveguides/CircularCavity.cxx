@@ -8,6 +8,12 @@
 #include "BasicFunctions/BasicFunctions.h"
 #include "TMath.h"
 
+rad::CircularCavity::CircularCavity(double radius, double length,
+                                    TVector3 probe)
+    : a(radius), d(length) {
+  SetProbePosition(probe);
+}
+
 double rad::CircularCavity::GetResonantModeF(Mode_t modeType, unsigned int n,
                                              unsigned int m, unsigned int l) {
   if (m < 1) {
