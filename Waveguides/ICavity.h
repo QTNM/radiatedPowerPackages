@@ -22,6 +22,10 @@ class ICavity {
   // Different types of modes
   enum Mode_t { kTE, kTM, kTEM };
 
+  /// @brief Getter function for probe position
+  /// @return 3-vector of probe position
+  TVector3 GetProbePosition() { return probePos; }
+
   /// @brief Calculates the frequency of a resonant mode
   /// @param modeType TE, TM or TEM
   /// @param n First mode index
@@ -51,14 +55,24 @@ class ICavity {
                                         unsigned int i, unsigned int j,
                                         unsigned int k, bool state) = 0;
 
+  /// @brief Calculate factor to correctly normalise mode fields
+  /// @param modeType Select TE or TM
+  /// @param i First mode index
+  /// @param j Second mode index
+  /// @param k Third mode index
+  /// @param state Choose polarisation state
+  /// @return Factor which unnormalised field must be multiplied by to give
+  /// correct integral
+  virtual std::complex<double> GetModeNormalisation(Mode_t modeType,
+                                                    unsigned int i,
+                                                    unsigned int j,
+                                                    unsigned int k,
+                                                    bool state) = 0;
+
  private:
   TVector3 probePos;
 
  protected:
-  /// @brief Getter function for probe position
-  /// @return 3-vector of probe position
-  TVector3 GetProbePosition() { return probePos; }
-
   /// @brief Probe position setter
   /// @param probe 3-vector of desired probe position
   void SetProbePosition(TVector3 probe) { probePos = probe; }

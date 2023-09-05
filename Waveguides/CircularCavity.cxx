@@ -181,6 +181,35 @@ rad::ComplexVector3 rad::CircularCavity::GetModalEField(
   return E;
 }
 
+std::complex<double> rad::CircularCavity::GetModeNormalisation(Mode_t modeType,
+                                                               unsigned int m,
+                                                               unsigned int n,
+                                                               unsigned int p,
+                                                               bool state) {
+  const unsigned int nIntPnts{50};
+  const double dRho{a / nIntPnts};
+  const double dPhi{TMath::TwoPi() / nIntPnts};
+  const double dZ{d / nIntPnts};
+  std::complex<double> volumeIntegral{0};
+  // Integrate by looping over rho, phi and z
+  for (unsigned int iRho{0}; iRho < nIntPnts; iRho++) {
+    const double rho{dRho / 2 + double(iRho) * dRho};
+    const double dV{rho * dRho * dPhi * dZ};
+    for (unsigned int iPhi{0}; iPhi < nIntPnts; iPhi) {
+      const double phi{dPhi / 2 + double(iPhi) * dPhi};
+      for (unsigned int iZ{0}; iZ < nIntPnts; iZ++) {
+        const double z{dZ / 2 + double(iZ) * dZ};
+        TVector3 pos(rho * cos(phi), rho * sin(phi), z);
+
+        // Now calculate the electric field at this point
+        ComplexVector3 eField{GetModalEField(pos, modeType, 1, m, n, p, state)};
+        volumeIntegral += eField.Dot(eField) * dV;
+      }
+    }
+  }
+  return 1.0 / sqrt(volumeIntegral);
+}
+
 rad::ComplexVector3 rad::CircularCavity::GetMaxEField(
     TVector3 pos, Mode_t modeType, double A, unsigned int m, unsigned int n,
     unsigned int p, bool state) {

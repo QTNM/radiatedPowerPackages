@@ -31,6 +31,8 @@ class CircularCavity : public ICavity {
   /// @return Cavity length in metres
   double GetLength() { return d; }
 
+  /// @brief Calculate cavity volue
+  /// @return Cavity volume in m^3
   double GetVolume() { return TMath::Pi() * a * a * d; }
 
   /// @brief Calculate resonant frequency of given mode
@@ -92,6 +94,18 @@ class CircularCavity : public ICavity {
   ComplexVector3 GetModalEField(TVector3 pos, Mode_t modeType, double A,
                                 unsigned int m, unsigned int n, unsigned int p,
                                 bool state) override;
+
+  /// @brief Calculate factor to correctly normalise mode fields
+  /// @param modeType Select TE or TM
+  /// @param m Angular mode number
+  /// @param n Radial mode number
+  /// @param p Axial mode number
+  /// @param state Choose polarisation state
+  /// @return Factor which unnormalised field must be multiplied by to give
+  /// correct integral
+  std::complex<double> GetModeNormalisation(Mode_t modeType, unsigned int m,
+                                            unsigned int n, unsigned int p,
+                                            bool state) override;
 
   /// @brief Calculate electric field at maximum time
   /// @param pos Position 3-vector (in metres)
