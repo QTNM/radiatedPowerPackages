@@ -23,8 +23,13 @@ class BorisSolver {
   double mass;
   double charge;
   double tau;
-  BaseField* field = 0;
-  CircularCavity* cav = 0;
+  BaseField* field{0};
+  CircularCavity* cav{0};
+  bool calcPurcellFactor{false};
+
+  // Field normalisations
+  double maxFieldPlus{-DBL_MAX};
+  double maxFieldMinus{-DBL_MAX};
 
   /// @brief Calculate omega as a function of position
   /// @param pos Position of charge

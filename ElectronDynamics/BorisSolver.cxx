@@ -19,7 +19,40 @@ rad::BorisSolver::BorisSolver()
 rad::BorisSolver::BorisSolver(BaseField* field_v, const double charge_v,
                               const double mass_v, const double tau_v,
                               CircularCavity* cavity)
-    : charge(charge_v), mass(mass_v), field(field_v), tau(tau_v), cav(cavity) {}
+    : charge(charge_v), mass(mass_v), field(field_v), tau(tau_v), cav(cavity) {
+  // If a cavity is present then calculate the Purcell factor as we go
+  if (cav && tau != 0) {
+    calcPurcellFactor = true;
+
+    // Firstly need to calculate field normalisations for the cavity modes
+    // Normalise so that field = 1 at antinode
+    const unsigned int nScanPnts{50};  // Scan 50 points in each direction
+    const double A{1};
+    for (unsigned int iRho{0}; iRho < nScanPnts; iRho++) {
+      double rho{double(iRho) * cav->GetRadius() / double(nScanPnts - 1)};
+      for (unsigned int iPhi{0}; iPhi < nScanPnts; iPhi++) {
+        double phi{double(iPhi) * TMath::TwoPi() / double(nScanPnts - 1)};
+        for (unsigned int iZ{0}; iZ < nScanPnts; iZ++) {
+          double z{-cav->GetLength() +
+                   cav->GetLength() * double(iZ) / double(nScanPnts - 1)};
+          TVector3 pos(rho * cos(phi), rho * sin(phi), z);
+          // For now just look at the TE111 mode
+          TVector3 fPlus{
+              cav->GetModalEField(pos, CircularCavity::kTE, A, 1, 1, 1, true)
+                  .Real()};
+          TVector3 fMinus{
+              cav->GetModalEField(pos, CircularCavity::kTE, A, 1, 1, 1, false)
+                  .Real()};
+          if (fPlus.Mag() > maxFieldPlus) maxFieldPlus = fPlus.Mag();
+          if (fMinus.Mag() > maxFieldMinus) maxFieldMinus = fMinus.Mag();
+        }
+      }
+    }
+  }
+
+  std::cout << "Field maximum +ve, -ve = " << maxFieldPlus << ", "
+            << maxFieldMinus << std::endl;
+}
 
 TVector3 rad::BorisSolver::get_omega(const TVector3 pos) {
   TVector3 BField = field->evaluate_field_at_point(pos);
