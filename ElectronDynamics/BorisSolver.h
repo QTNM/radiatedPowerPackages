@@ -15,6 +15,7 @@
 #include "ElectronDynamics/BaseField.h"
 #include "TMath.h"
 #include "TVector3.h"
+#include "Waveguides/CircularCavity.h"
 
 namespace rad {
 class BorisSolver {
@@ -23,6 +24,7 @@ class BorisSolver {
   double charge;
   double tau;
   BaseField* field = 0;
+  CircularCavity* cav = 0;
 
   /// Calculate omega as a function of position
   /// \param pos Position of charge
@@ -54,7 +56,8 @@ class BorisSolver {
   /// \param mass_v Particle mass. Default is electron mass
   /// \param tau_v Energy loss. Default is zero
   BorisSolver(BaseField* field_v, const double charge_v = -TMath::Qe(),
-              const double mass_v = ME, const double tau_v = 0.0);
+              const double mass_v = ME, const double tau_v = 0.0,
+              CircularCavity* cavity = 0);
 
   /// Advances position and velocity vector by a set time
   /// \param time_step The time step over which to advance the charge's motion

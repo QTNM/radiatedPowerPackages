@@ -17,8 +17,9 @@ rad::BorisSolver::BorisSolver()
     : mass(ME), charge(-TMath::Qe()), tau(0), field(new UniformField(1.0)) {}
 
 rad::BorisSolver::BorisSolver(BaseField* field_v, const double charge_v,
-                              const double mass_v, const double tau_v)
-    : charge(charge_v), mass(mass_v), field(field_v), tau(tau_v) {}
+                              const double mass_v, const double tau_v,
+                              CircularCavity* cavity)
+    : charge(charge_v), mass(mass_v), field(field_v), tau(tau_v), cav(cavity) {}
 
 TVector3 rad::BorisSolver::get_omega(const TVector3 pos) {
   TVector3 BField = field->evaluate_field_at_point(pos);
@@ -27,11 +28,11 @@ TVector3 rad::BorisSolver::get_omega(const TVector3 pos) {
 
 TVector3 rad::BorisSolver::radiation_acceleration(const TVector3 pos,
                                                   const TVector3 vel) {
-  TVector3 omega = get_omega(pos);
-  double denom = 1 + tau * tau * omega.Dot(omega);
-  double accX = 0;
-  double accY = 0;
-  double accZ = 0;
+  TVector3 omega{get_omega(pos)};
+  double denom{1 + tau * tau * omega.Dot(omega)};
+  double accX{0};
+  double accY{0};
+  double accZ{0};
 
   accX -= tau * (omega.Z() * omega.Z() + omega.Y() * omega.Y()) * vel.X();
   accX += tau * omega.X() * (omega.Z() * vel.Z() + omega.Y() * vel.Y());
@@ -47,10 +48,10 @@ TVector3 rad::BorisSolver::radiation_acceleration(const TVector3 pos,
 }
 
 TVector3 rad::BorisSolver::acc(const TVector3 pos, const TVector3 vel) {
-  TVector3 omega = get_omega(pos);
+  TVector3 omega{get_omega(pos)};
 
   // Lorentz force
-  TVector3 acc = vel.Cross(omega);
+  TVector3 acc{vel.Cross(omega)};
 
   // Add Larmor terms
   acc += radiation_acceleration(pos, vel);
@@ -63,10 +64,10 @@ TVector3 rad::BorisSolver::acc(const TVector3 pos, const TVector3 vel) {
 
 std::tuple<TVector3, TVector3> rad::BorisSolver::advance_step(
     const double time_step, const TVector3 x0, const TVector3 v0) {
-  double gamma_n = 1 / sqrt(1 - v0.Dot(v0) / pow(TMath::C(), 2));
-  TVector3 u_n = v0 * gamma_n;
-  TVector3 x_n = x0;
-  TVector3 v_n = v0;
+  double gamma_n{1.0 / sqrt(1 - v0.Dot(v0) / pow(TMath::C(), 2))};
+  TVector3 u_n{v0 * gamma_n};
+  TVector3 x_n{x0};
+  TVector3 v_n{v0};
 
   // Half position step
   TVector3 x_nplushalf{x_n + v_n * (time_step / 2.0)};
