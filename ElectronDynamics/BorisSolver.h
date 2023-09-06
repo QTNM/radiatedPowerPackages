@@ -30,6 +30,8 @@ class BorisSolver {
   // Field normalisations
   double maxFieldPlus{-DBL_MAX};
   double maxFieldMinus{-DBL_MAX};
+  double vEffPlus{0};
+  double vEffMinus{0};
 
   /// @brief Calculate omega as a function of position
   /// @param pos Position of charge

@@ -48,10 +48,40 @@ rad::BorisSolver::BorisSolver(BaseField* field_v, const double charge_v,
         }
       }
     }
-  }
+    std::cout << "Field maximum +ve, -ve = " << maxFieldPlus << ", "
+              << maxFieldMinus << std::endl;
 
-  std::cout << "Field maximum +ve, -ve = " << maxFieldPlus << ", "
-            << maxFieldMinus << std::endl;
+    // Now calculate the effective volume of the cavity
+    // Integrate field over cavity volume
+    const double dRho{cav->GetRadius() / double(nScanPnts)};
+    const double dPhi{TMath::TwoPi() / double(nScanPnts)};
+    const double dZ{cav->GetLength() / double(nScanPnts)};
+    for (unsigned int iRho{0}; iRho < nScanPnts; iRho++) {
+      double rho{dRho / 2 + double(iRho) * dRho};
+      double dV{rho * dRho * dPhi * dZ};
+      for (unsigned int iPhi{0}; iPhi < nScanPnts; iPhi++) {
+        double phi{dPhi / 2 + double(iPhi) * dPhi};
+        for (unsigned int iZ{0}; iZ < nScanPnts; iZ++) {
+          double z{dZ / 2 + double(iZ) * dZ};
+          TVector3 pos(rho * cos(phi), rho * sin(phi), z);
+
+          TVector3 fPlus{cavity
+                             ->GetModalEField(pos, CircularCavity::kTE,
+                                              1 / maxFieldPlus, 1, 1, 1, true)
+                             .Real()};
+          vEffPlus += dV * fPlus.Mag();
+          TVector3 fMinus{cavity
+                              ->GetModalEField(pos, CircularCavity::kTE,
+                                               1 / maxFieldMinus, 1, 1, 1,
+                                               false)
+                              .Real()};
+          vEffMinus += dV * fMinus.Mag();
+        }
+      }
+    }
+    std::cout << "Effective volume +ve, -ve = " << vEffPlus * 1e9 << " mm^3, "
+              << vEffMinus * 1e9 << " mm^3\n";
+  }
 }
 
 TVector3 rad::BorisSolver::get_omega(const TVector3 pos) {
