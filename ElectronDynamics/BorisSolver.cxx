@@ -43,13 +43,17 @@ rad::BorisSolver::BorisSolver(BaseField* field_v, const double charge_v,
           TVector3 fMinus{
               cav->GetModalEField(pos, CircularCavity::kTE, A, 1, 1, 1, false)
                   .Real()};
+
           if (fPlus.Mag() > maxFieldPlus) maxFieldPlus = fPlus.Mag();
           if (fMinus.Mag() > maxFieldMinus) maxFieldMinus = fMinus.Mag();
+          if ((fPlus + fMinus).Mag() > maxField)
+            maxField = (fPlus + fMinus).Mag();
         }
       }
     }
     std::cout << "Field maximum +ve, -ve = " << maxFieldPlus << ", "
               << maxFieldMinus << std::endl;
+    std::cout << "Combined field maximum = " << maxField << std::endl;
 
     // Now calculate the effective volume of the cavity
     // Integrate field over cavity volume
@@ -65,22 +69,28 @@ rad::BorisSolver::BorisSolver(BaseField* field_v, const double charge_v,
           double z{dZ / 2 + double(iZ) * dZ};
           TVector3 pos(rho * cos(phi), rho * sin(phi), z);
 
-          TVector3 fPlus{cavity
-                             ->GetModalEField(pos, CircularCavity::kTE,
-                                              1 / maxFieldPlus, 1, 1, 1, true)
+          TVector3 fPlus{cav->GetModalEField(pos, CircularCavity::kTE,
+                                             1 / maxFieldPlus, 1, 1, 1, true)
                              .Real()};
           vEffPlus += dV * fPlus.Mag();
-          TVector3 fMinus{cavity
-                              ->GetModalEField(pos, CircularCavity::kTE,
-                                               1 / maxFieldMinus, 1, 1, 1,
-                                               false)
+          TVector3 fMinus{cav->GetModalEField(pos, CircularCavity::kTE,
+                                              1 / maxFieldMinus, 1, 1, 1, false)
                               .Real()};
           vEffMinus += dV * fMinus.Mag();
+          vEff += dV * (fPlus + fMinus).Mag();
         }
       }
     }
     std::cout << "Effective volume +ve, -ve = " << vEffPlus * 1e9 << " mm^3, "
               << vEffMinus * 1e9 << " mm^3\n";
+    std::cout << "Effective volume = " << vEff * 1e9 << " mm^3\n";
+
+    // Get resonant frequency
+    const double cavQ{200};
+    const double fTE111{cav->GetResonantModeF(CircularCavity::kTE, 1, 1, 1)};
+    const double lTE111{TMath::C() / fTE111};
+    FpMax = 3 * cavQ * pow(lTE111, 3) / (pow(TMath::TwoPi(), 2) * vEff);
+    std::cout << "Maximum Purcell factor = " << FpMax << std::endl;
   }
 }
 
@@ -91,6 +101,29 @@ TVector3 rad::BorisSolver::get_omega(const TVector3 pos) {
 
 TVector3 rad::BorisSolver::radiation_acceleration(const TVector3 pos,
                                                   const TVector3 vel) {
+  double fieldFactor{1};
+  double detuningFactor{1};
+  if (cav && tau != 0) {
+    // If a cavity is present then do some calculation of the relative mode
+    // field strength
+    ComplexVector3 fPlus{cav->GetModalEField(pos, CircularCavity::kTE,
+                                             1 / maxField, 1, 1, 1, true)};
+    ComplexVector3 fMinus{cav->GetModalEField(pos, CircularCavity::kTE,
+                                              1 / maxField, 1, 1, 1, false)};
+    fieldFactor = (fPlus + fMinus).Real().Mag2();
+
+    // Now calculate the detuning factor
+    // Start by getting the mode resonant frequency
+    double fRes{cav->GetResonantModeF(CircularCavity::kTE, 1, 1, 1)};
+    // Now get the instantaneous magnetic field at this point
+    double f{get_omega(pos).Mag() / TMath::TwoPi()};
+    double deltaFRes{fRes / 200};
+    detuningFactor =
+        deltaFRes * deltaFRes / (4 * pow(f - fRes, 2) + deltaFRes * deltaFRes);
+  }
+
+  double Fp{FpMax * fieldFactor * detuningFactor};
+
   TVector3 omega{get_omega(pos)};
   double denom{1 + tau * tau * omega.Dot(omega)};
   double accX{0};
@@ -107,7 +140,7 @@ TVector3 rad::BorisSolver::radiation_acceleration(const TVector3 pos,
   accZ += tau * omega.Z() * (omega.X() * vel.X() + omega.Y() * vel.Y());
 
   TVector3 acc(accX / denom, accY / denom, accZ / denom);
-  return acc;
+  return acc * sqrt(Fp);
 }
 
 TVector3 rad::BorisSolver::acc(const TVector3 pos, const TVector3 vel) {

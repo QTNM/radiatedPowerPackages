@@ -28,10 +28,15 @@ class BorisSolver {
   bool calcPurcellFactor{false};
 
   // Field normalisations
+  double maxField{-DBL_MAX};
   double maxFieldPlus{-DBL_MAX};
   double maxFieldMinus{-DBL_MAX};
   double vEffPlus{0};
   double vEffMinus{0};
+  double vEff{0};
+
+  // Maximum Purcell factor
+  double FpMax{1};
 
   /// @brief Calculate omega as a function of position
   /// @param pos Position of charge
