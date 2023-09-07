@@ -118,6 +118,8 @@ TVector3 rad::BorisSolver::radiation_acceleration(const TVector3 pos,
     // Now get the instantaneous magnetic field at this point
     double f{get_omega(pos).Mag() / TMath::TwoPi()};
     double deltaFRes{fRes / 200};
+
+    // Calculate detuning based upon how far we are from the resonance
     detuningFactor =
         deltaFRes * deltaFRes / (4 * pow(f - fRes, 2) + deltaFRes * deltaFRes);
   }
