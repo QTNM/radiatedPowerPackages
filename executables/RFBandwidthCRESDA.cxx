@@ -86,8 +86,7 @@ int main(int argc, char *argv[]) {
 
     TString trackFile{Form(
         "/home/sjones/work/qtnm/outputs/RFBandwidthCRESDA/track%d.root", iPnt)};
-    ElectronTrajectoryGen traj(trackFile, field, X0, V0, simStepSize, simTime,
-                               0.0, tau);
+    ElectronTrajectoryGen traj(trackFile, field, X0, V0, simStepSize, simTime);
 
     // Now open track file
     TFile *fin = new TFile(trackFile, "READ");

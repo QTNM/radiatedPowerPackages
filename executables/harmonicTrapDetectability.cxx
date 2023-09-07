@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
       Form("%s/track_r%.3f_p%.2f_n%d.root", outputDir.data(), radialOffset,
            pitchAngle, nDipoles);
   ElectronTrajectoryGen traj(trackFilePath, field, X0, vInitial, simStepSize,
-                             simTime, 0.0, tau);
+                             simTime);
 
   // Firstly create our dipoles and add them to the array
   std::vector<IAntenna*> antennaArray;

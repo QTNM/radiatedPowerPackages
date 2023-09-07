@@ -103,8 +103,7 @@ int main() {
   TVector3 initPos(0, gyroradius, 0);
   TString trackFile{
       "/home/sjones/work/qtnm/Cavities/CavityFieldAmps/track.root"};
-  ElectronTrajectoryGen traj(trackFile, field, initPos, eVel, 5e-12, 1e-6, 0,
-                             2 * R_E / (3 * TMath::C()));
+  ElectronTrajectoryGen traj(trackFile, field, initPos, eVel, 5e-12, 1e-6);
 
   // Now reopen the track file and generate some amplitudes
   TFile fTrack(trackFile, "read");

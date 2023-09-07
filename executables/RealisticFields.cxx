@@ -135,8 +135,7 @@ int main(int argc, char *argv[]) {
   const double simTime{55e-6};
   const double simStepSize{1e-12};
   TString trackFile{Form("%s/track_%.2f.root", outputDir.data(), pitchAngle)};
-  ElectronTrajectoryGen traj(trackFile, harm, x0, v0, simStepSize, simTime, 0.0,
-                             tau);
+  ElectronTrajectoryGen traj(trackFile, harm, x0, v0, simStepSize, simTime);
   std::cout << "Generated trajectory\n";
 
   const double loadResistance{73.0};

@@ -16,7 +16,8 @@
 
 rad::ElectronTrajectoryGen::ElectronTrajectoryGen(
     TString outputFile, BaseField *field, TVector3 initPos, TVector3 initVel,
-    double simStepSize, double simTime, double initialSimTime, double tau) {
+    double simStepSize, double simTime, bool energyLoss,
+    double initialSimTime) {
   // Check the file path can be opened in
   auto foutTest = std::make_unique<TFile>(outputFile, "RECREATE");
   if (!foutTest) {
@@ -28,6 +29,7 @@ rad::ElectronTrajectoryGen::ElectronTrajectoryGen(
     foutTest->Close();
   }
 
+  double tau = energyLoss ? 2 * R_E / (3 * TMath::C()) : 0.0;
   solver = BorisSolver(field, -TMath::Qe(), ME, tau);
 
   // Check that various input values make sense

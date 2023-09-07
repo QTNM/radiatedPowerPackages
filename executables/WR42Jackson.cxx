@@ -220,9 +220,9 @@ int main(int argc, char *argv[]) {
     std::cout << testOffset * 1e3 << " mm" << std::endl;
 
     // Generate the electron trajectory
-    ElectronTrajectoryGen traj(
-        trackFile, field, TVector3(testOffset, -gyroradius, 0.0),
-        TVector3(speed, 0, 0), 1e-12, 1e-9, 0.0, 2 * R_E / (3 * TMath::C()));
+    ElectronTrajectoryGen traj(trackFile, field,
+                               TVector3(testOffset, -gyroradius, 0.0),
+                               TVector3(speed, 0, 0), 1e-12, 1e-9);
 
     // Now read in the file again and calculate some mode amplitudes as a
     // function of time

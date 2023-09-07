@@ -48,7 +48,7 @@ int main() {
   const double simTime{1e-6};
   TString trackFile{outputPath + "/track.root"};
   ElectronTrajectoryGen traj(trackFile, trap, initPos, initVel, stepSize,
-                             simTime);
+                             simTime, false);
 
   // Now read in track file
   TFile fin(trackFile, "READ");

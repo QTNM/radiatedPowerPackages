@@ -103,8 +103,7 @@ int main(int argc, char *argv[]) {
   const double simStepSize{1e-12};
 
   TString trackFile{Form("%s/track.root", outputDir.data())};
-  ElectronTrajectoryGen traj(trackFile, field, X0, V0, simStepSize, simTime,
-                             0.0, tau);
+  ElectronTrajectoryGen traj(trackFile, field, X0, V0, simStepSize, simTime);
   std::cout << "Generated electron track" << std::endl;
 
   // Generate the antenna array
