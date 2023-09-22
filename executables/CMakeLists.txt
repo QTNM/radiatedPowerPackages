@@ -81,3 +81,6 @@ target_link_libraries(ScatteringCheck PRIVATE BasicFunctions ElectronDynamics Sc
 
 add_executable(LongTimeGeneration LongTimeGeneration.cxx)
 target_link_libraries(LongTimeGeneration PRIVATE BasicFunctions ElectronDynamics Scattering ${ROOT_LIBRARIES})
+
+add_executable(VariableEnergyLoss VariableEnergyLoss.cxx)
+target_link_libraries(VariableEnergyLoss PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
