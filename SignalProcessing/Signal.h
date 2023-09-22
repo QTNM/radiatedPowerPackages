@@ -17,6 +17,7 @@
 #include "TFile.h"
 #include "TGraph.h"
 #include "TTree.h"
+#include "Waveguides/ICavity.h"
 
 namespace rad {
 class Signal {
@@ -41,6 +42,16 @@ class Signal {
   /// @param tAcq Acquisition time for signal in seconds
   Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
          LocalOscillator lo, double sRate,
+         std::vector<GaussianNoise> noiseTerms = {}, double tAcq = -1);
+
+  /// @brief Parametrised constructor using cavity as RF collection device
+  /// @param filePath String to electron trajectory file
+  /// @param cav Cavity used for RF collection
+  /// @param lo Local oscillator for downmixing
+  /// @param sRate Sample rate in Hertz
+  /// @param noiseTerms Vector of noise terms
+  /// @param tAcq Acquisition time for signal in seconds
+  Signal(TString filePath, ICavity* cav, LocalOscillator lo, double sRate,
          std::vector<GaussianNoise> noiseTerms = {}, double tAcq = -1);
 
   /// Destructor
@@ -100,15 +111,22 @@ class Signal {
   // Pointer to the antenna
   std::vector<IAntenna*> antenna;
 
+  // Pointer to cavity if necessary
+  ICavity* cavity;
+
   /// @brief Function to add new times to vectors
   /// @param time New time from file in seconds
   /// @param ePos Electron position vector in metres
-  /// @param ant Pointer to chosen antenna
   void AddNewTimes(double time, TVector3 ePos);
+
+  /// @brief Function to add new times for vector
+  /// @param time New time from file in seconds
+  /// @param ePos Electron position vector in metres
+  void AddNewCavityTimes(double time, TVector3 ePos);
 
   /// @brief Calculate the retarded time
   /// @param ts Sample time in seconds
-  /// @param antInd
+  /// @param antInd Index of antenna
   /// @return Relevant retarded time in seconds
   double GetRetardedTime(double ts, unsigned int antInd);
 
@@ -133,6 +151,12 @@ class Signal {
   /// @param ant Pointer to chosen antenna
   /// @return Voltage in volts
   double CalcVoltage(double tr, IAntenna* ant);
+
+  /// @brief Calculate electric field at cavity probe position
+  /// @param tr Retarded time in seconds
+  /// @param norm Field normalisation
+  /// @return Electric field at point in V/m
+  TVector3 CalcCavityEField(double tr, std::complex<double> norm);
 
   /// @brief Function for downmixing voltages
   /// @param vi In phase voltage component

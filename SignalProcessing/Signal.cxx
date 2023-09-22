@@ -1,5 +1,5 @@
 /*
-  SignalQUick.cxx
+  Signal.cxx
 */
 
 #include "SignalProcessing/Signal.h"
@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "BasicFunctions/BasicFunctions.h"
+#include "BasicFunctions/ComplexVector3.h"
 #include "BasicFunctions/EMFunctions.h"
 #include "TMath.h"
 #include "TTreeReader.h"
@@ -48,7 +49,7 @@ rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
   // Loop through tree entries
   // Initially we are just doing the the higher frequency sampling
   double printTime{0};  // seconds
-  double printInterval{5e-6};
+  const double printInterval{5e-6};
   for (unsigned int iE{0}; iE < inputTree->GetEntries(); iE++) {
     inputTree->GetEntry(iE);
     const double entryTime{time};
@@ -282,6 +283,117 @@ rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
   }
 }
 
+rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
+                    double sRate, std::vector<GaussianNoise> noiseTerms,
+                    double tAcq)
+    : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms), cavity(cav) {
+  CreateVoltageGraphs();
+
+  // Check if input file opens properly
+  SetUpTree(filePath);
+
+  // Set file info
+  GetFileInfo();
+
+  // TO DO: figure out what the relevant modes are
+
+  // Calculate mode normalisation
+  // This should be for all the relevant modes but for now just do it for the
+  // TE111 mode
+  const std::complex<double> normTE111p{
+      cavity->GetModeNormalisation(ICavity::kTE, 1, 1, 1, true)};
+  const std::complex<double> normTE111m{
+      cavity->GetModeNormalisation(ICavity::kTE, 1, 1, 1, false)};
+  std::cout << "Normalisation +ve, -ve = " << normTE111p << ", " << normTE111p
+            << std::endl;
+
+  // Figure out where we're going to generate the signal up to
+  // By default, just do the whole electron trajectory file
+  if (tAcq < 0) tAcq = fileEndTime;
+
+  double sampleTime{0};    // Second sample time in seconds
+  double sample10Time{0};  // First sample time in seconds
+  unsigned int sample10Num{0};
+  double sample10StepSize{1 / (10 * sRate)};
+
+  // Create just one deque for our
+  advancedTimeVec.push_back(std::deque<double>());
+
+  // Create some intermediate level graphs before final sampling
+  auto grVIInter = new TGraph();
+  auto grVQInter = new TGraph();
+  auto grVIBigFiltered = new TGraph();
+  auto grVQBigFiltered = new TGraph();
+
+  // Loop through tree entries
+  // Initially we are just doing the the higher frequency sampling
+  double printTime{0};  // seconds
+  const double printInterval{5e-6};
+  for (unsigned int iE{0}; iE < inputTree->GetEntries(); iE++) {
+    inputTree->GetEntry(iE);
+    const double entryTime{time};
+
+    // Check we are still within the acquisition time, stop otherwise
+    if (entryTime > tAcq) break;
+
+    if (entryTime >= printTime) {
+      std::cout << printTime * 1e6 << " us signal processed...\n";
+      printTime += printInterval;
+    }
+
+    AddNewCavityTimes(entryTime, TVector3(xPos, yPos, zPos));
+
+    // Do we need to sample now?
+    if (entryTime >= sample10Time) {
+      // Yes we do
+      // First get the retarded time to calculate the fields at
+      double tr{GetRetardedTime(sample10Time, 0)};
+
+      // Calculate the mode field amplitudes
+      double ei_p{CalcCavityEField(tr, normTE111p).X()};
+      double eq_p{ei_p};
+      double ei_m{CalcCavityEField(tr, normTE111m).X()};
+      double eq_m{ei_m};
+
+      DownmixVoltages(ei_p, eq_p, sample10Time);
+
+      grVIInter->SetPoint(grVIInter->GetN(), sample10Time, ei_p);
+      grVQInter->SetPoint(grVQInter->GetN(), sample10Time, eq_p);
+
+      sample10Num++;
+      sample10Time = double(sample10Num) * sample10StepSize;
+
+      // We want to filter this signal if it's long enough
+      // Pick a good number to do FFTs with (2^n preferably)
+      if (grVIInter->GetN() == 32768) {
+        auto grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
+        auto grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
+        // Now add these points to the existing graph
+        for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
+          grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
+                                    grVISmallFiltered->GetPointX(iF),
+                                    grVISmallFiltered->GetPointY(iF));
+          grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
+                                    grVQSmallFiltered->GetPointX(iF),
+                                    grVQSmallFiltered->GetPointY(iF));
+        }
+        delete grVISmallFiltered;
+        delete grVQSmallFiltered;
+        // Clear the current graphs and start again
+        delete grVIInter;
+        delete grVQInter;
+        grVIInter = new TGraph();
+        grVQInter = new TGraph();
+      }
+    } else {
+      continue;
+    }
+  }
+
+  // Can now safely close the input file
+  CloseInputFile();
+}
+
 rad::Signal::~Signal() {
   delete grVITime;
   delete grVQTime;
@@ -393,6 +505,50 @@ double rad::Signal::CalcVoltage(double tr, IAntenna* ant) {
   }
 }
 
+TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
+  if (tr == -1) {
+    // The voltage is from before the signal has reached the antenna
+    return TVector3(0, 0, 0);
+  } else {
+    // We actually have to calculate the voltage
+    // Start off with a first guess
+    int firstGuessTInd{int(round(filePntsPerTime * (tr - fileStartTime)))};
+
+    // Find the appropriate time
+    inputTree->GetEntry(firstGuessTInd);
+    double firstGuessTime{time};
+    unsigned int correctIndex{0};
+    if (firstGuessTime == tr) {
+      // Easy, no need for interpolation
+      TVector3 pos(xPos, yPos, zPos);
+      ComplexVector3 modeFieldPlus{cavity->GetModalEField(
+          pos, ICavity::kTE, norm.real(), 1, 1, 1, true)};
+      ComplexVector3 modeFieldMinus{cavity->GetModalEField(
+          pos, ICavity::kTE, norm.real(), 1, 1, 1, false)};
+      // Calculate the current density
+      ComplexVector3 J(xVel, yVel, zVel);
+      J *= -TMath::Qe();
+
+      // Now calculate the field amplitudes
+      // Assume we're at the resonance
+      const double factor{-190};
+      std::complex<double> fieldAmpPlus{factor * J.Dot(modeFieldPlus)};
+      std::complex<double> fieldAmpMinus{factor * J.Dot(modeFieldMinus)};
+
+      // Now calculate the actual electric field at the probe
+      ComplexVector3 probeFieldPlus{
+          cavity->GetModalEField(cavity->GetProbePosition(), ICavity::kTE,
+                                 norm.real(), 1, 1, 1, true) *
+          fieldAmpPlus};
+      ComplexVector3 probeFieldMinus{
+          cavity->GetModalEField(cavity->GetProbePosition(), ICavity::kTE,
+                                 norm.real(), 1, 1, 1, false) *
+          fieldAmpMinus};
+      return (probeFieldPlus + probeFieldMinus).Real();
+    }
+  }
+}
+
 void rad::Signal::AddNewTimes(double time, TVector3 ePos) {
   timeVec.push_back(time);
 
@@ -409,6 +565,20 @@ void rad::Signal::AddNewTimes(double time, TVector3 ePos) {
     for (size_t i{0}; i < antenna.size(); i++) {
       advancedTimeVec.at(i).pop_front();
     }
+  }
+}
+
+void rad::Signal::AddNewCavityTimes(double time, TVector3 ePos) {
+  timeVec.push_back(time);
+
+  // Calculate the advanced time for cavity probe position
+  double ta{time + (ePos - cavity->GetProbePosition()).Mag() / TMath::C()};
+  advancedTimeVec.at(0).push_back(ta);
+
+  // If the deques are getting too long, get rid of the first element
+  if (timeVec.size() > 10000) {
+    timeVec.pop_front();
+    advancedTimeVec.at(0).pop_front();
   }
 }
 
