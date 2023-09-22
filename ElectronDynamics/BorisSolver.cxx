@@ -116,7 +116,9 @@ TVector3 rad::BorisSolver::radiation_acceleration(const TVector3 pos,
     // Start by getting the mode resonant frequency
     double fRes{cav->GetResonantModeF(CircularCavity::kTE, 1, 1, 1)};
     // Now get the instantaneous magnetic field at this point
-    double f{get_omega(pos).Mag() / TMath::TwoPi()};
+    double gamma{1 / sqrt(1 - pow(vel.Mag() / TMath::C(), 2))};
+    double ke{(gamma - 1) * ME * TMath::C() * TMath::C() / TMath::Qe()};
+    double f{CalcCyclotronFreq(ke, calc_b_field(pos).Mag())};
     double deltaFRes{fRes / 200};
 
     // Calculate detuning based upon how far we are from the resonance

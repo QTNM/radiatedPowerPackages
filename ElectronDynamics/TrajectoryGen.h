@@ -13,6 +13,7 @@
 #include "ElectronDynamics/BorisSolver.h"
 #include "TString.h"
 #include "TVector3.h"
+#include "Waveguides/CircularCavity.h"
 
 namespace rad {
 class ElectronTrajectoryGen {
@@ -29,12 +30,10 @@ class ElectronTrajectoryGen {
   /// @param simTime The time to simulate in seconds
   /// @param energyLoss Boolean for choosing if energy loss is on
   /// @param initialSimTime The initial time in the simulation. Default is 0
-  ElectronTrajectoryGen(TString outputFile, BaseField *field, TVector3 initPos,
+  ElectronTrajectoryGen(TString outputFile, BaseField* field, TVector3 initPos,
                         TVector3 initVel, double simStepSize, double simTime,
-                        bool energyLoss = true, double initialSimTime = 0.0);
-
-  /// Generates the trajectory with the specified parameters
-  /// void GenerateTraj();
+                        bool energyLoss = true, CircularCavity* cav = 0,
+                        double initialSimTime = 0.0);
 };
 }  // namespace rad
 
