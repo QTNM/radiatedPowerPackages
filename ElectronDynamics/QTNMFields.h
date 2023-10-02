@@ -328,6 +328,33 @@ class HelmholtzField : public BaseField {
     return TVector3(0, 0, 0);
   }
 };
+
+// Class representing 4 current loops
+// Useful for representing a shaped bathtub
+// Two pair of coils symmetric about z = 0
+class FourCoilField : public BaseField {
+ private:
+  CoilField coil1a;
+  CoilField coil1b;
+  CoilField coil2a;
+  CoilField coil2b;
+
+ public:
+  FourCoilField(double rPair1, double iPair1, double zOffPair1, double rPair2,
+                double iPair2, double zOffPair2);
+
+  /// @brief Get magnetic field at point
+  /// @param vec 3-vector at which to evaluate B field
+  /// @return Magnetic field vector in Tesla
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
+
+  /// @brief Calculate electric field at a point
+  /// @param v Position at which to calculate field
+  /// @return Electric field = 0
+  TVector3 evaluate_e_field_at_point(TVector3 v) override {
+    return TVector3(0, 0, 0);
+  }
+};
 }  // namespace rad
 
 #endif

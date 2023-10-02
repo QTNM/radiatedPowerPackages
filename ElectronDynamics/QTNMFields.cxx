@@ -262,7 +262,24 @@ rad::HelmholtzField::HelmholtzField(double coilRadius, double coilLength,
 }
 
 TVector3 rad::HelmholtzField::evaluate_field_at_point(const TVector3 vec) {
-  TVector3 totalField =
-      coil1.evaluate_field_at_point(vec) + coil2.evaluate_field_at_point(vec);
+  TVector3 totalField{coil1.evaluate_field_at_point(vec) +
+                      coil2.evaluate_field_at_point(vec)};
+  return totalField;
+}
+
+rad::FourCoilField::FourCoilField(double rPair1, double iPair1,
+                                  double zOffPair1, double rPair2,
+                                  double iPair2, double zOffPair2) {
+  CoilField coil1a(rPair1, iPair1, -zOffPair1);
+  CoilField coil1b(rPair1, iPair1, zOffPair1);
+  CoilField coil2a(rPair2, iPair2, -zOffPair2);
+  CoilField coil2b(rPair2, iPair2, zOffPair2);
+}
+
+TVector3 rad::FourCoilField::evaluate_field_at_point(const TVector3 vec) {
+  TVector3 totalField{coil1a.evaluate_field_at_point(vec) +
+                      coil1b.evaluate_field_at_point(vec) +
+                      coil2a.evaluate_field_at_point(vec) +
+                      coil2b.evaluate_field_at_point(vec)};
   return totalField;
 }
