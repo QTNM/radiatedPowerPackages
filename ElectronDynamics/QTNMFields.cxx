@@ -250,3 +250,19 @@ TVector3 rad::HTSMagnetTrap::evaluate_field_at_point(const TVector3 vec) {
   TVector3 totalField = bkgField - coilField;
   return totalField;
 }
+
+rad::HelmholtzField::HelmholtzField(double coilRadius, double coilLength,
+                                    double coilCurrent, double turnsPerMetre) {
+  const double zOffset{coilRadius * 1.02 / 2};
+
+  SolenoidField coil1(coilRadius, coilLength, coilCurrent, turnsPerMetre, MU0,
+                      -zOffset);
+  SolenoidField coil2(coilRadius, coilLength, coilCurrent, turnsPerMetre, MU0,
+                      zOffset);
+}
+
+TVector3 rad::HelmholtzField::evaluate_field_at_point(const TVector3 vec) {
+  TVector3 totalField =
+      coil1.evaluate_field_at_point(vec) + coil2.evaluate_field_at_point(vec);
+  return totalField;
+}

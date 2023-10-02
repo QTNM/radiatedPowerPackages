@@ -124,8 +124,9 @@ class SolenoidField : public BaseField {
   /// \param perm Permeability (default is permeability of free space)
   /// \param zOffset Offset (in metres) of the solenoid centre from z = 0
   /// (default is 0)
-  SolenoidField(double radius, double length, double current,
-                double turnsPerMetre, double perm = MU0, double zOffset = 0.0)
+  SolenoidField(double radius = 0.2, double length = 0.05, double current = 1e3,
+                double turnsPerMetre = 400, double perm = MU0,
+                double zOffset = 0.0)
       : r(radius),
         l(length),
         i(current),
@@ -291,6 +292,33 @@ class HTSMagnetTrap : public BaseField {
  public:
   HTSMagnetTrap(double radius, double current);
 
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
+
+  /// @brief Calculate electric field at a point
+  /// @param v Position at which to calculate field
+  /// @return Electric field = 0
+  TVector3 evaluate_e_field_at_point(TVector3 v) override {
+    return TVector3(0, 0, 0);
+  }
+};
+
+class HelmholtzField : public BaseField {
+ private:
+  SolenoidField coil1;
+  SolenoidField coil2;
+
+ public:
+  /// @brief Generate field from Helmholtz coils
+  /// @param coilRadius Radius of both coils in metres
+  /// @param coilLength Length of both coils in metres
+  /// @param coilCurrent Current through both coils in Amps
+  /// @param turnsPerMetre Turns per metre for coils
+  HelmholtzField(double coilRadius, double coilLength, double coilCurrent,
+                 double turnsPerMetre);
+
+  /// @brief Get magnetic field at point
+  /// @param vec 3-vector at which to evaluate B field
+  /// @return Magnetic field vector in Tesla
   TVector3 evaluate_field_at_point(const TVector3 vec) override;
 
   /// @brief Calculate electric field at a point
