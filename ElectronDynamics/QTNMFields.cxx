@@ -255,10 +255,10 @@ rad::HelmholtzField::HelmholtzField(double coilRadius, double coilLength,
                                     double coilCurrent, double turnsPerMetre) {
   const double zOffset{coilRadius * 1.02 / 2};
 
-  SolenoidField coil1(coilRadius, coilLength, coilCurrent, turnsPerMetre, MU0,
-                      -zOffset);
-  SolenoidField coil2(coilRadius, coilLength, coilCurrent, turnsPerMetre, MU0,
-                      zOffset);
+  coil1 = SolenoidField(coilRadius, coilLength, coilCurrent, turnsPerMetre, MU0,
+                        -zOffset);
+  coil2 = SolenoidField(coilRadius, coilLength, coilCurrent, turnsPerMetre, MU0,
+                        zOffset);
 }
 
 TVector3 rad::HelmholtzField::evaluate_field_at_point(const TVector3 vec) {
@@ -270,10 +270,10 @@ TVector3 rad::HelmholtzField::evaluate_field_at_point(const TVector3 vec) {
 rad::FourCoilField::FourCoilField(double rPair1, double iPair1,
                                   double zOffPair1, double rPair2,
                                   double iPair2, double zOffPair2) {
-  CoilField coil1a(rPair1, iPair1, -zOffPair1);
-  CoilField coil1b(rPair1, iPair1, zOffPair1);
-  CoilField coil2a(rPair2, iPair2, -zOffPair2);
-  CoilField coil2b(rPair2, iPair2, zOffPair2);
+  coil1a = CoilField(rPair1, iPair1, -zOffPair1);
+  coil1b = CoilField(rPair1, iPair1, zOffPair1);
+  coil2a = CoilField(rPair2, iPair2, -zOffPair2);
+  coil2b = CoilField(rPair2, iPair2, zOffPair2);
 }
 
 TVector3 rad::FourCoilField::evaluate_field_at_point(const TVector3 vec) {

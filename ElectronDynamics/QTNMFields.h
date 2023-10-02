@@ -340,6 +340,13 @@ class FourCoilField : public BaseField {
   CoilField coil2b;
 
  public:
+  /// @brief Parametrised constructor
+  /// @param rPair1 Radius in metres of first coil pair
+  /// @param iPair1 Current in amps of first coil pair
+  /// @param zOffPair1 z offset of first coil pair
+  /// @param rPair2 Radius in metres of second coil pair
+  /// @param iPair2 Current in amps of second coil pair
+  /// @param zOffPair1 z offset of second coil pair
   FourCoilField(double rPair1, double iPair1, double zOffPair1, double rPair2,
                 double iPair2, double zOffPair2);
 

@@ -23,7 +23,7 @@ int main() {
 
   const double rCoil{15e-3};         // mm
   const double outerCoilSep{50e-3};  // mm
-  const double trapDepth{5.4e-3};    // T
+  const double trapDepth{5.5e-3};    // T
   const double iOuterCoil{2 * trapDepth * rCoil / MU0};
   const double outerCoil1Pos{-outerCoilSep / 2};
   const double outerCoil2Pos{outerCoilSep / 2};
@@ -33,7 +33,7 @@ int main() {
   std::cout << "Coils z pos (mm):\t" << outerCoil1Pos << "\t" << innerCoil1Pos
             << "\t" << innerCoil2Pos << "\t" << outerCoil2Pos << std::endl;
 
-  const double innerTrapDepth{3e-3};
+  const double innerTrapDepth{3.1e-3};
   const double iInnerCoil{2 * innerTrapDepth * rCoil / MU0};
 
   CoilField outerCoil1(rCoil, iOuterCoil, outerCoil1Pos);
@@ -41,6 +41,10 @@ int main() {
   CoilField innerCoil1(rCoil, -iInnerCoil, innerCoil1Pos);
   CoilField innerCoil2(rCoil, -iInnerCoil, innerCoil2Pos);
 
+  FourCoilField fourCoils(rCoil, iOuterCoil, outerCoil2Pos, rCoil, -iInnerCoil,
+                          innerCoil2Pos);
+
+  // A central coil
   const double centralTrapDepth{0.3e-3};
   const double iCentralCoil{2 * centralTrapDepth * rCoil / MU0};
   CoilField centralCoil(rCoil, iCentralCoil, 0);
@@ -82,6 +86,7 @@ int main() {
     TVector3 iCoilField1{innerCoil1.evaluate_field_at_point(pos)};
     TVector3 iCoilField2{innerCoil2.evaluate_field_at_point(pos)};
     TVector3 cCoilField{centralCoil.evaluate_field_at_point(pos)};
+    TVector3 fCoilField{fourCoils.evaluate_field_at_point(pos)};
     grOuterCoilField->SetPoint(iZ, z * 1e3,
                                (oCoilField1 + oCoilField2).Mag() * 1e3);
     grInnerCoilField->SetPoint(
@@ -89,9 +94,7 @@ int main() {
     grCentralCoilField->SetPoint(iZ, z * 1e3, cCoilField.Mag() * 1e3);
     gr3CoilField->SetPoint(
         iZ, z * 1e3, (oCoilField1 + oCoilField2 + cCoilField).Mag() * 1e3);
-    gr4CoilField->SetPoint(
-        iZ, z * 1e3,
-        (oCoilField1 + oCoilField2 + iCoilField1 + iCoilField2).Mag() * 1e3);
+    gr4CoilField->SetPoint(iZ, z * 1e3, fCoilField.Mag() * 1e3);
   }
   fout.cd();
   grOuterCoilField->Write("grOuterCoilField");
