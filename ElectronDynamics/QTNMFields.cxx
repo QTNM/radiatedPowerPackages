@@ -283,3 +283,29 @@ TVector3 rad::FourCoilField::evaluate_field_at_point(const TVector3 vec) {
                       coil2b.evaluate_field_at_point(vec)};
   return totalField;
 }
+
+rad::FourCoilBathtub::FourCoilBathtub(double rPair1, double iPair1,
+                                      double zOffPair1, double rPair2,
+                                      double iPair2, double zOffPair2,
+                                      double bkgField) {
+  fourCoils =
+      FourCoilField(rPair1, iPair1, zOffPair1, rPair2, iPair2, zOffPair2);
+  bkg = TVector3(0, 0, bkgField);
+}
+
+TVector3 rad::FourCoilBathtub::evaluate_field_at_point(const TVector3 vec) {
+  TVector3 totalField{fourCoils.evaluate_field_at_point(vec) + bkg};
+  return totalField;
+}
+
+rad::FourCoilHelmholtz::FourCoilHelmholtz(FourCoilField tField,
+                                          HelmholtzField bgField) {
+  trapField = tField;
+  bkgField = bgField;
+}
+
+TVector3 rad::FourCoilHelmholtz::evaluate_field_at_point(const TVector3 vec) {
+  TVector3 totalField{trapField.evaluate_field_at_point(vec) +
+                      bkgField.evaluate_field_at_point(vec)};
+  return totalField;
+}
