@@ -84,3 +84,14 @@ target_link_libraries(LongTimeGeneration PRIVATE BasicFunctions ElectronDynamics
 
 add_executable(VariableEnergyLoss VariableEnergyLoss.cxx)
 target_link_libraries(VariableEnergyLoss PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+add_executable(HelmholtzCoils HelmholtzCoils.cxx)
+target_link_libraries(HelmholtzCoils PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES} ${Boost_MATH_LIBRARY})
+
+add_executable(LeeWhitingCoils LeeWhitingCoils.cxx)
+target_link_libraries(LeeWhitingCoils PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES} ${Boost_MATH_LIBRARY})
+
+add_executable(TrapCoilTuning TrapCoilTuning.cxx)
+target_link_libraries(TrapCoilTuning PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(FourCoilEnergyRes FourCoilEnergyRes.cxx)
+target_link_libraries(FourCoilEnergyRes PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
