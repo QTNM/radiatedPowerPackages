@@ -375,18 +375,18 @@ double rad::CircularWaveguide::GetEFieldNormalisation(Mode_t modeType, int n,
 double rad::CircularWaveguide::GetHFieldIntegral(Mode_t modeType, int n, int m,
                                                  double omega, double A,
                                                  double B, int nSurfPnts) {
-  double area{pow(a / double(nSurfPnts), 2)};
+  const double dRho{a / double(nSurfPnts)};
+  const double dPhi{TMath::TwoPi() / double(nSurfPnts)};
   double integral{0};
-  for (int ix = 0; ix < nSurfPnts; ix++) {
-    double thisx{-a / 2.0 + a / (2.0 * double(nSurfPnts)) +
-                 a * double(ix) / double(nSurfPnts)};
-    for (int iy = 0; iy < nSurfPnts; iy++) {
-      double thisy{-a / 2.0 + a / (2.0 * double(nSurfPnts)) +
-                   a * double(iy) / double(nSurfPnts)};
+  for (unsigned int iRho{0}; iRho < nSurfPnts; iRho++) {
+    double thisRho{a / (2.0 * double(nSurfPnts)) +
+                   a * double(iRho) / double(nSurfPnts)};
+    const double area{thisRho * dRho * dPhi};
+    for (unsigned int iPhi{0}; iPhi < nSurfPnts; iPhi++) {
+      double thisPhi{TMath::TwoPi() / (2.0 * double(nSurfPnts)) +
+                     TMath::TwoPi() * double(iPhi) / double(nSurfPnts)};
 
-      if (sqrt(thisx * thisx + thisy * thisy) > a) continue;
-
-      TVector3 surfacePos{thisx, thisy, 0.0};
+      TVector3 surfacePos{thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0.0};
       ComplexVector3 hTrans{
           GetModalHField(modeType, n, m, surfacePos, omega, A, B)};
       hTrans.SetZ(std::complex<double>{0, 0});
