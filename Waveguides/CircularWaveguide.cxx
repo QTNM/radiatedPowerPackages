@@ -87,66 +87,58 @@ TVector3 rad::CircularWaveguide::GetModeEField(Mode_t modeType, int n, int m,
   return field.Real();
 }
 
-rad::ComplexVector3 rad::CircularWaveguide::GetModalEField(Mode_t modeType,
-                                                           int n, int m,
-                                                           TVector3 pos,
-                                                           double omega,
-                                                           double A, double B) {
+rad::ComplexVector3 rad::CircularWaveguide::GetModalEField(
+    TVector3 pos, Mode_t modeType, double A, unsigned int n, unsigned int m,
+    double omega, bool state) {
   double rho{pos.Perp()};
   if (rho > a) return ComplexVector3(0, 0, 0);
 
   double phi{pos.Phi()};
-  double z{pos.Z() + d / 2.0};
-  std::complex<double> i{0.0, 1.0};
-
+  std::complex<double> ERho{0};
+  std::complex<double> EPhi{0};
+  std::complex<double> EZ{0};
   if (modeType == kTE) {
     // We have a TE mode
-    double pnmPrime{GetBesselPrimeZero(n, m)};
-    double k_c{pnmPrime / a};
-    std::complex<double> betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-    std::complex<double> beta{sqrt(betaSq)};
-    std::complex<double> Ez{0.0, 0.0};
-    std::complex<double> Erho{
-        (omega * MU0 * double(n) / (k_c * k_c * rho)) *
-        (A * cos(double(n) * phi) - B * sin(double(n) * phi)) *
-        boost::math::cyl_bessel_j(n, k_c * rho)};
-    std::complex<double> Ephi{
-        (-1.0 * omega * MU0 / k_c) *
-        (A * sin(double(n) * phi) + B * cos(double(n) * phi)) *
-        boost::math::cyl_bessel_j_prime(n, k_c * rho)};
-
-    ComplexVector3 eField{Erho * cos(phi) - Ephi * sin(phi),
-                          Erho * sin(phi) + Ephi * cos(phi), Ez};
-    return eField;
+    double XnmPrime{GetBesselPrimeZero(n, m)};
+    ERho = (-A * double(n) / rho) *
+           boost::math::cyl_bessel_j(n, XnmPrime * rho / a);
+    EPhi = (A * XnmPrime / a) *
+           boost::math::cyl_bessel_j_prime(m, XnmPrime * rho / a);
+    if (state) {
+      ERho *= -sin(double(n) * phi);
+      EPhi *= cos(double(n) * phi);
+    } else {
+      ERho *= cos(double(n) * phi);
+      EPhi *= sin(double(n) * phi);
+    }
   } else if (modeType == kTM) {
     // We have a TM mode
-    double pnm{boost::math::cyl_bessel_j_zero(double(n), m)};
-    double k_c{pnm / a};
+    double Xnm{boost::math::cyl_bessel_j_zero(double(n), m)};
+    double k_c{Xnm / a};
     std::complex<double> betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
     std::complex<double> beta{sqrt(betaSq)};
-    std::complex<double> Ez{
-        i * (A * sin(double(n) * phi) + B * cos(double(n) * phi)) *
-        boost::math::cyl_bessel_j(n, k_c * rho)};
-    std::complex<double> Erho{
-        (beta / k_c) * (A * sin(double(n) * phi) + B * cos(double(n) * phi)) *
-        boost::math::cyl_bessel_j_prime(n, k_c * rho)};
-    std::complex<double> Ephi{
-        (beta * double(n) / (k_c * k_c * rho)) *
-        (A * cos(double(n) * phi) - B * sin(double(n) * phi)) *
-        boost::math::cyl_bessel_j(n, k_c * rho)};
-
-    ComplexVector3 eField{Erho * cos(phi) - Ephi * sin(phi),
-                          Erho * sin(phi) + Ephi * cos(phi), Ez};
-    return eField;
+    EZ = A * boost::math::cyl_bessel_j(n, k_c * rho);
+    ERho = (-A * beta * Xnm / (a * k_c * k_c)) *
+           boost::math::cyl_bessel_j_prime(n, k_c * rho);
+    EPhi = (-A * beta * double(n) / (k_c * k_c * rho)) *
+           boost::math::cyl_bessel_j(n, k_c * rho);
+    if (state) {
+      EZ *= cos(double(n) * phi);
+      ERho *= cos(double(n) * phi);
+      EPhi *= -sin(double(n) * phi);
+    } else {
+      EZ *= sin(double(n) * phi);
+      ERho *= sin(double(n) * phi);
+      EPhi *= cos(double(n) * phi);
+    }
   } else {
     // This is a TEM mode that which is not supported by this waveguide
     std::cout << "TEM modes are not supported by circular waveguides."
               << std::endl;
-    ComplexVector3 eField{std::complex<double>{0, 0},
-                          std::complex<double>{0, 0},
-                          std::complex<double>{0, 0}};
-    return eField;
   }
+  ComplexVector3 eField{ERho * cos(phi) - EPhi * sin(phi),
+                        ERho * sin(phi) + EPhi * cos(phi), EZ};
+  return eField;
 }
 
 rad::ComplexVector3 rad::CircularWaveguide::GetModeHFieldComplex(
@@ -359,7 +351,7 @@ double rad::CircularWaveguide::GetEFieldNormalisation(Mode_t modeType, int n,
 
       TVector3 surfacePos{thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0.0};
       ComplexVector3 eTrans{
-          GetModalEField(modeType, n, m, surfacePos, omega, A, B)};
+          GetModalEField(surfacePos, modeType, A, n, m, omega, true)};
       eTrans.SetZ(std::complex<double>{0, 0});
       integral += (eTrans.Dot(eTrans)).real() * area;
     }
@@ -405,10 +397,10 @@ std::complex<double> rad::CircularWaveguide::GetFieldAmp(
   ComplexVector3 jComplex{j};
 
   ComplexVector3 eTrans{
-      GetModalEField(modeType, n, m, ePos, omega, normA, normB)};
+      GetModalEField(ePos, modeType, normA, n, m, omega, true)};
   eTrans.SetZ(std::complex<double>{0.0, 0.0});
   ComplexVector3 eAxial{
-      GetModalEField(modeType, n, m, ePos, omega, normA, normB)};
+      GetModalEField(ePos, modeType, normA, n, m, omega, true)};
   eAxial.SetX(std::complex<double>{0.0, 0.0});
   eAxial.SetY(std::complex<double>{0.0, 0.0});
   ComplexVector3 eField(0, 0, 0);
@@ -443,13 +435,13 @@ void rad::CircularWaveguide::CalculatePn(Mode_t modeType, unsigned int n,
 
       // Get transverse E and H components
       ComplexVector3 eTrans1{
-          GetModalEField(modeType, n, m, sPos1, omega, A, B)};
+          GetModalEField(sPos1, modeType, A, n, m, omega, true)};
       eTrans1.SetZ(0);
       ComplexVector3 hTrans1{
           GetModalHField(modeType, n, m, sPos1, omega, A, B)};
       hTrans1.SetZ(0);
       ComplexVector3 eTrans2{
-          GetModalEField(modeType, n, m, sPos2, omega, A, B)};
+          GetModalEField(sPos1, modeType, A, n, m, omega, true)};
       eTrans2.SetZ(0);
       ComplexVector3 hTrans2{
           GetModalHField(modeType, n, m, sPos2, omega, A, B)};
