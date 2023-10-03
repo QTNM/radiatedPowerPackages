@@ -80,23 +80,17 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModeEFieldComplex(
   }
 }
 
-TVector3 rad::CircularWaveguide::GetModeEField(Mode_t modeType, int n, int m,
-                                               TVector3 pos, double omega,
-                                               double A, double B) {
-  ComplexVector3 field{GetModeEFieldComplex(modeType, n, m, pos, omega, A, B)};
-  return field.Real();
-}
-
-rad::ComplexVector3 rad::CircularWaveguide::GetModalEField(
-    TVector3 pos, Mode_t modeType, double A, unsigned int n, unsigned int m,
-    double omega, bool state) {
+TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, Mode_t modeType,
+                                               double A, unsigned int n,
+                                               unsigned int m, double omega,
+                                               bool state) {
   double rho{pos.Perp()};
-  if (rho > a) return ComplexVector3(0, 0, 0);
+  if (rho > a) return TVector3(0, 0, 0);
 
   double phi{pos.Phi()};
-  std::complex<double> ERho{0};
-  std::complex<double> EPhi{0};
-  std::complex<double> EZ{0};
+  double ERho{0};
+  double EPhi{0};
+  double EZ{0};
   if (modeType == kTE) {
     // We have a TE mode
     double XnmPrime{GetBesselPrimeZero(n, m)};
@@ -115,8 +109,8 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModalEField(
     // We have a TM mode
     double Xnm{boost::math::cyl_bessel_j_zero(double(n), m)};
     double k_c{Xnm / a};
-    std::complex<double> betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-    std::complex<double> beta{sqrt(betaSq)};
+    double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
+    double beta{sqrt(betaSq)};
     EZ = A * boost::math::cyl_bessel_j(n, k_c * rho);
     ERho = (-A * beta * Xnm / (a * k_c * k_c)) *
            boost::math::cyl_bessel_j_prime(n, k_c * rho);
@@ -136,8 +130,8 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModalEField(
     std::cout << "TEM modes are not supported by circular waveguides."
               << std::endl;
   }
-  ComplexVector3 eField{ERho * cos(phi) - EPhi * sin(phi),
-                        ERho * sin(phi) + EPhi * cos(phi), EZ};
+  TVector3 eField{ERho * cos(phi) - EPhi * sin(phi),
+                  ERho * sin(phi) + EPhi * cos(phi), EZ};
   return eField;
 }
 
@@ -350,10 +344,10 @@ double rad::CircularWaveguide::GetEFieldNormalisation(Mode_t modeType, int n,
                      TMath::TwoPi() * double(iPhi) / double(nSurfPnts)};
 
       TVector3 surfacePos{thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0.0};
-      ComplexVector3 eTrans{
-          GetModalEField(surfacePos, modeType, A, n, m, omega, true)};
-      eTrans.SetZ(std::complex<double>{0, 0});
-      integral += (eTrans.Dot(eTrans)).real() * area;
+      TVector3 eTrans{
+          GetModeEField(surfacePos, modeType, A, n, m, omega, true)};
+      eTrans.SetZ(0);
+      integral += eTrans.Dot(eTrans) * area;
     }
   }
 
@@ -394,16 +388,14 @@ std::complex<double> rad::CircularWaveguide::GetFieldAmp(
     TVector3 ePos, TVector3 eVel, double normA, double normB, bool isPositive) {
   double waveImp{GetModeImpedance(modeType, n, m, omega)};
   TVector3 j{-TMath::Qe() * eVel};
-  ComplexVector3 jComplex{j};
+  TVector3 jComplex{j};
 
-  ComplexVector3 eTrans{
-      GetModalEField(ePos, modeType, normA, n, m, omega, true)};
-  eTrans.SetZ(std::complex<double>{0.0, 0.0});
-  ComplexVector3 eAxial{
-      GetModalEField(ePos, modeType, normA, n, m, omega, true)};
-  eAxial.SetX(std::complex<double>{0.0, 0.0});
-  eAxial.SetY(std::complex<double>{0.0, 0.0});
-  ComplexVector3 eField(0, 0, 0);
+  TVector3 eTrans{GetModeEField(ePos, modeType, normA, n, m, omega, true)};
+  eTrans.SetZ(0);
+  TVector3 eAxial{GetModeEField(ePos, modeType, normA, n, m, omega, true)};
+  eAxial.SetX(0);
+  eAxial.SetY(0);
+  TVector3 eField(0, 0, 0);
   if (isPositive) {
     eField = eTrans - eAxial;
   } else {
@@ -434,22 +426,16 @@ void rad::CircularWaveguide::CalculatePn(Mode_t modeType, unsigned int n,
                      GetLength() / 2);
 
       // Get transverse E and H components
-      ComplexVector3 eTrans1{
-          GetModalEField(sPos1, modeType, A, n, m, omega, true)};
+      TVector3 eTrans1{GetModeEField(sPos1, modeType, A, n, m, omega, true)};
       eTrans1.SetZ(0);
-      ComplexVector3 hTrans1{
-          GetModalHField(modeType, n, m, sPos1, omega, A, B)};
+      TVector3 hTrans1{GetModeHField(modeType, n, m, sPos1, omega, A, B)};
       hTrans1.SetZ(0);
-      ComplexVector3 eTrans2{
-          GetModalEField(sPos1, modeType, A, n, m, omega, true)};
+      TVector3 eTrans2{GetModeEField(sPos1, modeType, A, n, m, omega, true)};
       eTrans2.SetZ(0);
-      ComplexVector3 hTrans2{
-          GetModalHField(modeType, n, m, sPos2, omega, A, B)};
+      TVector3 hTrans2{GetModeHField(modeType, n, m, sPos2, omega, A, B)};
       hTrans2.SetZ(0);
-      sum += (eTrans1.Cross(hTrans1)).Z().real() * elArea;
-      // sum += abs((eTrans1.Cross(hTrans1)).Z()) * elArea;
-      sum += (eTrans2.Cross(hTrans2)).Z().real() * elArea;
-      // sum += abs((eTrans2.Cross(hTrans2)).Z()) * elArea;
+      sum += (eTrans1.Cross(hTrans1)).Z() * elArea;
+      sum += (eTrans2.Cross(hTrans2)).Z() * elArea;
     }
   }
   SetPn(sum * 2);

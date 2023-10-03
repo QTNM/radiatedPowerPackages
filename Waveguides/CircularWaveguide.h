@@ -48,20 +48,8 @@ class CircularWaveguide : public IWaveguide {
                                       TVector3 pos, double omega, double A = 1,
                                       double B = 0) override;
 
-  /// Gets the real electric field vector for a given mode at a point
-  /// \param modeType The mode type to get (either TE or TM)
-  /// \param n The angular number of the mode
-  /// \param m The radial number of the mode
-  /// \param pos The position vector (in metres)
-  /// \param omega Angular frequency of the chosen wave
-  /// \param A Arbitrary amplitude for part of solution (default = 1)
-  /// \param B Arbitrary amplitude for part of solution (default = 0)
-  /// \Returns The mode electric field vector at the supplied point
-  TVector3 GetModeEField(Mode_t modeType, int n, int m, TVector3 pos,
-                         double omega, double A = 1, double B = 0) override;
-
   /// @brief Gets the electric field vector for a given mode at a point
-  /// @param pos Position vector (in metres) 
+  /// @param pos Position vector (in metres)
   /// @param modeType The mode type to get (either TE or TM)
   /// @param A Normalisation constant
   /// @param n The angular number of the mode
@@ -69,9 +57,9 @@ class CircularWaveguide : public IWaveguide {
   /// @param omega Angular frequency of the wave
   /// @param state Choose polarisation
   /// @return Electric field vector at that point
-  ComplexVector3 GetModalEField(TVector3 pos, Mode_t modeType, double A,
-                                unsigned int n, unsigned int m, double omega,
-                                bool state);
+  TVector3 GetModeEField(TVector3 pos, Mode_t modeType, double A,
+                         unsigned int n, unsigned int m, double omega,
+                         bool state);
 
   /// Gets the complex magnetic field strength vector for a given mode at a
   /// point \param modeType The mode type to get (either TE or TM) \param n The
