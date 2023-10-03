@@ -33,15 +33,15 @@ class IWaveguide {
                                               TVector3 pos, double omega,
                                               double A = 1, double B = 0) = 0;
 
-  /// Gets the electric field vector for a given mode at a point
-  /// \param modeType The mode type to get (TE, TM, TEM)
-  /// \param n The angular number of the mode
-  /// \param m The radial number of the mode
-  /// \param pos The position vector (in metres)
-  /// \param omega Angular frequency of the chosen wave
-  /// \param A Arbitrary amplitude for part of solution (default = 1)
-  /// \param B Arbitrary amplitude for part of solution (default = 0)
-  /// \Returns The mode electric field vector at the supplied point
+  /// @brief Gets the electric field vector for a given mode at a point
+  /// @param pos The position vector (in metres)
+  /// @param modeType The mode type to get (TE, TM, TEM)
+  /// @param A Arbitrary amplitude for solution
+  /// @param n The angular number of the mode
+  /// @param m The radial number of the mode
+  /// @param omega Angular frequency of the chosen wave
+  /// @param state Choose polarisation state (where applicable)
+  /// @return The mode electric field vector at the supplied point
   virtual TVector3 GetModeEField(TVector3 pos, Mode_t modeType, double A,
                                  unsigned int n, unsigned int m, double omega,
                                  bool state) = 0;
