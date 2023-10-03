@@ -18,6 +18,7 @@
 #include "TGraph.h"
 #include "TTree.h"
 #include "Waveguides/ICavity.h"
+#include "Waveguides/IWaveguide.h"
 
 namespace rad {
 class Signal {
@@ -52,6 +53,16 @@ class Signal {
   /// @param noiseTerms Vector of noise terms
   /// @param tAcq Acquisition time for signal in seconds
   Signal(TString filePath, ICavity* cav, LocalOscillator lo, double sRate,
+         std::vector<GaussianNoise> noiseTerms = {}, double tAcq = -1);
+
+  /// @brief Parametrised constructor using waveguide as RF collection device
+  /// @param filePath String to electron trajectory file
+  /// @param wg
+  /// @param lo
+  /// @param sRate
+  /// @param noiseTerms
+  /// @param tAcq
+  Signal(TString filePath, IWaveguide* wg, LocalOscillator lo, double sRate,
          std::vector<GaussianNoise> noiseTerms = {}, double tAcq = -1);
 
   /// Destructor
@@ -113,6 +124,9 @@ class Signal {
 
   // Pointer to cavity if necessary
   ICavity* cavity;
+
+  // Pointer to waveguide if necessary
+  IWaveguide* waveguide;
 
   /// @brief Function to add new times to vectors
   /// @param time New time from file in seconds

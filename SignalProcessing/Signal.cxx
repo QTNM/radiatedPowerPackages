@@ -394,6 +394,32 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
   CloseInputFile();
 }
 
+rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
+                    double sRate, std::vector<GaussianNoise> noiseTerms,
+                    double tAcq)
+    : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms), waveguide(wg) {
+  CreateVoltageGraphs();
+  // Check if input file opens properly
+  SetUpTree(filePath);
+  // Set file info
+  GetFileInfo();
+
+  // Calculate mode normalisation
+  // Just do this for the TE11 mode for a circular waveguide currently
+
+  // Figure out where we're going to generate the signal up to
+  // By default, just do the whole electron trajectory file
+  if (tAcq < 0) tAcq = fileEndTime;
+
+  double sampleTime{0};    // Second sample time in seconds
+  double sample10Time{0};  // First sample time in seconds
+  unsigned int sample10Num{0};
+  double sample10StepSize{1 / (10 * sRate)};
+
+  // Create just one deque for our
+  advancedTimeVec.push_back(std::deque<double>());
+}
+
 rad::Signal::~Signal() {
   delete grVITime;
   delete grVQTime;
