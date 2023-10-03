@@ -545,7 +545,111 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
                                  norm.real(), 1, 1, 1, false) *
           fieldAmpMinus};
       return (probeFieldPlus + probeFieldMinus).Real();
+    } else if (firstGuessTime < tr) {
+      // We are searching upwards
+      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
+        inputTree->GetEntry(i);
+        double lowerPoint{time};
+        inputTree->GetEntry(i + 1);
+        double upperPoint{time};
+        if (tr > lowerPoint && tr < upperPoint) {
+          correctIndex = i;
+          break;
+        }
+      }
+    } else {
+      // We are searching downwards
+      for (int i{firstGuessTInd}; i >= 0; i--) {
+        inputTree->GetEntry(i);
+        double lowerPoint{time};
+        inputTree->GetEntry(i + 1);
+        double upperPoint{time};
+        if (tr > lowerPoint && tr < upperPoint) {
+          correctIndex = i;
+          break;
+        }
+      }
     }
+
+    // Now can do some interpolation if we haven't already found the value
+    std::vector<double> timeVals(4);
+    std::vector<double> ExVals(4);
+    std::vector<double> EyVals(4);
+    std::vector<double> EzVals(4);
+    if (correctIndex == 0) {
+      timeVals.at(0) = 0;
+      ExVals.at(0) = 0;
+      EyVals.at(0) = 0;
+      EzVals.at(0) = 0;
+    } else {
+      inputTree->GetEntry(correctIndex - 1);
+      timeVals.at(0) = time;
+      TVector3 pos(xPos, yPos, zPos);
+      ComplexVector3 modeFieldPlus{cavity->GetModalEField(
+          pos, ICavity::kTE, norm.real(), 1, 1, 1, true)};
+      ComplexVector3 modeFieldMinus{cavity->GetModalEField(
+          pos, ICavity::kTE, norm.real(), 1, 1, 1, false)};
+      // Calculate the current density
+      ComplexVector3 J(xVel, yVel, zVel);
+      J *= -TMath::Qe();
+
+      // Now calculate the field amplitudes
+      // Assume we're at the resonance
+      const double factor{-190};
+      std::complex<double> fieldAmpPlus{factor * J.Dot(modeFieldPlus)};
+      std::complex<double> fieldAmpMinus{factor * J.Dot(modeFieldMinus)};
+      // Now calculate the actual electric field at the probe
+      ComplexVector3 probeFieldPlus{
+          cavity->GetModalEField(cavity->GetProbePosition(), ICavity::kTE,
+                                 norm.real(), 1, 1, 1, true)};
+      probeFieldPlus *= fieldAmpPlus;
+      ComplexVector3 probeFieldMinus{
+          cavity->GetModalEField(cavity->GetProbePosition(), ICavity::kTE,
+                                 norm.real(), 1, 1, 1, false)};
+      probeFieldMinus *= fieldAmpMinus;
+      TVector3 totalProbeField{(probeFieldPlus + probeFieldMinus).Real()};
+      ExVals.at(0) = totalProbeField.X();
+      EyVals.at(0) = totalProbeField.Y();
+      EzVals.at(0) = totalProbeField.Z();
+    }
+
+    // Now add the rest of the elements of the vector
+    for (unsigned int iEl{1}; iEl <= 3; iEl++) {
+      inputTree->GetEntry(correctIndex + iEl - 1);
+      timeVals.at(iEl) = time;
+      TVector3 pos(xPos, yPos, zPos);
+      ComplexVector3 modeFieldPlus{cavity->GetModalEField(
+          pos, ICavity::kTE, norm.real(), 1, 1, 1, true)};
+      ComplexVector3 modeFieldMinus{cavity->GetModalEField(
+          pos, ICavity::kTE, norm.real(), 1, 1, 1, false)};
+      ComplexVector3 J(xVel, yVel, zVel);
+      J *= -TMath::Qe();
+
+      // Now calculate the field amplitudes
+      // Assume we're at the resonance
+      const double factor{-190};
+      std::complex<double> fieldAmpPlus{factor * J.Dot(modeFieldPlus)};
+      std::complex<double> fieldAmpMinus{factor * J.Dot(modeFieldMinus)};
+      // Now calculate the actual electric field at the probe
+      ComplexVector3 probeFieldPlus{
+          cavity->GetModalEField(cavity->GetProbePosition(), ICavity::kTE,
+                                 norm.real(), 1, 1, 1, true)};
+      probeFieldPlus *= fieldAmpPlus;
+      ComplexVector3 probeFieldMinus{
+          cavity->GetModalEField(cavity->GetProbePosition(), ICavity::kTE,
+                                 norm.real(), 1, 1, 1, false)};
+      probeFieldMinus *= fieldAmpMinus;
+      TVector3 totalProbeField{(probeFieldPlus + probeFieldMinus).Real()};
+      ExVals.at(iEl) = totalProbeField.X();
+      EyVals.at(iEl) = totalProbeField.Y();
+      EzVals.at(iEl) = totalProbeField.Z();
+    }
+
+    // Now do the cubic interpolation
+    double ExInterp{CubicInterpolation(timeVals, ExVals, tr)};
+    double EyInterp{CubicInterpolation(timeVals, EyVals, tr)};
+    double EzInterp{CubicInterpolation(timeVals, EzVals, tr)};
+    return TVector3(ExInterp, EyInterp, EzInterp);
   }
 }
 
