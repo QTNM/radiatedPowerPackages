@@ -79,3 +79,6 @@ target_link_libraries(LeeWhitingCoils PRIVATE BasicFunctions ElectronDynamics ${
 
 add_executable(TrapCoilTuning TrapCoilTuning.cxx)
 target_link_libraries(TrapCoilTuning PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(FourCoilEnergyRes FourCoilEnergyRes.cxx)
+target_link_libraries(FourCoilEnergyRes PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
