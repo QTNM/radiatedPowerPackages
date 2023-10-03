@@ -34,6 +34,9 @@ double rad::RectangularWaveguide::GetCutoffWavenumber(Mode_t modeType,
 rad::ComplexVector3 rad::RectangularWaveguide::GetModeEFieldComplex(
     Mode_t modeType, int m, int n, TVector3 pos, double omega, double A,
     double B) {
+  if (pos.X() > a / 2 || pos.Y() > b / 2 || pos.Z() > d / 2)
+    ComplexVector3(0, 0, 0);
+
   double x{pos.X() + a / 2.0};
   double y{pos.Y() + b / 2.0};
   double z{pos.Z() + d / 2.0};
@@ -90,9 +93,13 @@ TVector3 rad::RectangularWaveguide::GetModeEField(Mode_t modeType, int m, int n,
 TVector3 rad::RectangularWaveguide::GetModalEField(Mode_t modeType, int m,
                                                    int n, TVector3 pos,
                                                    double omega, double A) {
+  if (pos.X() > a / 2 || pos.Y() > b / 2 || pos.Z() > d / 2)
+    return TVector3(0, 0, 0);
+
   double x{pos.X() + a / 2.0};
   double y{pos.Y() + b / 2.0};
   double z{pos.Z() + d / 2.0};
+
   double k_c{GetCutoffWavenumber(modeType, m, n)};
   double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
   double beta{sqrt(betaSq)};
@@ -131,6 +138,9 @@ TVector3 rad::RectangularWaveguide::GetModalEField(Mode_t modeType, int m,
 
 rad::ComplexVector3 rad::RectangularWaveguide::GetNormalisedEField(
     Mode_t modeType, int m, int n, TVector3 pos, double omega) {
+  if (pos.X() > a / 2 || pos.Y() > b / 2 || pos.Z() > d / 2)
+    return ComplexVector3(0, 0, 0);
+
   double x{pos.X() + a / 2.0};
   double y{pos.Y() + b / 2.0};
   double z{pos.Z() + d / 2.0};
@@ -184,6 +194,9 @@ rad::ComplexVector3 rad::RectangularWaveguide::GetNormalisedEField(
 rad::ComplexVector3 rad::RectangularWaveguide::GetModeHFieldComplex(
     Mode_t modeType, int m, int n, TVector3 pos, double omega, double A,
     double B) {
+  if (pos.X() > a / 2 || pos.Y() > b / 2 || pos.Z() > d / 2)
+    ComplexVector3(0, 0, 0);
+
   double x{pos.X() + a / 2.0};
   double y{pos.Y() + b / 2.0};
   double z{pos.Z() + d / 2.0};
@@ -241,6 +254,8 @@ TVector3 rad::RectangularWaveguide::GetModeHField(Mode_t modeType, int m, int n,
 TVector3 rad::RectangularWaveguide::GetModalHField(Mode_t modeType, int m,
                                                    int n, TVector3 pos,
                                                    double omega, double A) {
+  if (pos.X() > a || pos.Y() > b || pos.Z() > d) return TVector3(0, 0, 0);
+
   double x{pos.X() + a / 2.0};
   double y{pos.Y() + b / 2.0};
   double z{pos.Z() + d / 2.0};
@@ -283,9 +298,13 @@ TVector3 rad::RectangularWaveguide::GetModalHField(Mode_t modeType, int m,
 
 rad::ComplexVector3 rad::RectangularWaveguide::GetNormalisedHField(
     Mode_t modeType, int m, int n, TVector3 pos, double omega) {
+  if (pos.X() > a / 2 || pos.Y() > b / 2 || pos.Z() > d / 2)
+    ComplexVector3(0, 0, 0);
+
   double x{pos.X() + a / 2.0};
   double y{pos.Y() + b / 2.0};
   double z{pos.Z() + d / 2.0};
+
   double k_c{GetCutoffWavenumber(modeType, m, n)};
   double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
   double beta{sqrt(betaSq)};
