@@ -54,14 +54,11 @@ class RectangularWaveguide : public IWaveguide {
   /// \param n The mode number in the y direction of the waveguide
   /// \param pos The position vector (in metres)
   /// \param omega Angular frequency of the chosen wave
-  /// \param A Arbitrary amplitude for solution (default = 1)
-  /// \param B Arbitrary amplitude for solution has no effect
+  /// \param A Arbitrary amplitude for solution
   /// \Returns The mode electric field vector at the supplied point
-  TVector3 GetModeEField(Mode_t modeType, int m, int n, TVector3 pos,
-                         double omega, double A = 1, double B = 0) override;
-
-  TVector3 GetModalEField(Mode_t modeType, int m, int n, TVector3 pos,
-                          double omega, double A = 1);
+  TVector3 GetModeEField(TVector3 pos, Mode_t modeType, double A,
+                         unsigned int m, unsigned int n, double omega,
+                         bool state) override;
 
   ComplexVector3 GetNormalisedEField(Mode_t modeType, int m, int n,
                                      TVector3 pos, double omega);

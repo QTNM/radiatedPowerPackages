@@ -83,16 +83,10 @@ rad::ComplexVector3 rad::RectangularWaveguide::GetModeEFieldComplex(
   }
 }
 
-TVector3 rad::RectangularWaveguide::GetModeEField(Mode_t modeType, int m, int n,
-                                                  TVector3 pos, double omega,
-                                                  double A, double B) {
-  ComplexVector3 field{GetModeEFieldComplex(modeType, m, n, pos, omega, A, B)};
-  return field.Real();
-}
-
-TVector3 rad::RectangularWaveguide::GetModalEField(Mode_t modeType, int m,
-                                                   int n, TVector3 pos,
-                                                   double omega, double A) {
+TVector3 rad::RectangularWaveguide::GetModeEField(TVector3 pos, Mode_t modeType,
+                                                  double A, unsigned int m,
+                                                  unsigned int n, double omega,
+                                                  bool state) {
   if (pos.X() > a / 2 || pos.Y() > b / 2 || pos.Z() > d / 2)
     return TVector3(0, 0, 0);
 

@@ -42,8 +42,9 @@ class IWaveguide {
   /// \param A Arbitrary amplitude for part of solution (default = 1)
   /// \param B Arbitrary amplitude for part of solution (default = 0)
   /// \Returns The mode electric field vector at the supplied point
-  virtual TVector3 GetModeEField(Mode_t modeType, int n, int m, TVector3 pos,
-                                 double omega, double A = 1, double B = 0) = 0;
+  virtual TVector3 GetModeEField(TVector3 pos, Mode_t modeType, double A,
+                                 unsigned int n, unsigned int m, double omega,
+                                 bool state) = 0;
 
   /// Gets the complex magnetic field strength vector for a given mode at a
   /// point \param modeType The mode type to get (TE, TM, TEM) \param n The

@@ -59,7 +59,7 @@ class CircularWaveguide : public IWaveguide {
   /// @return Electric field vector at that point
   TVector3 GetModeEField(TVector3 pos, Mode_t modeType, double A,
                          unsigned int n, unsigned int m, double omega,
-                         bool state);
+                         bool state) override;
 
   /// Gets the complex magnetic field strength vector for a given mode at a
   /// point \param modeType The mode type to get (either TE or TM) \param n The
