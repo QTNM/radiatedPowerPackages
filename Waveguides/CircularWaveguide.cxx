@@ -16,6 +16,8 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModeEFieldComplex(
     Mode_t modeType, int n, int m, TVector3 pos, double omega, double A,
     double B) {
   double rho{pos.Perp()};
+  if (rho > a) return ComplexVector3(0, 0, 0);
+
   double phi{pos.Phi()};
   double z{pos.Z() + d / 2.0};
   std::complex<double> i{0.0, 1.0};
@@ -91,6 +93,8 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModalEField(Mode_t modeType,
                                                            double omega,
                                                            double A, double B) {
   double rho{pos.Perp()};
+  if (rho > a) return ComplexVector3(0, 0, 0);
+
   double phi{pos.Phi()};
   double z{pos.Z() + d / 2.0};
   std::complex<double> i{0.0, 1.0};
@@ -149,6 +153,8 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModeHFieldComplex(
     Mode_t modeType, int n, int m, TVector3 pos, double omega, double A,
     double B) {
   double rho{pos.Perp()};
+  if (rho > a) return ComplexVector3(0, 0, 0);
+
   double phi{pos.Phi()};
   double z{pos.Z() + d / 2.0};
   std::complex<double> i{0.0, 1.0};
@@ -217,6 +223,8 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModalHField(Mode_t modeType,
                                                            double omega,
                                                            double A, double B) {
   double rho{pos.Perp()};
+  if (rho > a) return ComplexVector3(0, 0, 0);
+
   double phi{pos.Phi()};
   double z{pos.Z() + d / 2.0};
   std::complex<double> i{0.0, 1.0};
@@ -336,7 +344,6 @@ double rad::CircularWaveguide::GetResonantModeFrequency(Mode_t modeType, int n,
 double rad::CircularWaveguide::GetEFieldNormalisation(Mode_t modeType, int n,
                                                       int m, double omega,
                                                       double A, double B,
-
                                                       int nSurfPnts) {
   double integral{0};
   const double dRho{a / double(nSurfPnts)};
