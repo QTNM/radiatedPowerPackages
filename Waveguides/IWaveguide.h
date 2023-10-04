@@ -93,22 +93,20 @@ class IWaveguide {
   virtual double GetCutoffWavenumber(Mode_t modeType, unsigned int n,
                                      unsigned int m) = 0;
 
-  /// Gets the field amplitude from a moving electron in the guide
-  /// \param modeType The mode type to get (TE, TM, TEM)
-  /// \param n The first mode index to get
-  /// \param m The second mode index to get
-  /// \param omega Angular frequency of the chosen wave
-  /// \param ePos The electron position vector
-  /// \param eVel The electron velocity vector
-  /// \param normA Normalisation of one polarisation (circular guide only)
-  /// \param normB Normalisation of one polarisation (circular guide only)
+  /// @brief Gets the field amplitude from a moving electron in the guide
+  /// @param modeType The mode type to get (TE, TM, TEM)
+  /// @param n The first mode index to get
+  /// @param m The second mode index to get
+  /// @param omega Angular frequency of the chosen wave
+  /// @param ePos The electron position vector
+  /// @param eVel The electron velocity vector
+  /// @param normA Normalisation of one polarisation (circular guide only)
   /// @param isPositive Do we want the positive or negative amplitude?
-  /// \Returns The field amplitude at a given time
+  /// @return The field amplitude at a given time
   virtual std::complex<double> GetFieldAmp(Mode_t modeType, unsigned int n,
                                            unsigned int m, double omega,
                                            TVector3 ePos, TVector3 eVel,
-                                           double normA, double normB,
-                                           bool isPositive) = 0;
+                                           double normA, bool isPositive) = 0;
 
   /// @brief Getter function for normalisation constant
   /// @return Normalisation constant

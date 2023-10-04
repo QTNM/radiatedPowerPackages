@@ -367,7 +367,7 @@ double rad::CircularWaveguide::GetHFieldIntegral(Mode_t modeType, int n, int m,
 
 std::complex<double> rad::CircularWaveguide::GetFieldAmp(
     Mode_t modeType, unsigned int n, unsigned int m, double omega,
-    TVector3 ePos, TVector3 eVel, double normA, double normB, bool isPositive) {
+    TVector3 ePos, TVector3 eVel, double normA, bool isPositive) {
   double waveImp{GetModeImpedance(modeType, n, m, omega)};
   TVector3 j{-TMath::Qe() * eVel};
   TVector3 jComplex{j};
