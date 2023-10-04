@@ -19,13 +19,13 @@ class CircularWaveguide : public IWaveguide {
  private:
   double a;  // Waveguide inner radius (in metres)
   double d;  // Waveguide length (in metres)
-             // double r_s; // Surface resistance
 
  public:
-  /// Parametrised  constructor
-  /// \param radius Inner radius of the waveguide (in metres)
-  /// \param length Length of the waveguide (in metres)
-  CircularWaveguide(double radius, double length) : a{radius}, d{radius} {}
+  /// @brief Parametrised  constructor
+  /// @param radius Inner radius of the waveguide (in metres)
+  /// @param length Length of the waveguide (in metres)
+  /// @param probePos Probe position 3-vector
+  CircularWaveguide(double radius, double length, TVector3 probePos);
 
   /// Return the inner radius of the waveguide
   /// \Returns The waveguide inner radius (in metres)

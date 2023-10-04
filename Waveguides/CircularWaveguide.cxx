@@ -12,6 +12,12 @@
 #include "TMath.h"
 #include "TVector3.h"
 
+rad::CircularWaveguide::CircularWaveguide(double radius, double length,
+                                          TVector3 probePos)
+    : a(radius), d(radius) {
+  SetProbePosition(probePos);
+}
+
 rad::ComplexVector3 rad::CircularWaveguide::GetModeEFieldComplex(
     Mode_t modeType, int n, int m, TVector3 pos, double omega, double A,
     double B) {

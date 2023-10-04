@@ -175,8 +175,9 @@ int main(int argc, char *argv[]) {
   const double WR42Side1{10.668e-3};
   const double WR42Side2{4.318e-3};
   const double waveguideLength{0.05};  // Don't think this is very important
-  RectangularWaveguide *WR42 =
-      new RectangularWaveguide(WR42Side1, WR42Side2, waveguideLength);
+  TVector3 probePosition(0, WR42Side2 * 0.2, 0);
+  RectangularWaveguide *WR42 = new RectangularWaveguide(
+      WR42Side1, WR42Side2, waveguideLength, probePosition);
 
   // Check fields are normalised
   const int nSurfPnts{30};

@@ -21,11 +21,13 @@ class RectangularWaveguide : public IWaveguide {
   double d;  // Axial length in metres
 
  public:
-  /// Parametrised constructor
-  /// \param longSide The longer side of the waveguide (in metres)
-  /// \param shortSide The shorter side of the waveguide (in metres)
-  /// \param length The axial length of the waveguide (in metres);
-  RectangularWaveguide(double longSide, double shortSide, double length);
+  /// @brief Parametrised constructor
+  /// @param longSide The longer side of the waveguide (in metres)
+  /// @param shortSide The shorter side of the waveguide (in metres)
+  /// @param length The axial length of the waveguide (in metres);
+  /// @param probePos Probe position vector
+  RectangularWaveguide(double longSide, double shortSide, double length,
+                       TVector3 probePos);
 
   /// Gets the long dimension of the waveguide
   /// \Returns The long (x) dimension of the waveguide (in metres)
