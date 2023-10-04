@@ -119,6 +119,19 @@ class IWaveguide {
   /// @return Normalisation constant
   double GetPn() { return Pn; }
 
+  /// @brief Calculates the required normalisation of the electric fields. If
+  /// you multiply the fields by the result should give correct normalisation
+  /// @param modeType The type of mode (TE or TM)
+  /// @param n The angular number of the mode
+  /// @param m The radial number of the mode
+  /// @param omega Angular frequency for the chosen wave
+  /// @param A The constant factor
+  /// @param nSurfPnts Number of points in each dimension to test
+  /// @param state Can be used for choosing polarisation state
+  virtual double GetEFieldIntegral(Mode_t modeType, unsigned int n,
+                                   unsigned int m, double omega, double A,
+                                   int nSurfPnts, bool state) = 0;
+
  private:
   // Normalisation constant
   double Pn;

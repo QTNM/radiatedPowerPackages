@@ -102,26 +102,26 @@ class CircularWaveguide : public IWaveguide {
   double GetCutoffWavenumber(Mode_t modeType, unsigned int n,
                              unsigned int m) override;
 
-  /// Gets the resonant frequency for a particle mode
-  /// \param modeType The type of mode (TE or TM)
-  /// \param n The angular number of the mode
-  /// \param m The radial number of the mode
-  /// \param l The mode number in the z direction of the waveguide
-  /// \Returns The resonant frequency of the chosen mode (in Hertz)
+  /// @brief Gets the resonant frequency for a particle mode
+  /// @param modeType The type of mode (TE or TM)
+  /// @param n The angular number of the mode
+  /// @param m The radial number of the mode
+  /// @param l The mode number in the z direction of the waveguide
+  /// @return The resonant frequency of the chosen mode (in Hertz)
   double GetResonantModeFrequency(Mode_t modeType, int n, int m,
                                   int l) override;
 
-  /// Calculates the required normalisation of the electric fields
-  /// If you multiply the fields by the result should give correct normalisation
-  /// \param modeType The type of mode (TE or TM)
-  /// \param n The angular number of the mode
-  /// \param m The radial number of the mode
-  /// \param omega Angular frequency for the chosen wave
-  /// \param A The constant factor for one polarisation state
-  /// \param B The constant factor for the other polarisation state
-  /// \param nSurfPnts Number of points in each dimension to test
-  double GetEFieldNormalisation(Mode_t modeType, int n, int m, double omega,
-                                double A, double B, int nSurfPnts);
+  /// @brief Calculates the normalisation integral of the mode electric field
+  /// @param modeType The type of mode (TE or TM)
+  /// @param n The angular number of the mode
+  /// @param m The radial number of the mode
+  /// @param omega Angular frequency for the chosen wave
+  /// @param A The constant factor
+  /// @param nSurfPnts Number of points in each dimension to test
+  /// @return Electric field integral
+  double GetEFieldIntegral(Mode_t modeType, unsigned int n, unsigned int m,
+                           double omega, double A, int nSurfPnts,
+                           bool state) override;
 
   double GetHFieldIntegral(Mode_t modeType, int n, int m, double omega,
                            double A, double B, int nSurfPnts);

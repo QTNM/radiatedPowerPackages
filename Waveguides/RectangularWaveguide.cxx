@@ -352,6 +352,34 @@ double rad::RectangularWaveguide::GetResonantModeFrequency(Mode_t modeType,
   return freq;
 }
 
+double rad::RectangularWaveguide::GetEFieldIntegral(Mode_t modeType,
+                                                    unsigned int m,
+                                                    unsigned int n,
+                                                    double omega, double A,
+                                                    int nSurfPnts, bool state) {
+  double integral{0};
+  const double dX{a / double(nSurfPnts)};
+  const double dY{b / double(nSurfPnts)};
+  const double area{dX * dY};
+  // Loop through points in the field to calculate the integral
+  for (unsigned int iX{0}; iX < nSurfPnts; iX++) {
+    const double x{(-a / 2) + dX / 2 + double(iX) * dX};
+    for (unsigned int iY{0}; iY < nSurfPnts; iY++) {
+      const double y{(-b / 2) + dY / 2 + double(iY) * dY};
+      TVector3 surfacePos{x, y, 0};
+      TVector3 eTrans{
+          GetModeEField(surfacePos, modeType, A, m, n, omega, true)};
+      eTrans.SetZ(0);
+      integral += eTrans.Dot(eTrans) * area;
+    }
+  }
+
+  if (integral == 0)
+    return 0;
+  else
+    return integral;
+}
+
 std::complex<double> rad::RectangularWaveguide::GetFieldAmp(
     Mode_t modeType, unsigned int m, unsigned int n, double omega,
     TVector3 ePos, TVector3 eVel, double normA, double normB, bool isPositive) {

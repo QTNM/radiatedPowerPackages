@@ -117,6 +117,18 @@ class RectangularWaveguide : public IWaveguide {
   double GetResonantModeFrequency(Mode_t modeType, int m, int n,
                                   int l) override;
 
+  /// @brief Calculates the normalisation integral of the mode electric field
+  /// @param modeType The type of mode (TE or TM)
+  /// @param m The mode number in the x direction of the waveguide
+  /// @param n The mode number in the y direction of the waveguide
+  /// @param omega Angular frequency for the chosen wave
+  /// @param A The constant factor
+  /// @param nSurfPnts Number of points in each dimension to test
+  /// @return Electric field integral
+  double GetEFieldIntegral(Mode_t modeType, unsigned int m, unsigned int n,
+                           double omega, double A, int nSurfPnts,
+                           bool state) override;
+
   /// @brief Gets the field amplitude from a moving electron in the guide
   /// @param modeType The mode type to get (TE, TM)
   /// @param m The mode number in the x direction of the waveguide

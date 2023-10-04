@@ -327,10 +327,10 @@ double rad::CircularWaveguide::GetResonantModeFrequency(Mode_t modeType, int n,
   }
 }
 
-double rad::CircularWaveguide::GetEFieldNormalisation(Mode_t modeType, int n,
-                                                      int m, double omega,
-                                                      double A, double B,
-                                                      int nSurfPnts) {
+double rad::CircularWaveguide::GetEFieldIntegral(Mode_t modeType,
+                                                 unsigned int n, unsigned int m,
+                                                 double omega, double A,
+                                                 int nSurfPnts, bool state) {
   double integral{0};
   const double dRho{a / double(nSurfPnts)};
   const double dPhi{TMath::TwoPi() / double(nSurfPnts)};
@@ -345,7 +345,7 @@ double rad::CircularWaveguide::GetEFieldNormalisation(Mode_t modeType, int n,
 
       TVector3 surfacePos{thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0.0};
       TVector3 eTrans{
-          GetModeEField(surfacePos, modeType, A, n, m, omega, true)};
+          GetModeEField(surfacePos, modeType, A, n, m, omega, state)};
       eTrans.SetZ(0);
       integral += eTrans.Dot(eTrans) * area;
     }
@@ -354,7 +354,7 @@ double rad::CircularWaveguide::GetEFieldNormalisation(Mode_t modeType, int n,
   if (integral == 0) {
     return 0;
   } else {
-    return sqrt(1.0 / integral);
+    return integral;
   }
 }
 
