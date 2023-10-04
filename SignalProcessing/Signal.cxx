@@ -316,7 +316,8 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
   unsigned int sample10Num{0};
   double sample10StepSize{1 / (10 * sRate)};
 
-  // Create just one deque for our
+  // Create just one deque for our probe position
+  // To do: allow multiple probes
   advancedTimeVec.push_back(std::deque<double>());
 
   // Create some intermediate level graphs before final sampling
@@ -341,7 +342,8 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
       printTime += printInterval;
     }
 
-    AddNewCavityTimes(entryTime, TVector3(xPos, yPos, zPos));
+    AddNewCavWgTimes(entryTime, TVector3(xPos, yPos, zPos),
+                     cavity->GetProbePosition());
 
     // Do we need to sample now?
     if (entryTime >= sample10Time) {
@@ -392,6 +394,48 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
 
   // Can now safely close the input file
   CloseInputFile();
+
+  // There are still potentially signals that haven't been filtered so do those
+  if (grVIInter->GetN() > 0) {
+    TGraph* grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
+    TGraph* grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
+    delete grVIInter;
+    delete grVQInter;
+    // Add these remaining points to the main filtered graph
+    for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
+      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
+                                grVISmallFiltered->GetPointX(iF),
+                                grVISmallFiltered->GetPointY(iF));
+      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
+                                grVQSmallFiltered->GetPointX(iF),
+                                grVQSmallFiltered->GetPointY(iF));
+    }
+    delete grVISmallFiltered;
+    delete grVQSmallFiltered;
+  } else {
+    delete grVIInter;
+    delete grVQInter;
+  }
+
+  // Now sample at actual sample rate
+  std::cout << "Second sampling...\n";
+  for (int i{0}; i < grVIBigFiltered->GetN(); i++) {
+    // We need to sample every 10th point
+    if (i % 10 == 0) {
+      grVITime->SetPoint(grVITime->GetN(), grVIBigFiltered->GetPointX(i),
+                         grVIBigFiltered->GetPointY(i));
+      grVQTime->SetPoint(grVQTime->GetN(), grVQBigFiltered->GetPointX(i),
+                         grVQBigFiltered->GetPointY(i));
+    }
+  }
+  delete grVIBigFiltered;
+  delete grVQBigFiltered;
+
+  // Now need to add noise (if noise terms exist)
+  if (!noiseTerms.empty()) {
+    std::cout << "Adding noise...\n";
+    AddNoise();
+  }
 }
 
 rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
@@ -404,8 +448,18 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
   // Set file info
   GetFileInfo();
 
-  // Calculate mode normalisation
-  // Just do this for the TE11 mode for a circular waveguide currently
+  // Calculate mode integrals and resulting normalisation
+  // Just do this for the TE11 mode currently
+  const unsigned int nSurfPnts{100};
+  const double omega{19e9 * TMath::TwoPi()};
+  const double intTE11p{waveguide->GetEFieldIntegral(
+      IWaveguide::kTE, 1, 1, omega, 1, nSurfPnts, true)};
+  const double intTE11m{waveguide->GetEFieldIntegral(
+      IWaveguide::kTE, 1, 1, omega, 1, nSurfPnts, false)};
+  const double normTE11p{1 / sqrt(intTE11p)};
+  const double normTE11m{1 / sqrt(intTE11m)};
+  std::cout << "Normalisation constant 1, 2 = " << normTE11p << ", "
+            << normTE11m << std::endl;
 
   // Figure out where we're going to generate the signal up to
   // By default, just do the whole electron trajectory file
@@ -416,8 +470,127 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
   unsigned int sample10Num{0};
   double sample10StepSize{1 / (10 * sRate)};
 
-  // Create just one deque for our
+  // Create just one deque for our probe position
+  // TO DO: Allow for multiple probes
   advancedTimeVec.push_back(std::deque<double>());
+
+  // Create some intermediate level graphs before final sampling
+  auto grVIInter = new TGraph();
+  auto grVQInter = new TGraph();
+  auto grVIBigFiltered = new TGraph();
+  auto grVQBigFiltered = new TGraph();
+
+  // Loop through tree entries
+  // Initially we are just doing the the higher frequency sampling
+  double printTime{0};  // seconds
+  // Controls how many seconds are processed before we print
+  const double printInterval{5e-6};
+  for (unsigned int iE{0}; iE < inputTree->GetEntries(); iE++) {
+    inputTree->GetEntry(iE);
+    const double entryTime{time};
+
+    // Check we are still within the acquisition time, stop otherwise
+    if (entryTime > tAcq) break;
+
+    if (entryTime >= printTime) {
+      std::cout << printTime * 1e6 << " us signal processed...\n";
+      printTime += printInterval;
+    }
+
+    AddNewCavWgTimes(entryTime, TVector3(xPos, yPos, zPos),
+                     waveguide->GetProbePosition());
+
+    // Do we need to sample now?
+    if (entryTime >= sample10Time) {
+      // Yes we do
+      // First get the retarded time to calculate the fields at
+      double tr{GetRetardedTime(sample10Time, 0)};
+
+      // Calculate the mode field amplitudes
+      double ei_p{CalcWaveguideEField(tr, normTE11p).X()};
+      double eq_p{ei_p};
+      double ei_m{CalcWaveguideEField(tr, normTE11m).X()};
+      double eq_m{ei_m};
+
+      DownmixVoltages(ei_p, eq_p, sample10Time);
+
+      grVIInter->SetPoint(grVIInter->GetN(), sample10Time, ei_p);
+      grVQInter->SetPoint(grVQInter->GetN(), sample10Time, eq_p);
+
+      sample10Num++;
+      sample10Time = double(sample10Num) * sample10StepSize;
+
+      // We want to filter this signal if it's long enough
+      // Pick a good number to do FFTs with (2^n preferably)
+      if (grVIInter->GetN() == 32768) {
+        auto grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
+        auto grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
+        // Now add these points to the existing graph
+        for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
+          grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
+                                    grVISmallFiltered->GetPointX(iF),
+                                    grVISmallFiltered->GetPointY(iF));
+          grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
+                                    grVQSmallFiltered->GetPointX(iF),
+                                    grVQSmallFiltered->GetPointY(iF));
+        }
+        delete grVISmallFiltered;
+        delete grVQSmallFiltered;
+        // Clear the current graphs and start again
+        delete grVIInter;
+        delete grVQInter;
+        grVIInter = new TGraph();
+        grVQInter = new TGraph();
+      }
+    } else {
+      continue;
+    }
+  }
+
+  // Safely close input file
+  CloseInputFile();
+
+  // There are still potentially signals that haven't been filtered so do those
+  if (grVIInter->GetN() > 0) {
+    TGraph* grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
+    TGraph* grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
+    delete grVIInter;
+    delete grVQInter;
+    // Add these remaining points to the main filtered graph
+    for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
+      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
+                                grVISmallFiltered->GetPointX(iF),
+                                grVISmallFiltered->GetPointY(iF));
+      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
+                                grVQSmallFiltered->GetPointX(iF),
+                                grVQSmallFiltered->GetPointY(iF));
+    }
+    delete grVISmallFiltered;
+    delete grVQSmallFiltered;
+  } else {
+    delete grVIInter;
+    delete grVQInter;
+  }
+
+  // Now sample at actual sample rate
+  std::cout << "Second sampling...\n";
+  for (int i{0}; i < grVIBigFiltered->GetN(); i++) {
+    // We need to sample every 10th point
+    if (i % 10 == 0) {
+      grVITime->SetPoint(grVITime->GetN(), grVIBigFiltered->GetPointX(i),
+                         grVIBigFiltered->GetPointY(i));
+      grVQTime->SetPoint(grVQTime->GetN(), grVQBigFiltered->GetPointX(i),
+                         grVQBigFiltered->GetPointY(i));
+    }
+  }
+  delete grVIBigFiltered;
+  delete grVQBigFiltered;
+
+  // Now need to add noise (if noise terms exist)
+  if (!noiseTerms.empty()) {
+    std::cout << "Adding noise...\n";
+    AddNoise();
+  }
 }
 
 rad::Signal::~Signal() {
@@ -679,6 +852,134 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
   }
 }
 
+TVector3 rad::Signal::CalcWaveguideEField(double tr, double norm) {
+  if (tr == -1) {
+    // The voltage is from before the signal has reached the probe
+    // Therefore there is no electric field there at this time
+    return TVector3(0, 0, 0);
+  } else {
+    // We actually have to calculate the voltage
+    // Start off with a first guess
+    int firstGuessTInd{int(round(filePntsPerTime * (tr - fileStartTime)))};
+
+    // Find the appropriate time
+    inputTree->GetEntry(firstGuessTInd);
+    double firstGuessTime{time};
+    unsigned int correctIndex{0};
+    if (firstGuessTime == tr) {
+      TVector3 pos(xPos, yPos, zPos);
+      TVector3 vel(xVel, yVel, zVel);
+      // Calculate the field amplitudes
+      double aTE11p{waveguide->GetFieldAmp(IWaveguide::kTE, 1, 1,
+                                           TMath::TwoPi() * 19e9, pos, vel,
+                                           norm, true, true)};
+      double aTE11m{waveguide->GetFieldAmp(IWaveguide::kTE, 1, 1,
+                                           TMath::TwoPi() * 19e9, pos, vel,
+                                           norm, false, true)};
+      // Now calculate the actual field at the probe position
+      TVector3 probeFieldPlus{waveguide->GetModeEField(
+          pos, IWaveguide::kTE, norm, 1, 1, TMath::TwoPi() * 19e9, true)};
+      probeFieldPlus *= aTE11p;
+      TVector3 probeFieldMinus{waveguide->GetModeEField(
+          pos, IWaveguide::kTE, norm, 1, 1, TMath::TwoPi() * 19e9, false)};
+      probeFieldMinus *= aTE11m;
+      return probeFieldPlus + probeFieldMinus;
+    } else if (firstGuessTime < tr) {
+      // We are searching upwards
+      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
+        inputTree->GetEntry(i);
+        double lowerPoint{time};
+        inputTree->GetEntry(i + 1);
+        double upperPoint{time};
+        if (tr > lowerPoint && tr < upperPoint) {
+          correctIndex = i;
+          break;
+        }
+      }
+    } else {
+      // We are searching downwards
+      for (int i{firstGuessTInd}; i >= 0; i--) {
+        inputTree->GetEntry(i);
+        double lowerPoint{time};
+        inputTree->GetEntry(i + 1);
+        double upperPoint{time};
+        if (tr > lowerPoint && tr < upperPoint) {
+          correctIndex = i;
+          break;
+        }
+      }
+    }
+
+    // Now can do some interpolation if we haven't already found the value
+    std::vector<double> timeVals(4);
+    std::vector<double> ExVals(4);
+    std::vector<double> EyVals(4);
+    std::vector<double> EzVals(4);
+    if (correctIndex == 0) {
+      timeVals.at(0) = 0;
+      ExVals.at(0) = 0;
+      EyVals.at(0) = 0;
+      EzVals.at(0) = 0;
+    } else {
+      inputTree->GetEntry(correctIndex - 1);
+      timeVals.at(0) = time;
+      TVector3 pos(xPos, yPos, zPos);
+      TVector3 vel(xVel, yVel, zVel);
+      // Calculate the field amplitudes
+      double aTE11p{waveguide->GetFieldAmp(IWaveguide::kTE, 1, 1,
+                                           TMath::TwoPi() * 19e9, pos, vel,
+                                           norm, true, true)};
+      double aTE11m{waveguide->GetFieldAmp(IWaveguide::kTE, 1, 1,
+                                           TMath::TwoPi() * 19e9, pos, vel,
+                                           norm, false, true)};
+      // Now calculate the actual field at the probe position
+      TVector3 probeFieldPlus{waveguide->GetModeEField(
+          pos, IWaveguide::kTE, norm, 1, 1, TMath::TwoPi() * 19e9, true)};
+      probeFieldPlus *= aTE11p;
+      TVector3 probeFieldMinus{waveguide->GetModeEField(
+          pos, IWaveguide::kTE, norm, 1, 1, TMath::TwoPi() * 19e9, false)};
+      probeFieldMinus *= aTE11m;
+      TVector3 totalProbeField{probeFieldPlus + probeFieldMinus};
+      ExVals.at(0) = totalProbeField.X();
+      EyVals.at(0) = totalProbeField.Y();
+      EzVals.at(0) = totalProbeField.Z();
+    }
+
+    // Now add the other elements for the interpolation
+    for (unsigned int iEl{1}; iEl <= 3; iEl++) {
+      inputTree->GetEntry(correctIndex + iEl - 1);
+      timeVals.at(iEl) = time;
+      TVector3 pos(xPos, yPos, zPos);
+      TVector3 vel(xVel, yVel, zVel);
+      // Calculate the field amplitudes
+      double aTE11p{waveguide->GetFieldAmp(IWaveguide::kTE, 1, 1,
+                                           TMath::TwoPi() * 19e9, pos, vel,
+                                           norm, true, true)};
+      double aTE11m{waveguide->GetFieldAmp(IWaveguide::kTE, 1, 1,
+                                           TMath::TwoPi() * 19e9, pos, vel,
+                                           norm, false, true)};
+
+      // Now calculate the actual field at the probe position
+      TVector3 probeFieldPlus{waveguide->GetModeEField(
+          pos, IWaveguide::kTE, norm, 1, 1, TMath::TwoPi() * 19e9, true)};
+      probeFieldPlus *= aTE11p;
+      TVector3 probeFieldMinus{waveguide->GetModeEField(
+          pos, IWaveguide::kTE, norm, 1, 1, TMath::TwoPi() * 19e9, false)};
+      probeFieldMinus *= aTE11m;
+      TVector3 totalProbeField{probeFieldPlus + probeFieldMinus};
+      ExVals.at(iEl) = totalProbeField.X();
+      EyVals.at(iEl) = totalProbeField.Y();
+      EzVals.at(iEl) = totalProbeField.Z();
+    }
+
+    // Now do the cubic interpolation
+    double ExInterp{CubicInterpolation(timeVals, ExVals, tr)};
+    double EyInterp{CubicInterpolation(timeVals, EyVals, tr)};
+    double EzInterp{CubicInterpolation(timeVals, EzVals, tr)};
+    return TVector3(ExInterp, EyInterp, EzInterp);
+  }
+}
+
 void rad::Signal::AddNewTimes(double time, TVector3 ePos) {
   timeVec.push_back(time);
 
@@ -698,11 +999,12 @@ void rad::Signal::AddNewTimes(double time, TVector3 ePos) {
   }
 }
 
-void rad::Signal::AddNewCavityTimes(double time, TVector3 ePos) {
+void rad::Signal::AddNewCavWgTimes(double time, TVector3 ePos,
+                                   TVector3 probePos) {
   timeVec.push_back(time);
 
   // Calculate the advanced time for cavity probe position
-  double ta{time + (ePos - cavity->GetProbePosition()).Mag() / TMath::C()};
+  double ta{time + (ePos - probePos).Mag() / TMath::C()};
   advancedTimeVec.at(0).push_back(ta);
 
   // If the deques are getting too long, get rid of the first element

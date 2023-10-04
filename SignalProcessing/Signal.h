@@ -136,7 +136,7 @@ class Signal {
   /// @brief Function to add new times for vector
   /// @param time New time from file in seconds
   /// @param ePos Electron position vector in metres
-  void AddNewCavityTimes(double time, TVector3 ePos);
+  void AddNewCavWgTimes(double time, TVector3 ePos, TVector3 probePos);
 
   /// @brief Calculate the retarded time
   /// @param ts Sample time in seconds
@@ -171,6 +171,12 @@ class Signal {
   /// @param norm Field normalisation
   /// @return Electric field at point in V/m
   TVector3 CalcCavityEField(double tr, std::complex<double> norm);
+
+  /// @brief Calculate electric field at waveguide probe position
+  /// @param tr Retarded time in seconds
+  /// @param norm Field normalisation
+  /// @return Electric field at point in V/m
+  TVector3 CalcWaveguideEField(double tr, double norm);
 
   /// @brief Function for downmixing voltages
   /// @param vi In phase voltage component
