@@ -342,16 +342,6 @@ double rad::RectangularWaveguide::GetCutoffFrequency(Mode_t modeType, int m,
   return k_c * TMath::C() / (2 * TMath::Pi());
 }
 
-double rad::RectangularWaveguide::GetResonantModeFrequency(Mode_t modeType,
-                                                           int m, int n,
-                                                           int l) {
-  double freq{(TMath::C() / (2 * TMath::Pi())) *
-              sqrt(pow(double(m) * TMath::Pi() / a, 2) +
-                   pow(double(n) * TMath::Pi() / b, 2) +
-                   pow(double(l) * TMath::Pi() / d, 2))};
-  return freq;
-}
-
 double rad::RectangularWaveguide::GetEFieldIntegral(Mode_t modeType,
                                                     unsigned int m,
                                                     unsigned int n,

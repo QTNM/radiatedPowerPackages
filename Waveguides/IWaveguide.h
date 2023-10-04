@@ -93,11 +93,6 @@ class IWaveguide {
   virtual double GetCutoffWavenumber(Mode_t modeType, unsigned int n,
                                      unsigned int m) = 0;
 
-  /// Gets the frequency of a particular resonant mode
-  /// \Returns The resonant frequency of the chosen mode (in Hertz)
-  virtual double GetResonantModeFrequency(Mode_t modeType, int n, int m,
-                                          int l) = 0;
-
   /// Gets the field amplitude from a moving electron in the guide
   /// \param modeType The mode type to get (TE, TM, TEM)
   /// \param n The first mode index to get

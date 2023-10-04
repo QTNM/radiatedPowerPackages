@@ -108,15 +108,6 @@ class RectangularWaveguide : public IWaveguide {
   double GetCutoffWavenumber(Mode_t modeType, unsigned int m,
                              unsigned int n) override;
 
-  /// Gets the resonant frequency for a particle mode
-  /// \param modeType The type of mode (TE or TM)
-  /// \param m The mode number in the x direction of the waveguide
-  /// \param n The mode number in the y direction of the waveguide
-  /// \param l The mode number in the z direction of the waveguide
-  /// \Returns The resonant frequency of the chosen mode (in Hertz)
-  double GetResonantModeFrequency(Mode_t modeType, int m, int n,
-                                  int l) override;
-
   /// @brief Calculates the normalisation integral of the mode electric field
   /// @param modeType The type of mode (TE or TM)
   /// @param m The mode number in the x direction of the waveguide

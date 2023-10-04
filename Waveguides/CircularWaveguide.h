@@ -102,15 +102,6 @@ class CircularWaveguide : public IWaveguide {
   double GetCutoffWavenumber(Mode_t modeType, unsigned int n,
                              unsigned int m) override;
 
-  /// @brief Gets the resonant frequency for a particle mode
-  /// @param modeType The type of mode (TE or TM)
-  /// @param n The angular number of the mode
-  /// @param m The radial number of the mode
-  /// @param l The mode number in the z direction of the waveguide
-  /// @return The resonant frequency of the chosen mode (in Hertz)
-  double GetResonantModeFrequency(Mode_t modeType, int n, int m,
-                                  int l) override;
-
   /// @brief Calculates the normalisation integral of the mode electric field
   /// @param modeType The type of mode (TE or TM)
   /// @param n The angular number of the mode
