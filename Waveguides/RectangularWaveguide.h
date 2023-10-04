@@ -130,12 +130,12 @@ class RectangularWaveguide : public IWaveguide {
   /// @param ePos The electron position vector
   /// @param eVel The electron velocity vector
   /// @param normA Normalisation
+  /// @param state Does nothing here
   /// @param isPositive Do we want the positive or negative amplitude?
   /// @return The field amplitude at a given time
-  std::complex<double> GetFieldAmp(Mode_t modeType, unsigned int m,
-                                   unsigned int n, double omega, TVector3 ePos,
-                                   TVector3 eVel, double normA,
-                                   bool isPositive) override;
+  double GetFieldAmp(Mode_t modeType, unsigned int m, unsigned int n,
+                     double omega, TVector3 ePos, TVector3 eVel, double normA,
+                     bool state, bool isPositive) override;
 
   /// @brief Calculate and set Pn for a given mode
   /// @param modeType TE or TM mode

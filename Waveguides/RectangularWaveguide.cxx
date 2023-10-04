@@ -371,27 +371,29 @@ double rad::RectangularWaveguide::GetEFieldIntegral(Mode_t modeType,
     return integral;
 }
 
-std::complex<double> rad::RectangularWaveguide::GetFieldAmp(
-    Mode_t modeType, unsigned int m, unsigned int n, double omega,
-    TVector3 ePos, TVector3 eVel, double normA, bool isPositive) {
+double rad::RectangularWaveguide::GetFieldAmp(Mode_t modeType, unsigned int m,
+                                              unsigned int n, double omega,
+                                              TVector3 ePos, TVector3 eVel,
+                                              double normA, bool state,
+                                              bool isPositive) {
   double waveImp{GetModeImpedance(modeType, n, m, omega)};
   TVector3 j{-TMath::Qe() * eVel};
-  ComplexVector3 jComplex{j};
+  TVector3 jComplex{j};
 
-  ComplexVector3 eTrans{GetNormalisedEField(modeType, m, n, ePos, omega)};
-  eTrans.SetZ(std::complex<double>{0.0, 0.0});
-  ComplexVector3 eAxial{GetNormalisedEField(modeType, m, n, ePos, omega)};
-  eAxial.SetX(std::complex<double>{0.0, 0.0});
-  eAxial.SetY(std::complex<double>{0.0, 0.0});
+  TVector3 eTrans{GetModeEField(ePos, modeType, normA, m, n, omega, state)};
+  eTrans.SetZ(0);
+  TVector3 eAxial{GetModeEField(ePos, modeType, normA, m, n, omega, state)};
+  eAxial.SetX(0);
+  eAxial.SetY(0);
 
-  ComplexVector3 eField(0, 0, 0);
+  TVector3 eField(0, 0, 0);
   if (isPositive) {
     eField = eTrans - eAxial;
   } else {
     eField = eTrans + eAxial;
   }
 
-  std::complex<double> A{eField.Dot(jComplex) * (-waveImp / 2.0)};
+  double A{eField.Dot(jComplex) * (-waveImp / 2.0)};
   return A;
 }
 

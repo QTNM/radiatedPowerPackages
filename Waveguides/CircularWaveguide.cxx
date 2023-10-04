@@ -371,16 +371,18 @@ double rad::CircularWaveguide::GetHFieldIntegral(Mode_t modeType, int n, int m,
   return integral;
 }
 
-std::complex<double> rad::CircularWaveguide::GetFieldAmp(
-    Mode_t modeType, unsigned int n, unsigned int m, double omega,
-    TVector3 ePos, TVector3 eVel, double normA, bool isPositive) {
+double rad::CircularWaveguide::GetFieldAmp(Mode_t modeType, unsigned int n,
+                                           unsigned int m, double omega,
+                                           TVector3 ePos, TVector3 eVel,
+                                           double normA, bool state,
+                                           bool isPositive) {
   double waveImp{GetModeImpedance(modeType, n, m, omega)};
   TVector3 j{-TMath::Qe() * eVel};
   TVector3 jComplex{j};
 
-  TVector3 eTrans{GetModeEField(ePos, modeType, normA, n, m, omega, true)};
+  TVector3 eTrans{GetModeEField(ePos, modeType, normA, n, m, omega, state)};
   eTrans.SetZ(0);
-  TVector3 eAxial{GetModeEField(ePos, modeType, normA, n, m, omega, true)};
+  TVector3 eAxial{GetModeEField(ePos, modeType, normA, n, m, omega, state)};
   eAxial.SetX(0);
   eAxial.SetY(0);
   TVector3 eField(0, 0, 0);
@@ -390,7 +392,7 @@ std::complex<double> rad::CircularWaveguide::GetFieldAmp(
     eField = eTrans + eAxial;
   }
 
-  std::complex<double> A{eField.Dot(jComplex) * (-waveImp / 2.0)};
+  double A{eField.Dot(jComplex) * (-waveImp / 2.0)};
   return A;
 }
 
