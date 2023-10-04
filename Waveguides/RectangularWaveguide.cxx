@@ -372,7 +372,7 @@ double rad::RectangularWaveguide::GetEFieldIntegral(Mode_t modeType,
 
 std::complex<double> rad::RectangularWaveguide::GetFieldAmp(
     Mode_t modeType, unsigned int m, unsigned int n, double omega,
-    TVector3 ePos, TVector3 eVel, double normA, double normB, bool isPositive) {
+    TVector3 ePos, TVector3 eVel, double normA, bool isPositive) {
   double waveImp{GetModeImpedance(modeType, n, m, omega)};
   TVector3 j{-TMath::Qe() * eVel};
   ComplexVector3 jComplex{j};
