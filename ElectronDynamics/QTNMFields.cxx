@@ -309,3 +309,9 @@ TVector3 rad::FourCoilHelmholtz::evaluate_field_at_point(const TVector3 vec) {
                       bkgField.evaluate_field_at_point(vec)};
   return totalField;
 }
+
+TVector3 rad::IdealHarmonicTrap::evaluate_field_at_point(const TVector3 vec) {
+  // Z component of magnetic field
+  double bZ{B0 * (1 + pow(vec.Z() / L0, 2))};
+  return TVector3(0, 0, bZ);
+}
