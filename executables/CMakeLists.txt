@@ -98,3 +98,6 @@ target_link_libraries(FourCoilEnergyRes PRIVATE BasicFunctions ElectronDynamics 
 
 add_executable(SignalFromWaveguide SignalFromWaveguide.cxx)
 target_link_libraries(SignalFromWaveguide PRIVATE BasicFunctions ElectronDynamics SignalProcessing ${ROOT_LIBRARIES})
+
+add_executable(P8HarmonicTrap P8HarmonicTrap.cxx)
+target_link_libraries(P8HarmonicTrap PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES})
