@@ -412,31 +412,6 @@ class FourCoilHelmholtz : public BaseField {
     return TVector3(0, 0, 0);
   }
 };
-
-/// @brief Class representing an ideal harmonic trap
-class IdealHarmonicTrap : public BaseField {
- private:
-  double L0;
-  double B0;
-
- public:
-  /// @brief Parametrised constructor
-  /// @param l0 Controls the steepness of the trap
-  /// @param b0 The background magnetic field in tesla
-  IdealHarmonicTrap(double l0, double b0) : L0(l0), B0(b0) {}
-
-  /// @brief Get magnetic field at point
-  /// @param vec 3-vector at which to evaluate B field
-  /// @return Magnetic field vector in Tesla
-  TVector3 evaluate_field_at_point(const TVector3 vec) override;
-
-  /// @brief Calculate electric field at a point
-  /// @param v Position at which to calculate field
-  /// @return Electric field = 0
-  TVector3 evaluate_e_field_at_point(TVector3 v) override {
-    return TVector3(0, 0, 0);
-  }
-};
 }  // namespace rad
 
 #endif
