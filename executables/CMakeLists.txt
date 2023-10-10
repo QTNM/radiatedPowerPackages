@@ -94,7 +94,7 @@ add_executable(TrapCoilTuning TrapCoilTuning.cxx)
 target_link_libraries(TrapCoilTuning PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
 
 add_executable(FourCoilEnergyRes FourCoilEnergyRes.cxx)
-target_link_libraries(FourCoilEnergyRes PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+target_link_libraries(FourCoilEnergyRes PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES})
 
 add_executable(SignalFromWaveguide SignalFromWaveguide.cxx)
 target_link_libraries(SignalFromWaveguide PRIVATE BasicFunctions ElectronDynamics SignalProcessing ${ROOT_LIBRARIES})
