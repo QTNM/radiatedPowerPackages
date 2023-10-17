@@ -84,6 +84,7 @@ target_link_libraries(LongTimeGeneration PRIVATE BasicFunctions ElectronDynamics
 
 add_executable(VariableEnergyLoss VariableEnergyLoss.cxx)
 target_link_libraries(VariableEnergyLoss PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
 add_executable(HelmholtzCoils HelmholtzCoils.cxx)
 target_link_libraries(HelmholtzCoils PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES} ${Boost_MATH_LIBRARY})
 
@@ -101,3 +102,6 @@ target_link_libraries(SignalFromWaveguide PRIVATE BasicFunctions ElectronDynamic
 
 add_executable(P8HarmonicTrap P8HarmonicTrap.cxx)
 target_link_libraries(P8HarmonicTrap PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES})
+
+add_executable(WaveguideSignalGen WaveguideSignalGen.cxx)
+target_link_libraries(WaveguideSignalGen PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
