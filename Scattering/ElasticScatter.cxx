@@ -4,6 +4,7 @@
 
 #include "Scattering/ElasticScatter.h"
 
+#include <boost/math/special_functions/legendre.hpp>
 #include <cmath>
 #include <random>
 
@@ -33,7 +34,7 @@ double rad::ElasticScatter::GetDiffXSec(std::vector<double> A, double B,
   }
 
   for (unsigned int n{0}; n <= 6; n++) {
-    sum2 += C.at(n) * std::legendre(n, cosTheta);
+    sum2 += C.at(n) * boost::math::legendre_p(n, cosTheta);
   }
 
   return sum1 + sum2;
