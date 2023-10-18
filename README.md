@@ -20,8 +20,8 @@ HDF5 libraries are also required for some executables purely for I/O.
 
 There are also inter-dependencies between the individual packages:
 
-|   | Basic Functions | Field Classes | Signal Processing | Antennas | Electron Dynamics | Scattering
-|:-:|:---------------:|:-------------:|:-----------------:|:--------:|:-----------------:|
+|   | Basic Functions | Field Classes | Signal Processing | Antennas | Electron Dynamics | Scattering |
+|:-:|:---------------:|:-------------:|:-----------------:|:--------:|:-----------------:|:----------:|
 | Basic Functions | | | | | |
 | Field Classes | x | | | | |
 | Signal Processing | x | x | | x | |
