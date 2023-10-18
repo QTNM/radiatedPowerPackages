@@ -19,7 +19,7 @@ find_package(Boost 1.73.0 REQUIRED ALL HINTS $ENV{BOOST_DIR})
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Locate HDF5
-find_package(HDF5 COMPONENTS C CXX HL REQUIRED HINTS $ENV{HDF5_INSTALL})
+find_package(HDF5 COMPONENTS C CXX HL REQUIRED)
 link_directories(${HDF5_LIBRARY_DIRS})
 include_directories(${HDF5_INCLUDE_DIRS})
 
