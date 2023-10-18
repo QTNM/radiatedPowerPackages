@@ -3,7 +3,7 @@ Designed to offer easy calculation of EM fields and the associated voltage signa
 
 ## Requirements and Dependencies
 
-The core code requires C++17, built with CMake (3.18+) with the following external dependencies for each package:
+The core code requires C++20, built with CMake (3.18+) with the following external dependencies for each package:
 
 |   | BOOST (1.73+) | ROOT (6.14+) | libRootFftwWrapper(*)|
 |:-:|:-------------:|:------------:|:--------------------:|
@@ -12,19 +12,22 @@ The core code requires C++17, built with CMake (3.18+) with the following extern
 | Signal Processing | | x | x
 | Antennas | | x | |
 | Electron Dynamics | x | x | |
+| Scattering | x | | |
 
+HDF5 libraries are also required for some executables purely for I/O.
 
 (*) libRootFftwWrapper available at: https://github.com/nichol77/libRootFftwWrapper. Requires an existing FFTW install.
 
 There are also inter-dependencies between the individual packages:
 
-|   | Basic Functions | Field Classes | Signal Processing | Antennas | Electron Dynamics |
+|   | Basic Functions | Field Classes | Signal Processing | Antennas | Electron Dynamics | Scattering
 |:-:|:---------------:|:-------------:|:-----------------:|:--------:|:-----------------:|
 | Basic Functions | | | | | |
 | Field Classes | x | | | | |
 | Signal Processing | x | x | | x | |
-| Antennas | | | | | |
+| Antennas | x | | | | |
 | Electron Dynamics | x | | | | |
+| Scattering | | | | | |
 
 Dependencies are listed row by row, for example the Signal Processing package requires the Basic Functions, Field Classes and Antennas packages.
 
