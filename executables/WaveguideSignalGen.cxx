@@ -127,8 +127,9 @@ int main(int argc, char *argv[]) {
   double maxSimTime{1e-3};         // seconds
   std::string outputStemStr{" "};  // Directory in which to store files
   unsigned int nEvents{1000};      // Number of electrons to attempt to generate
+  double maxRunTime{-1};           // Maximum run time in seconds
 
-  while ((opt = getopt(argc, argv, ":o:t:n:")) != -1) {
+  while ((opt = getopt(argc, argv, ":o:t:n:r:")) != -1) {
     switch (opt) {
       case 'o':
         outputStemStr = optarg;
@@ -140,6 +141,10 @@ int main(int argc, char *argv[]) {
 
       case 'n':
         nEvents = std::stoi(optarg);
+        break;
+
+      case 'r':
+        maxRunTime = std::stod(optarg);
         break;
 
       case ':':
@@ -303,6 +308,7 @@ int main(int argc, char *argv[]) {
       double axFreq{1 / (zCrossTimes[2] - zCrossTimes[0])};
       cout << "Initial frequency = " << startFreq / 1e6
            << " MHz\tAxial frequency = " << axFreq / 1e6 << " MHz\n";
+      delete tr;
       fTrack.Close();
 
       // Write the TGraph actually containing the information about the signal
@@ -373,7 +379,14 @@ int main(int argc, char *argv[]) {
     const clock_t endEventClock{clock()};
     const double eventTime{double(endEventClock - startEventClock) /
                            CLOCKS_PER_SEC};
-    cout << "Event took " << eventTime << " seconds to generate\n\n";
+    const double runTime{double(endEventClock - startTotalClock) /
+                         CLOCKS_PER_SEC};
+    cout << "Event took " << eventTime
+         << " seconds to generate\tTotal time = " << runTime << "s\n\n";
+
+    // Stop generating events if we're getting close to the time limit
+    // Assume we're going to be taking roughly 4200s to generate each event
+    if (maxRunTime > 0 & runTime > maxRunTime - 4400) break;
   }
 
   fout.Close();
@@ -386,7 +399,8 @@ int main(int argc, char *argv[]) {
   // Clock at the end of the executable
   const clock_t endTotalClock{clock()};
   double eventTime{double(endTotalClock - startTotalClock) / CLOCKS_PER_SEC};
-  cout << "Took " << eventTime << " seconds to generate and process event\n";
+  cout << "Took " << eventTime
+       << " seconds to generate and process all events\n";
 
   delete field;
   delete wg;
