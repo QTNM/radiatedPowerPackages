@@ -18,6 +18,11 @@ add_definitions(${ROOT_CXX_FLAGS})
 find_package(Boost 1.73.0 REQUIRED ALL HINTS $ENV{BOOST_DIR})
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Locate HDF5
+find_package(HDF5 COMPONENTS C CXX HL REQUIRED)
+link_directories(${HDF5_LIBRARY_DIRS})
+include_directories(${HDF5_INCLUDE_DIRS})
+
 # Add the FFTW ROOT wrapper library
 # Need to check if the helper variable is set
 if(DEFINED ENV{FFTW_WRAPPER_INSTALL})
