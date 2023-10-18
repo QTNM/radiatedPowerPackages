@@ -33,7 +33,7 @@ Dependencies are listed row by row, for example the Signal Processing package re
 
 There are also a set of example programs (radiatedPowerPackages/executables) for which we recommend installing all packages.
 
-A docker image containing the required external libraries is available at: https://hub.docker.com/repository/docker/tomgoffrey/qtnm_deps.
+A docker image containing the required external libraries is available at: https://hub.docker.com/repository/docker/sebj101/qtnm_deps.
 
 A minimal set of instructions to install the required dependencies using Ubuntu 20.04 are:
 
@@ -82,6 +82,11 @@ $ make
 $ make install
 ```
 
+### HDF5
+```
+$ sudo apt-get install -y libhdf5-serial-dev
+```
+
 ## Build instructions
 The package is designed to be built with CMake and the build instructions are as follows.
 
@@ -89,8 +94,9 @@ The package is designed to be built with CMake and the build instructions are as
 $ mkdir build
 $ cd build
 $ cmake ..
-$ cmake --build .
+$ cmake --build . -jN
 ```
+where N is the number of cores used in the build
 
 ## Creating electron trajectories
 All the code required to create magnetic fields and electron trajectories is contained within the ```ElectronDynamics``` folder. 
@@ -141,8 +147,7 @@ If one just wants to view this signal without any downmixing, downsampling or no
 A ```TGraph``` of the time series signal can then be produced using ```GetVoltageGraph```.
 
 ### Signal
-Full signal processing is done using the ```Signal``` class which takes as an input an instance of ```InducedVoltage```, an ```LocalOscillator``` used to define the down-mixing and the sampling rate (in Hertz).
+Full signal processing is done using the ```Signal``` class which takes as an input the path to the electron trajectory file, a pointer to the ```IAntenna```, a ```LocalOscillator``` used to define the down-mixing and the sampling rate (in Hertz).
 Additionally a vector of ```GaussianNoise``` terms can be supplied as well as a maximum acquisition time.
-Note: you do not need to call ```GenerateVoltage``` on the supplied ```InducedVoltage``` to get the signal out, the ```Signal``` machinery handles that for you.
 
 [1]: <https://aip.scitation.org/doi/pdf/10.1063/1.5051077>
