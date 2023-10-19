@@ -1024,6 +1024,12 @@ double rad::Signal::GetRetardedTime(double ts, unsigned int antInd) {
     // Find the values which the sample time lives in between
     // Firstly get a good first guess of where to start looking
     unsigned int firstGuess{GetFirstGuessPoint(ts, antInd)};
+    // Some debugging info
+    if (firstGuess >= advancedTimeVec.at(antInd).size()) {
+      std::cout << "Strange index produced!: firstTime - ts = "
+                << (advancedTimeVec.at(antInd).at(0) - ts) << " seconds\n";
+    }
+
     // Check which direction to search in
     if (advancedTimeVec.at(antInd).at(firstGuess) < ts) {
       // We are searching upwards
@@ -1101,10 +1107,12 @@ unsigned int rad::Signal::GetFirstGuessPoint(double ts, unsigned int antInd) {
                            (advancedTimeVec.at(antInd).at(taVecSize - 1) -
                             advancedTimeVec.at(antInd).at(0))};
 
-  size_t firstGuessPnt{
-      size_t(round(pntsPerTime * (ts - advancedTimeVec.at(antInd).at(0))))};
-  if (firstGuessPnt < 0) firstGuessPnt = 0;
-  return firstGuessPnt;
+  int firstGuessPnt{
+      int(round(pntsPerTime * (ts - advancedTimeVec.at(antInd).at(0))))};
+  if (firstGuessPnt < 0)
+    return 0;
+  else
+    return firstGuessPnt;
 }
 
 void rad::Signal::CloseInputFile() {
