@@ -76,6 +76,7 @@ target_link_libraries(CRESDA0Cavity PRIVATE BasicFunctions Waveguides ${ROOT_LIB
 
 add_executable(CavityFieldAmps CavityFieldAmps.cxx)
 target_link_libraries(CavityFieldAmps PRIVATE BasicFunctions Waveguides ElectronDynamics ${ROOT_LIBRARIES})
+
 add_executable(ScatteringCheck ScatteringCheck.cxx)
 target_link_libraries(ScatteringCheck PRIVATE BasicFunctions ElectronDynamics Scattering ${ROOT_LIBRARIES})
 
@@ -90,6 +91,7 @@ target_link_libraries(HelmholtzCoils PRIVATE BasicFunctions ElectronDynamics ${R
 
 add_executable(LeeWhitingCoils LeeWhitingCoils.cxx)
 target_link_libraries(LeeWhitingCoils PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES} ${Boost_MATH_LIBRARY})
+target_include_directories(LeeWhitingCoils PRIVATE ${Boost_INCLUDE_DIRS})
 
 add_executable(TrapCoilTuning TrapCoilTuning.cxx)
 target_link_libraries(TrapCoilTuning PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
