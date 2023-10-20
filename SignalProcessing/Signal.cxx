@@ -38,7 +38,7 @@ rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
   double sample10StepSize{1 / (10 * sRate)};
 
   // Create just one deque
-  advancedTimeVec.push_back(std::deque<double>());
+  advancedTimeVec.push_back(std::deque<long double>());
 
   // Create some intermediate level graphs before final sampling
   auto grVIInter = new TGraph();
@@ -169,7 +169,7 @@ rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
 
   // Create number of deques equal to number of antennas
   for (size_t i{0}; i < antenna.size(); i++) {
-    advancedTimeVec.push_back(std::deque<double>());
+    advancedTimeVec.push_back(std::deque<long double>());
   }
 
   // Create some intermediate level graphs before final sampling
@@ -318,7 +318,7 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
 
   // Create just one deque for our probe position
   // To do: allow multiple probes
-  advancedTimeVec.push_back(std::deque<double>());
+  advancedTimeVec.push_back(std::deque<long double>());
 
   // Create some intermediate level graphs before final sampling
   auto grVIInter = new TGraph();
@@ -472,7 +472,7 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
 
   // Create just one deque for our probe position
   // TO DO: Allow for multiple probes
-  advancedTimeVec.push_back(std::deque<double>());
+  advancedTimeVec.push_back(std::deque<long double>());
 
   // Create some intermediate level graphs before final sampling
   auto grVIInter = new TGraph();
@@ -605,6 +605,11 @@ void rad::Signal::GetFileInfo() {
   fileEndTime = time;
   filePntsPerTime =
       double(inputTree->GetEntries()) / (fileEndTime - fileStartTime);
+
+  // Now get the simulation step size
+  inputTree->GetEntry(1);
+  long double time1{time};
+  simStepSize = time1 - fileStartTime;
 }
 
 double rad::Signal::CalcVoltage(double tr, IAntenna* ant) {
@@ -980,13 +985,13 @@ TVector3 rad::Signal::CalcWaveguideEField(double tr, double norm) {
   }
 }
 
-void rad::Signal::AddNewTimes(double time, TVector3 ePos) {
+void rad::Signal::AddNewTimes(long double time, TVector3 ePos) {
   timeVec.push_back(time);
 
   // Now calculate advanced time for each antenna point
   for (size_t i{0}; i < antenna.size(); i++) {
-    double ta{time +
-              (ePos - antenna.at(i)->GetAntennaPosition()).Mag() / TMath::C()};
+    long double ta{time + (ePos - antenna.at(i)->GetAntennaPosition()).Mag() /
+                              TMath::C()};
     advancedTimeVec.at(i).push_back(ta);
   }
 
@@ -999,12 +1004,12 @@ void rad::Signal::AddNewTimes(double time, TVector3 ePos) {
   }
 }
 
-void rad::Signal::AddNewCavWgTimes(double time, TVector3 ePos,
+void rad::Signal::AddNewCavWgTimes(long double time, TVector3 ePos,
                                    TVector3 probePos) {
   timeVec.push_back(time);
 
   // Calculate the advanced time for cavity probe position
-  double ta{time + (ePos - probePos).Mag() / TMath::C()};
+  long double ta{time + (ePos - probePos).Mag() / TMath::C()};
   advancedTimeVec.at(0).push_back(ta);
 
   // If the deques are getting too long, get rid of the first element
@@ -1014,7 +1019,7 @@ void rad::Signal::AddNewCavWgTimes(double time, TVector3 ePos,
   }
 }
 
-double rad::Signal::GetRetardedTime(double ts, unsigned int antInd) {
+double rad::Signal::GetRetardedTime(long double ts, unsigned int antInd) {
   unsigned int chosenInd{0};
 
   // Check if the sample time is before the signal has reached the antenna
@@ -1023,7 +1028,7 @@ double rad::Signal::GetRetardedTime(double ts, unsigned int antInd) {
   } else {
     // Find the values which the sample time lives in between
     // Firstly get a good first guess of where to start looking
-    unsigned int firstGuess{GetFirstGuessPoint(ts, antInd)};
+    int firstGuess{GetFirstGuessPoint(ts, antInd)};
     // Some debugging info
     if (firstGuess >= advancedTimeVec.at(antInd).size()) {
       std::cout << "Strange index produced!: firstTime - ts = "
@@ -1033,8 +1038,7 @@ double rad::Signal::GetRetardedTime(double ts, unsigned int antInd) {
     // Check which direction to search in
     if (advancedTimeVec.at(antInd).at(firstGuess) < ts) {
       // We are searching upwards
-      for (size_t i{firstGuess}; i < advancedTimeVec.at(antInd).size() - 2;
-           i++) {
+      for (int i{firstGuess}; i < advancedTimeVec.at(antInd).size() - 2; i++) {
         // Aim to find the advanced time values the ssample point lies between
         if (ts > advancedTimeVec.at(antInd).at(i) &&
             ts < advancedTimeVec.at(antInd).at(i + 1)) {
@@ -1044,7 +1048,7 @@ double rad::Signal::GetRetardedTime(double ts, unsigned int antInd) {
       }
     } else {
       // We are searching downwards
-      for (size_t i{firstGuess}; i >= 0; i--) {
+      for (int i{firstGuess}; i >= 0; i--) {
         if (ts > advancedTimeVec.at(antInd).at(i) &&
             ts < advancedTimeVec.at(antInd).at(i + 1)) {
           chosenInd = i;
@@ -1055,12 +1059,16 @@ double rad::Signal::GetRetardedTime(double ts, unsigned int antInd) {
 
     // Now we have the relevant index, we need to interpolate
     // This should be the retarded time
-
     std::vector<double> timeVals(4);
     std::vector<double> advancedTimeVals(4);
     if (chosenInd == 0) {
-      timeVals.at(0) = 0;
-      advancedTimeVals.at(0) = 0;
+      // Set these to something sensible
+      long double deltaT{timeVec.at(chosenInd + 1) - timeVec.at(chosenInd)};
+      long double deltaAT{advancedTimeVals.at(chosenInd + 1) -
+                          advancedTimeVals.at(chosenInd)};
+      timeVals.at(0) = timeVec.at(chosenInd) - deltaT;
+      advancedTimeVals.at(0) =
+          advancedTimeVec.at(antInd).at(chosenInd) - deltaAT;
     } else {
       timeVals.at(0) = timeVec.at(chosenInd - 1);
       advancedTimeVals.at(0) = advancedTimeVec.at(antInd).at(chosenInd - 1);
@@ -1101,11 +1109,11 @@ void rad::Signal::OpenInputFile(TString filePath) {
   }
 }
 
-unsigned int rad::Signal::GetFirstGuessPoint(double ts, unsigned int antInd) {
+int rad::Signal::GetFirstGuessPoint(long double ts, unsigned int antInd) {
   const size_t taVecSize{advancedTimeVec.at(antInd).size()};
-  const double pntsPerTime{double(taVecSize) /
-                           (advancedTimeVec.at(antInd).at(taVecSize - 1) -
-                            advancedTimeVec.at(antInd).at(0))};
+  const long double pntsPerTime{(long double)taVecSize /
+                                (advancedTimeVec.at(antInd).at(taVecSize - 1) -
+                                 advancedTimeVec.at(antInd).at(0))};
 
   int firstGuessPnt{
       int(round(pntsPerTime * (ts - advancedTimeVec.at(antInd).at(0))))};

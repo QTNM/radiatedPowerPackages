@@ -95,14 +95,18 @@ class Signal {
   // Sample rate
   double sampleRate;
 
+  // Simulation step size
+  long double simStepSize;
+
   // Noise terms
   std::vector<GaussianNoise> noiseVec;
 
   TGraph* grVITime = 0;  // In phase component
   TGraph* grVQTime = 0;  // Quadrature component
 
-  std::deque<double> timeVec;
-  std::vector<std::deque<double>> advancedTimeVec;  // One deque per antenna
+  std::deque<long double> timeVec;
+  std::vector<std::deque<long double>>
+      advancedTimeVec;  // One deque per antenna
 
   // Input file details
   double fileStartTime{};
@@ -131,23 +135,23 @@ class Signal {
   /// @brief Function to add new times to vectors
   /// @param time New time from file in seconds
   /// @param ePos Electron position vector in metres
-  void AddNewTimes(double time, TVector3 ePos);
+  void AddNewTimes(long double time, TVector3 ePos);
 
   /// @brief Function to add new times for vector
   /// @param time New time from file in seconds
   /// @param ePos Electron position vector in metres
-  void AddNewCavWgTimes(double time, TVector3 ePos, TVector3 probePos);
+  void AddNewCavWgTimes(long double time, TVector3 ePos, TVector3 probePos);
 
   /// @brief Calculate the retarded time
   /// @param ts Sample time in seconds
   /// @param antInd Index of antenna
   /// @return Relevant retarded time in seconds
-  double GetRetardedTime(double ts, unsigned int antInd);
+  double GetRetardedTime(long double ts, unsigned int antInd);
 
   /// @brief Get a guess for the index to start at
   /// @param ts Sample time in seconds
   /// @return Index of guess
-  unsigned int GetFirstGuessPoint(double ts, unsigned int antInd);
+  int GetFirstGuessPoint(long double ts, unsigned int antInd);
 
   /// @brief Sets up the tree to be read in
   /// @param filePath Path to electron trajectory file
