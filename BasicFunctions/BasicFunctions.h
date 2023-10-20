@@ -107,18 +107,34 @@ std::vector<double> BandPassFilter(std::vector<double> xVals,
 /// @param yVals A vector of the corresponding y values
 /// @param xInterp The x value at which to interpolate
 /// @return The interpolated y value
-double CubicInterpolation(std::vector<double> &xVals,
-                          std::vector<double> &yVals, double xInterp);
+template <typename T>
+T CubicInterpolation(std::vector<T> &xVals, std::vector<T> &yVals, T xInterp) {
+  // Check we have the right number of values
+  if (xVals.size() != 4 || yVals.size() != 4) {
+    std::cout << "Invalid interpolation input size! Require 4 values.\n";
+    return 0;
+  }
+  // Check that we have monotonically increasing x values
+  for (unsigned int i{1}; i < xVals.size(); i++) {
+    if (xVals.at(i) - xVals.at(i - 1) <= 0) {
+      std::cout
+          << "x values (for interpolation) do not increase monotonically!\n";
+      return 0;
+    }
+  }
 
-/// @brief Given a set of 4 (x, y) values allow for interpolating at a value.
-/// Use a 3rd order Lagrange interpolating polynomial
-/// @param xVals A vector of 4 x values. These do not have to be evenly spaced
-/// @param yVals A vector of the corresponding y values
-/// @param xInterp The x value at which to interpolate
-/// @return The interpolated y value
-long double CubicInterpolation(std::vector<long double> &xVals,
-                               std::vector<long double> &yVals,
-                               long double xInterp);
+  // First calculate the Lagrange xInterpolating basis functions
+  T l0{(xInterp - xVals[1]) * (xInterp - xVals[2]) * (xInterp - xVals[3]) /
+       ((xVals[0] - xVals[1]) * (xVals[0] - xVals[2]) * (xVals[0] - xVals[3]))};
+  T l1{(xInterp - xVals[0]) * (xInterp - xVals[2]) * (xInterp - xVals[3]) /
+       ((xVals[1] - xVals[0]) * (xVals[1] - xVals[2]) * (xVals[1] - xVals[3]))};
+  T l2{(xInterp - xVals[0]) * (xInterp - xVals[1]) * (xInterp - xVals[3]) /
+       ((xVals[2] - xVals[0]) * (xVals[2] - xVals[1]) * (xVals[2] - xVals[3]))};
+  T l3{(xInterp - xVals[0]) * (xInterp - xVals[1]) * (xInterp - xVals[2]) /
+       ((xVals[3] - xVals[0]) * (xVals[3] - xVals[1]) * (xVals[3] - xVals[2]))};
+
+  return l0 * yVals[0] + l1 * yVals[1] + l2 * yVals[2] + l3 * yVals[3];
+}
 
 /// @brief PDF of the Rayleigh distribution
 /// @param x
