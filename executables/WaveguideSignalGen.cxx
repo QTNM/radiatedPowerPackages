@@ -37,11 +37,11 @@ using std::cout;
 using std::endl;
 
 bool GenerateElectron(TString file, TVector3 pos, TVector3 vel,
-                      BaseField *field, double stepSize, double simTime) {
+                      BaseField *field, long double stepSize, double simTime) {
   bool isTrapped{true};
   TFile fT(file, "recreate");
   TTree tree("tree", "tree");
-  double time{};
+  long double time{};
   double xPos{}, yPos{}, zPos{};
   double xVel{}, yVel{}, zVel{};
   double xAcc{}, yAcc{}, zAcc{};
@@ -75,8 +75,8 @@ bool GenerateElectron(TString file, TVector3 pos, TVector3 vel,
 
   unsigned long nSteps{1};
   while (time <= simTime && isTrapped) {
-    time = double(nSteps) * stepSize;
-    if (std::fmod(time, 1e-6) < stepSize) {
+    time = (long double)nSteps * stepSize;
+    if (std::fmod(time, 5e-6) < stepSize) {
       std::cout << "Simulated " << time * 1e6 << " us\n";
     }
 
