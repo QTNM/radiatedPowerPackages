@@ -101,14 +101,24 @@ std::vector<double> BandPassFilter(std::vector<double> xVals,
                                    std::vector<double> yVals, double minFreq,
                                    double maxFreq);
 
-/// Given a set of 4 (x, y) values allow for interpolating at a value
+/// @brief Given a set of 4 (x, y) values allow for interpolating at a value.
 /// Use a 3rd order Lagrange interpolating polynomial
-/// \param xVals A vector of 4 x values. These do not have to be evenly spaced
-/// \param yVals A vector of the corresponding y values
-/// \param xInterp The x value at which to interpolate
-/// \return The interpolated y value
-double CubicInterpolation(std::vector<double> xVals, std::vector<double> yVals,
-                          double xInterp);
+/// @param xVals A vector of 4 x values. These do not have to be evenly spaced
+/// @param yVals A vector of the corresponding y values
+/// @param xInterp The x value at which to interpolate
+/// @return The interpolated y value
+double CubicInterpolation(std::vector<double> &xVals,
+                          std::vector<double> &yVals, double xInterp);
+
+/// @brief Given a set of 4 (x, y) values allow for interpolating at a value.
+/// Use a 3rd order Lagrange interpolating polynomial
+/// @param xVals A vector of 4 x values. These do not have to be evenly spaced
+/// @param yVals A vector of the corresponding y values
+/// @param xInterp The x value at which to interpolate
+/// @return The interpolated y value
+long double CubicInterpolation(std::vector<long double> &xVals,
+                               std::vector<long double> &yVals,
+                               long double xInterp);
 
 /// @brief PDF of the Rayleigh distribution
 /// @param x

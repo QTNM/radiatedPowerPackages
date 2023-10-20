@@ -146,7 +146,7 @@ class Signal {
   /// @param ts Sample time in seconds
   /// @param antInd Index of antenna
   /// @return Relevant retarded time in seconds
-  double GetRetardedTime(long double ts, unsigned int antInd);
+  long double GetRetardedTime(long double ts, unsigned int antInd);
 
   /// @brief Get a guess for the index to start at
   /// @param ts Sample time in seconds
@@ -168,7 +168,7 @@ class Signal {
   /// @param tr Retarded time at which to calculate the voltage [seconds]
   /// @param ant Pointer to chosen antenna
   /// @return Voltage in volts
-  double CalcVoltage(double tr, IAntenna* ant);
+  double CalcVoltage(long double tr, IAntenna* ant);
 
   /// @brief Calculate electric field at cavity probe position
   /// @param tr Retarded time in seconds

@@ -68,7 +68,7 @@ rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
     if (entryTime >= sample10Time) {
       // Yes we do
       // First get the retarded time to calculate the fields at
-      double tr{GetRetardedTime(sample10Time, 0)};
+      long double tr{GetRetardedTime(sample10Time, 0)};
 
       double vi{CalcVoltage(tr, antenna[0])};
       double vq{vi};
@@ -162,8 +162,8 @@ rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
   // Set file info
   GetFileInfo();
 
-  double sampleTime{0};    // Second sample time in seconds
-  double sample10Time{0};  // First sample time in seconds
+  double sampleTime{0};         // Second sample time in seconds
+  long double sample10Time{0};  // First sample time in seconds
   unsigned int sample10Num{0};
   double sample10StepSize{1 / (10 * sRate)};
 
@@ -201,7 +201,7 @@ rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
       for (size_t iAnt{0}; iAnt < antenna.size(); iAnt++) {
         // Yes we do
         // First get the retarded time to calculate the fields at
-        double tr{GetRetardedTime(sample10Time, iAnt)};
+        long double tr{GetRetardedTime(sample10Time, iAnt)};
         double v{CalcVoltage(tr, antenna[iAnt])};
         vi += v;
         vq += v;
@@ -349,7 +349,7 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
     if (entryTime >= sample10Time) {
       // Yes we do
       // First get the retarded time to calculate the fields at
-      double tr{GetRetardedTime(sample10Time, 0)};
+      long double tr{GetRetardedTime(sample10Time, 0)};
 
       // Calculate the mode field amplitudes
       double ei_p{CalcCavityEField(tr, normTE111p).X()};
@@ -504,7 +504,7 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
     if (entryTime >= sample10Time) {
       // Yes we do
       // First get the retarded time to calculate the fields at
-      double tr{GetRetardedTime(sample10Time, 0)};
+      long double tr{GetRetardedTime(sample10Time, 0)};
 
       // Calculate the mode field amplitudes
       double ei_p{CalcWaveguideEField(tr, normTE11p).X()};
@@ -612,7 +612,7 @@ void rad::Signal::GetFileInfo() {
   simStepSize = time1 - fileStartTime;
 }
 
-double rad::Signal::CalcVoltage(double tr, IAntenna* ant) {
+double rad::Signal::CalcVoltage(long double tr, IAntenna* ant) {
   if (tr == -1) {
     // The voltage is from before the signal has reached the antenna
     return 0;
@@ -665,8 +665,8 @@ double rad::Signal::CalcVoltage(double tr, IAntenna* ant) {
     }
 
     // We have the relevant index so we can now do some interpolation
-    std::vector<double> timeVals(4);
-    std::vector<double> vVals(4);
+    std::vector<long double> timeVals(4);
+    std::vector<long double> vVals(4);
     if (correctIndex == 0) {
       timeVals.at(0) = 0;
       vVals.at(0) = 0;
@@ -704,7 +704,7 @@ double rad::Signal::CalcVoltage(double tr, IAntenna* ant) {
     }
 
     // Now actually do the cubic interpolation
-    double vInterp{CubicInterpolation(timeVals, vVals, tr)};
+    long double vInterp{CubicInterpolation(timeVals, vVals, tr)};
     return vInterp;
   }
 }
@@ -1019,7 +1019,7 @@ void rad::Signal::AddNewCavWgTimes(long double time, TVector3 ePos,
   }
 }
 
-double rad::Signal::GetRetardedTime(long double ts, unsigned int antInd) {
+long double rad::Signal::GetRetardedTime(long double ts, unsigned int antInd) {
   unsigned int chosenInd{0};
 
   // Check if the sample time is before the signal has reached the antenna
@@ -1059,8 +1059,8 @@ double rad::Signal::GetRetardedTime(long double ts, unsigned int antInd) {
 
     // Now we have the relevant index, we need to interpolate
     // This should be the retarded time
-    std::vector<double> timeVals(4);
-    std::vector<double> advancedTimeVals(4);
+    std::vector<long double> timeVals(4);
+    std::vector<long double> advancedTimeVals(4);
     if (chosenInd == 0) {
       // Set these to something sensible
       long double deltaT{timeVec.at(chosenInd + 1) - timeVec.at(chosenInd)};

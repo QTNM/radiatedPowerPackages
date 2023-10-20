@@ -325,8 +325,8 @@ std::vector<double> rad::BandPassFilter(std::vector<double> xVals,
   }
 }
 
-double rad::CubicInterpolation(std::vector<double> xVals,
-                               std::vector<double> yVals, double xInterp) {
+double rad::CubicInterpolation(std::vector<double> &xVals,
+                               std::vector<double> &yVals, double xInterp) {
   // Check we have the right number of values
   if (xVals.size() != 4 || yVals.size() != 4) {
     std::cout << "Invalid interpolation input size! Require 4 values.\n";
@@ -352,6 +352,40 @@ double rad::CubicInterpolation(std::vector<double> xVals,
       (xInterp - xVals[0]) * (xInterp - xVals[1]) * (xInterp - xVals[3]) /
       ((xVals[2] - xVals[0]) * (xVals[2] - xVals[1]) * (xVals[2] - xVals[3]))};
   double l3{
+      (xInterp - xVals[0]) * (xInterp - xVals[1]) * (xInterp - xVals[2]) /
+      ((xVals[3] - xVals[0]) * (xVals[3] - xVals[1]) * (xVals[3] - xVals[2]))};
+
+  return l0 * yVals[0] + l1 * yVals[1] + l2 * yVals[2] + l3 * yVals[3];
+}
+
+long double rad::CubicInterpolation(std::vector<long double> &xVals,
+                                    std::vector<long double> &yVals,
+                                    long double xInterp) {
+  // Check we have the right number of values
+  if (xVals.size() != 4 || yVals.size() != 4) {
+    std::cout << "Invalid interpolation input size! Require 4 values.\n";
+    return 0;
+  }
+  // Check that we have monotonically increasing x values
+  for (unsigned int i{1}; i < xVals.size(); i++) {
+    if (xVals.at(i) - xVals.at(i - 1) <= 0) {
+      std::cout
+          << "x values (for interpolation) do not increase monotonically!\n";
+      return 0;
+    }
+  }
+
+  // First calculate the Lagrange xInterpolating basis functions
+  long double l0{
+      (xInterp - xVals[1]) * (xInterp - xVals[2]) * (xInterp - xVals[3]) /
+      ((xVals[0] - xVals[1]) * (xVals[0] - xVals[2]) * (xVals[0] - xVals[3]))};
+  long double l1{
+      (xInterp - xVals[0]) * (xInterp - xVals[2]) * (xInterp - xVals[3]) /
+      ((xVals[1] - xVals[0]) * (xVals[1] - xVals[2]) * (xVals[1] - xVals[3]))};
+  long double l2{
+      (xInterp - xVals[0]) * (xInterp - xVals[1]) * (xInterp - xVals[3]) /
+      ((xVals[2] - xVals[0]) * (xVals[2] - xVals[1]) * (xVals[2] - xVals[3]))};
+  long double l3{
       (xInterp - xVals[0]) * (xInterp - xVals[1]) * (xInterp - xVals[2]) /
       ((xVals[3] - xVals[0]) * (xVals[3] - xVals[1]) * (xVals[3] - xVals[2]))};
 
