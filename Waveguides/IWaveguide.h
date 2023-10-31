@@ -10,6 +10,7 @@
 #include "BasicFunctions/ComplexVector3.h"
 #include "TMath.h"
 #include "TVector3.h"
+#include "Waveguides/WaveguideMode.h"
 
 namespace rad {
 
@@ -46,6 +47,16 @@ class IWaveguide {
                                  unsigned int n, unsigned int m, double omega,
                                  bool state) = 0;
 
+  /// @brief Gets the electric field vector for a given mode at a point
+  /// @param pos The position vector (in metres)
+  /// @param mode The waveguide mode to get
+  /// @param A Arbitrary amplitude for solution
+  /// @param omega Angular frequency of the chosen wave
+  /// @param state Choose polarisation state (where applicable)
+  /// @return The mode electric field vector at the supplied point
+  TVector3 GetModeEField(TVector3 pos, WaveguideMode mode, double A,
+                         double omega, bool state);
+
   /// Gets the complex magnetic field strength vector for a given mode at a
   /// point \param modeType The mode type to get (TE, TM, TEM) \param n The
   /// angular number of the mode \param m The radial number of the mode \param
@@ -78,20 +89,36 @@ class IWaveguide {
   double GetModeImpedance(Mode_t modeType, unsigned int n, unsigned int m,
                           double omega);
 
-  /// Gets the cutoff frequency for a particular waveguide mode
-  /// \param modeType The mode type to get (TE, TM, TEM)
-  /// \param n The first mode index to get
-  /// \param m The second mode index to get
-  /// \Returns The cutoff frequency in Hertz
+  /// @brief Gets the characteristic mode impedance for a given mode
+  /// @param mode The mode to get
+  /// @param omega Angular frequency of the chosen wave
+  /// @return The impedance of the mode (in Ohms)
+  double GetModeImpedance(WaveguideMode mode, double omega);
+
+  /// @brief Calculates the cutoff frequency for a particular waveguide mode
+  /// @param modeType The mode type to get (TE, TM, TEM)
+  /// @param n The first mode index to get
+  /// @param m The second mode index to get
+  /// @return The cutoff frequency in Hertz
   virtual double GetCutoffFrequency(Mode_t modeType, int n, int m) = 0;
 
-  /// Gets the cutoff wavenumber for a particular waveguide mode
-  /// \param modeType The mode type to get (TE, TM, TEM)
-  /// \param n The first mode index to get
-  /// \param m The second mode index to get
-  /// \Returns The cutoff wavenumber in m^-1
+  /// @brief Calculates the cutoff frequency for a particular waveguide mode
+  /// @param mode The mode to do the calculation for
+  /// @return The cutoff frequency in Hertz
+  double GetCutoffFrequency(WaveguideMode mode);
+
+  /// @brief Gets the cutoff wavenumber for a particular waveguide mode
+  /// @param modeType The mode type to get (TE, TM, TEM)
+  /// @param n The first mode index to get
+  /// @param m The second mode index to get
+  /// @return The cutoff wavenumber in m^-1
   virtual double GetCutoffWavenumber(Mode_t modeType, unsigned int n,
                                      unsigned int m) = 0;
+
+  /// @brief Calculates the cutoff wavenumber for a particular waveguide mode
+  /// @param mode The mode to do the calculation for
+  /// @return The cutoff wavenumber in m^-1
+  double GetCutoffWavenumber(WaveguideMode mode);
 
   /// @brief Gets the field amplitude from a moving electron in the guide
   /// @param modeType The mode type to get (TE, TM, TEM)
