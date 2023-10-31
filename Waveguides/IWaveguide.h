@@ -158,6 +158,17 @@ class IWaveguide {
                                    unsigned int m, double omega, double A,
                                    int nSurfPnts, bool state) = 0;
 
+  /// @brief Calculates the required normalisation of the electric fields. If
+  /// you multiply the fields by the result should give correct normalisation
+  /// @param mode The type of mode (TE or TM)
+  /// @param omega Angular frequency for the chosen wave
+  /// @param A The constant factor
+  /// @param nSurfPnts Number of points in each dimension to test
+  /// @param state Can be used for choosing polarisation state
+  /// @return Required normalisation
+  double GetEFieldIntegral(WaveguideMode mode, double omega, double A,
+                           int nSurfPnts, bool state);
+
   /// @brief Getter for probe position
   /// @return Probe position 3-vector
   TVector3 GetProbePosition() { return probe; }

@@ -82,3 +82,17 @@ bool rad::IWaveguide::ModePropagates(WaveguideMode mode, double f) {
   const double fc{GetCutoffFrequency(mode)};
   return f > fc;
 }
+
+double rad::IWaveguide::GetEFieldIntegral(WaveguideMode mode, double omega,
+                                          double A, int nSurfPnts, bool state) {
+  if (mode.GetModeType() == ModeType::kTE) {
+    return GetEFieldIntegral(IWaveguide::kTE, mode.GetModeIndex1(),
+                             mode.GetModeIndex2(), omega, A, nSurfPnts, state);
+  } else if (mode.GetModeType() == ModeType::kTM) {
+    return GetEFieldIntegral(IWaveguide::kTM, mode.GetModeIndex1(),
+                             mode.GetModeIndex2(), omega, A, nSurfPnts, state);
+  } else {
+    return GetEFieldIntegral(IWaveguide::kTEM, mode.GetModeIndex1(),
+                             mode.GetModeIndex2(), omega, A, nSurfPnts, state);
+  }
+}
