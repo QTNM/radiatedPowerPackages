@@ -4,6 +4,9 @@
   Class representing modes in waveguides
 */
 
+#ifndef WAVEGUIDE_MODE_H
+#define WAVEGUIDE_MODE_H
+
 #include <ostream>
 #include <string>
 
@@ -61,3 +64,5 @@ class WaveguideMode {
   }
 };
 }  // namespace rad
+
+#endif
