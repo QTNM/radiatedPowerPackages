@@ -120,6 +120,12 @@ class IWaveguide {
   /// @return The cutoff wavenumber in m^-1
   double GetCutoffWavenumber(WaveguideMode mode);
 
+  /// @brief Check if a mode propagates at a given frequency
+  /// @param mode The mode to be checked
+  /// @param f Frequency of wave in guide in Hertz
+  /// @return True is mode propagates, false if not
+  bool ModePropagates(WaveguideMode mode, double f);
+
   /// @brief Gets the field amplitude from a moving electron in the guide
   /// @param modeType The mode type to get (TE, TM, TEM)
   /// @param n The first mode index to get

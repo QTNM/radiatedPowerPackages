@@ -77,3 +77,8 @@ double rad::IWaveguide::GetCutoffWavenumber(WaveguideMode mode) {
                                mode.GetModeIndex2());
   }
 }
+
+bool rad::IWaveguide::ModePropagates(WaveguideMode mode, double f) {
+  const double fc{GetCutoffFrequency(mode)};
+  return f > fc;
+}
