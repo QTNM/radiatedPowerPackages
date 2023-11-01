@@ -80,7 +80,11 @@ double rad::IWaveguide::GetCutoffWavenumber(WaveguideMode mode) {
 
 bool rad::IWaveguide::ModePropagates(WaveguideMode mode, double f) {
   const double fc{GetCutoffFrequency(mode)};
-  return f > fc;
+  if (fc <= 0) {
+    return false;
+  } else {
+    return f > fc;
+  }
 }
 
 double rad::IWaveguide::GetEFieldIntegral(WaveguideMode mode, double omega,

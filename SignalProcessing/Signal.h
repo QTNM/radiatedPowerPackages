@@ -19,6 +19,7 @@
 #include "TTree.h"
 #include "Waveguides/ICavity.h"
 #include "Waveguides/IWaveguide.h"
+#include "Waveguides/WaveguideMode.h"
 
 namespace rad {
 class Signal {

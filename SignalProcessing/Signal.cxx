@@ -448,10 +448,36 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
   // Set file info
   GetFileInfo();
 
+  // First things first, we need to figure out a rough frequency our electron is
+  // radiating at
+  const double omega{18.9e9 * TMath::TwoPi()};  // constant for now
+
+  // Now need to figure out which modes propagate in our waveguide at this
+  // particular frequency
+
+  const unsigned int ind1Min{0};
+  const unsigned int ind1Max{5};
+  const unsigned int ind2Min{0};
+  const unsigned int ind2Max{5};
+  std::vector<WaveguideMode> propagatingModes{};
+  for (unsigned int i1{ind1Min}; i1 <= ind1Max; i1++) {
+    for (unsigned int i2{ind2Min}; i2 <= ind2Max; i2++) {
+      if (i1 == 0 && i2 == 0) continue;
+
+      WaveguideMode modeTE(i1, i2, kTE);
+      WaveguideMode modeTM(i1, i2, kTM);
+
+      if (wg->ModePropagates(modeTE, omega / TMath::TwoPi()))
+        propagatingModes.push_back(modeTE);
+
+      if (wg->ModePropagates(modeTM, omega / TMath::TwoPi()))
+        propagatingModes.push_back(modeTM);
+    }
+  }
+
   // Calculate mode integrals and resulting normalisation
   // Just do this for the TE11 mode currently
   const unsigned int nSurfPnts{100};
-  const double omega{19e9 * TMath::TwoPi()};
   const double intTE11p{waveguide->GetEFieldIntegral(
       IWaveguide::kTE, 1, 1, omega, 1, nSurfPnts, true)};
   const double intTE11m{waveguide->GetEFieldIntegral(
