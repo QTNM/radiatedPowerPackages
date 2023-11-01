@@ -24,28 +24,15 @@ class IWaveguide {
   enum Mode_t { kTE, kTM, kTEM };
 
   /// Gets the complex electric field vector for a given mode at a point
-  /// \param modeType The mode type to get (TE, TM, TEM)
+  /// \param mode The mode to get
   /// \param pos The position vector (in metres)
   /// \param omega Angular frequency of the chosen wave
   /// \param A Arbitrary amplitude for part of solution (default = 1)
   /// \param B Arbitrary amplitude for part of solution (default = 0)
   /// \Returns The mode electric field vector at the supplied point
-  virtual ComplexVector3 GetModeEFieldComplex(Mode_t modeType, int n, int m,
-                                              TVector3 pos, double omega,
-                                              double A = 1, double B = 0) = 0;
-
-  /// @brief Gets the electric field vector for a given mode at a point
-  /// @param pos The position vector (in metres)
-  /// @param modeType The mode type to get (TE, TM, TEM)
-  /// @param A Arbitrary amplitude for solution
-  /// @param n The angular number of the mode
-  /// @param m The radial number of the mode
-  /// @param omega Angular frequency of the chosen wave
-  /// @param state Choose polarisation state (where applicable)
-  /// @return The mode electric field vector at the supplied point
-  virtual TVector3 GetModeEField(TVector3 pos, Mode_t modeType, double A,
-                                 unsigned int n, unsigned int m, double omega,
-                                 bool state) = 0;
+  virtual ComplexVector3 GetModeEFieldComplex(WaveguideMode mode, TVector3 pos,
+                                              double omega, double A = 1,
+                                              double B = 0) = 0;
 
   /// @brief Gets the electric field vector for a given mode at a point
   /// @param pos The position vector (in metres)
@@ -54,40 +41,30 @@ class IWaveguide {
   /// @param omega Angular frequency of the chosen wave
   /// @param state Choose polarisation state (where applicable)
   /// @return The mode electric field vector at the supplied point
-  TVector3 GetModeEField(TVector3 pos, WaveguideMode mode, double A,
-                         double omega, bool state);
+  virtual TVector3 GetModeEField(TVector3 pos, WaveguideMode mode, double A,
+                                 double omega, bool state) = 0;
 
-  /// Gets the complex magnetic field strength vector for a given mode at a
-  /// point \param modeType The mode type to get (TE, TM, TEM) \param n The
-  /// angular number of the mode \param m The radial number of the mode \param
-  /// pos The position vector (in metres) \param omega Angular frequency of the
-  /// chosen wave \param A Arbitrary amplitude for part of solution (default =
-  /// 1) \param B Arbitrary amplitude for part of solution (default = 0)
-  /// \Returns The mode H field vector at the supplied point
-  virtual ComplexVector3 GetModeHFieldComplex(Mode_t modeType, int n, int m,
-                                              TVector3 pos, double omega,
-                                              double A = 1, double B = 0) = 0;
+  /// @brief Gets the complex magnetic field strength vector for a given mode at
+  /// a point
+  /// @param mode The mode to get
+  /// @param pos The position vector (in metres)
+  /// @param omega Angular frequency of the chosen wave
+  /// @param A Arbitrary amplitude for part of solution (default = 1)
+  /// @param B Arbitrary amplitude for part of solution (default = 0)
+  /// @return The mode H field vector at the supplied point
+  virtual ComplexVector3 GetModeHFieldComplex(WaveguideMode mode, TVector3 pos,
+                                              double omega, double A = 1,
+                                              double B = 0) = 0;
 
   /// Gets the H field vector for a given mode at a point
-  /// \param modeType The mode type to get (TE, TM, TEM)
-  /// \param n The angular number of the mode
-  /// \param m The radial number of the mode
+  /// \param mode The mode to get
   /// \param pos The position vector (in metres)
   /// \param omega Angular frequency of the chosen wave
   /// \param A Arbitrary amplitude for part of solution (default = 1)
   /// \param B Arbitrary amplitude for part of solution (default = 0)
   /// \Returns The mode H field vector at the supplied point
-  virtual TVector3 GetModeHField(Mode_t modeType, int n, int m, TVector3 pos,
-                                 double omega, double A = 1, double B = 0) = 0;
-
-  /// Gets the characteristic mode impedance for a given mode
-  /// \param modeType The mode type to get (TE, TM, TEM)
-  /// \param n The first mode index
-  /// \param m The second mode index
-  /// \param omega Angular frequency of the chosen wave
-  /// \Returns The impedance of the mode (in Ohms)
-  double GetModeImpedance(Mode_t modeType, unsigned int n, unsigned int m,
-                          double omega);
+  virtual TVector3 GetModeHField(WaveguideMode mode, TVector3 pos, double omega,
+                                 double A = 1, double B = 0) = 0;
 
   /// @brief Gets the characteristic mode impedance for a given mode
   /// @param mode The mode to get
@@ -96,29 +73,14 @@ class IWaveguide {
   double GetModeImpedance(WaveguideMode mode, double omega);
 
   /// @brief Calculates the cutoff frequency for a particular waveguide mode
-  /// @param modeType The mode type to get (TE, TM, TEM)
-  /// @param n The first mode index to get
-  /// @param m The second mode index to get
-  /// @return The cutoff frequency in Hertz
-  virtual double GetCutoffFrequency(Mode_t modeType, int n, int m) = 0;
-
-  /// @brief Calculates the cutoff frequency for a particular waveguide mode
   /// @param mode The mode to do the calculation for
   /// @return The cutoff frequency in Hertz
-  double GetCutoffFrequency(WaveguideMode mode);
-
-  /// @brief Gets the cutoff wavenumber for a particular waveguide mode
-  /// @param modeType The mode type to get (TE, TM, TEM)
-  /// @param n The first mode index to get
-  /// @param m The second mode index to get
-  /// @return The cutoff wavenumber in m^-1
-  virtual double GetCutoffWavenumber(Mode_t modeType, unsigned int n,
-                                     unsigned int m) = 0;
+  virtual double GetCutoffFrequency(WaveguideMode mode) = 0;
 
   /// @brief Calculates the cutoff wavenumber for a particular waveguide mode
   /// @param mode The mode to do the calculation for
   /// @return The cutoff wavenumber in m^-1
-  double GetCutoffWavenumber(WaveguideMode mode);
+  virtual double GetCutoffWavenumber(WaveguideMode mode) = 0;
 
   /// @brief Check if a mode propagates at a given frequency
   /// @param mode The mode to be checked
@@ -127,9 +89,7 @@ class IWaveguide {
   bool ModePropagates(WaveguideMode mode, double f);
 
   /// @brief Gets the field amplitude from a moving electron in the guide
-  /// @param modeType The mode type to get (TE, TM, TEM)
-  /// @param n The first mode index to get
-  /// @param m The second mode index to get
+  /// @param modeType The mode to calculate for
   /// @param omega Angular frequency of the chosen wave
   /// @param ePos The electron position vector
   /// @param eVel The electron velocity vector
@@ -137,9 +97,9 @@ class IWaveguide {
   /// @param state Choose polarisation state (where more than one exists)
   /// @param isPositive Do we want the positive or negative amplitude?
   /// @return The field amplitude at a given time
-  virtual double GetFieldAmp(Mode_t modeType, unsigned int n, unsigned int m,
-                             double omega, TVector3 ePos, TVector3 eVel,
-                             double normA, bool state, bool isPositive) = 0;
+  virtual double GetFieldAmp(WaveguideMode mode, double omega, TVector3 ePos,
+                             TVector3 eVel, double normA, bool state,
+                             bool isPositive) = 0;
 
   /// @brief Getter function for normalisation constant
   /// @return Normalisation constant
@@ -147,27 +107,13 @@ class IWaveguide {
 
   /// @brief Calculates the required normalisation of the electric fields. If
   /// you multiply the fields by the result should give correct normalisation
-  /// @param modeType The type of mode (TE or TM)
-  /// @param n The angular number of the mode
-  /// @param m The radial number of the mode
+  /// @param mode The mode
   /// @param omega Angular frequency for the chosen wave
   /// @param A The constant factor
   /// @param nSurfPnts Number of points in each dimension to test
   /// @param state Can be used for choosing polarisation state
-  virtual double GetEFieldIntegral(Mode_t modeType, unsigned int n,
-                                   unsigned int m, double omega, double A,
+  virtual double GetEFieldIntegral(WaveguideMode mode, double omega, double A,
                                    int nSurfPnts, bool state) = 0;
-
-  /// @brief Calculates the required normalisation of the electric fields. If
-  /// you multiply the fields by the result should give correct normalisation
-  /// @param mode The type of mode (TE or TM)
-  /// @param omega Angular frequency for the chosen wave
-  /// @param A The constant factor
-  /// @param nSurfPnts Number of points in each dimension to test
-  /// @param state Can be used for choosing polarisation state
-  /// @return Required normalisation
-  double GetEFieldIntegral(WaveguideMode mode, double omega, double A,
-                           int nSurfPnts, bool state);
 
   /// @brief Getter for probe position
   /// @return Probe position 3-vector

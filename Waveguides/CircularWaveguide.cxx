@@ -19,8 +19,7 @@ rad::CircularWaveguide::CircularWaveguide(double radius, double length,
 }
 
 rad::ComplexVector3 rad::CircularWaveguide::GetModeEFieldComplex(
-    Mode_t modeType, int n, int m, TVector3 pos, double omega, double A,
-    double B) {
+    WaveguideMode mode, TVector3 pos, double omega, double A, double B) {
   double rho{pos.Perp()};
   if (rho > a) return ComplexVector3(0, 0, 0);
 
@@ -28,7 +27,11 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModeEFieldComplex(
   double z{pos.Z() + d / 2.0};
   std::complex<double> i{0.0, 1.0};
 
-  if (modeType == kTE) {
+  ModeType modeType{mode.GetModeType()};
+  unsigned int n{mode.GetModeIndex1()};
+  unsigned int m{mode.GetModeIndex2()};
+
+  if (modeType == ModeType::kTE) {
     // We have a TE mode
     double pnmPrime{GetBesselPrimeZero(n, m)};
     double k_c{pnmPrime / a};
@@ -50,7 +53,7 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModeEFieldComplex(
     ComplexVector3 eField{Erho * cos(phi) - Ephi * sin(phi),
                           Erho * sin(phi) + Ephi * cos(phi), Ez};
     return eField;
-  } else if (modeType == kTM) {
+  } else if (modeType == ModeType::kTM) {
     // We have a TM mode
     double pnm{boost::math::cyl_bessel_j_zero(double(n), m)};
     double k_c{pnm / a};
@@ -86,10 +89,12 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModeEFieldComplex(
   }
 }
 
-TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, Mode_t modeType,
-                                               double A, unsigned int n,
-                                               unsigned int m, double omega,
+TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, WaveguideMode mode,
+                                               double A, double omega,
                                                bool state) {
+  unsigned int n{mode.GetModeIndex1()};
+  unsigned int m{mode.GetModeIndex2()};
+
   double rho{pos.Perp()};
   if (rho > a) return TVector3(0, 0, 0);
 
@@ -97,7 +102,7 @@ TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, Mode_t modeType,
   double ERho{0};
   double EPhi{0};
   double EZ{0};
-  if (modeType == kTE) {
+  if (mode.GetModeType() == ModeType::kTE) {
     // We have a TE mode
     double XnmPrime{GetBesselPrimeZero(n, m)};
     ERho = (-A * double(n) / rho) *
@@ -111,7 +116,7 @@ TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, Mode_t modeType,
       ERho *= cos(double(n) * phi);
       EPhi *= sin(double(n) * phi);
     }
-  } else if (modeType == kTM) {
+  } else if (mode.GetModeType() == ModeType::kTM) {
     // We have a TM mode
     double Xnm{boost::math::cyl_bessel_j_zero(double(n), m)};
     double k_c{Xnm / a};
@@ -142,8 +147,7 @@ TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, Mode_t modeType,
 }
 
 rad::ComplexVector3 rad::CircularWaveguide::GetModeHFieldComplex(
-    Mode_t modeType, int n, int m, TVector3 pos, double omega, double A,
-    double B) {
+    WaveguideMode mode, TVector3 pos, double omega, double A, double B) {
   double rho{pos.Perp()};
   if (rho > a) return ComplexVector3(0, 0, 0);
 
@@ -151,7 +155,11 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModeHFieldComplex(
   double z{pos.Z() + d / 2.0};
   std::complex<double> i{0.0, 1.0};
 
-  if (modeType == kTE) {
+  ModeType modeType{mode.GetModeType()};
+  unsigned int n{mode.GetModeIndex1()};
+  unsigned int m{mode.GetModeIndex2()};
+
+  if (modeType == ModeType::kTE) {
     // We have a TE mode
     double pnmPrime{GetBesselPrimeZero(n, m)};
     double k_c{pnmPrime / a};
@@ -177,7 +185,7 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModeHFieldComplex(
     ComplexVector3 hField{Hrho * cos(phi) - Hphi * sin(phi),
                           Hrho * sin(phi) + Hphi * cos(phi), Hz};
     return hField;
-  } else if (modeType == kTM) {
+  } else if (modeType == ModeType::kTM) {
     // We have a TM mode
     double pnm{boost::math::cyl_bessel_j_zero(double(n), m)};
     double k_c{pnm / a};
@@ -209,8 +217,7 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModeHFieldComplex(
   }
 }
 
-rad::ComplexVector3 rad::CircularWaveguide::GetModalHField(Mode_t modeType,
-                                                           int n, int m,
+rad::ComplexVector3 rad::CircularWaveguide::GetModalHField(WaveguideMode mode,
                                                            TVector3 pos,
                                                            double omega,
                                                            double A, double B) {
@@ -221,7 +228,11 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModalHField(Mode_t modeType,
   double z{pos.Z() + d / 2.0};
   std::complex<double> i{0.0, 1.0};
 
-  if (modeType == kTE) {
+  ModeType modeType{mode.GetModeType()};
+  unsigned int n{mode.GetModeIndex1()};
+  unsigned int m{mode.GetModeIndex2()};
+
+  if (modeType == ModeType::kTE) {
     // We have a TE mode
     double pnmPrime{GetBesselPrimeZero(n, m)};
     double k_c{pnmPrime / a};
@@ -242,7 +253,7 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModalHField(Mode_t modeType,
     ComplexVector3 hField{Hrho * cos(phi) - Hphi * sin(phi),
                           Hrho * sin(phi) + Hphi * cos(phi), Hz};
     return hField;
-  } else if (modeType == kTM) {
+  } else if (modeType == ModeType::kTM) {
     // We have a TM mode
     double pnm{boost::math::cyl_bessel_j_zero(double(n), m)};
     double k_c{pnm / a};
@@ -272,25 +283,27 @@ rad::ComplexVector3 rad::CircularWaveguide::GetModalHField(Mode_t modeType,
   }
 }
 
-TVector3 rad::CircularWaveguide::GetModeHField(Mode_t modeType, int n, int m,
-                                               TVector3 pos, double omega,
-                                               double A, double B) {
-  ComplexVector3 field{GetModeHFieldComplex(modeType, n, m, pos, omega, A, B)};
+TVector3 rad::CircularWaveguide::GetModeHField(WaveguideMode mode, TVector3 pos,
+                                               double omega, double A,
+                                               double B) {
+  ComplexVector3 field{GetModeHFieldComplex(mode, pos, omega, A, B)};
   return field.Real();
 }
 
-double rad::CircularWaveguide::GetCutoffFrequency(Mode_t modeType, int n,
-                                                  int m) {
+double rad::CircularWaveguide::GetCutoffFrequency(WaveguideMode mode) {
+  ModeType mt{mode.GetModeType()};
+  unsigned int n{mode.GetModeIndex1()};
+  unsigned int m{mode.GetModeIndex2()};
   // Invalid mode number
   if (m == 0) {
     return -1;
   } else {
-    if (modeType == kTE) {
+    if (mt == ModeType::kTE) {
       double pnmPrime{GetBesselPrimeZero(n, m)};
       double k_c{pnmPrime / a};
       double f_c{k_c * TMath::C() / (2 * TMath::Pi())};
       return f_c;
-    } else if (modeType == kTM) {
+    } else if (mt == ModeType::kTM) {
       double pnm{boost::math::cyl_bessel_j_zero(double(n), m)};
       double k_c{pnm / a};
       double f_c{k_c * TMath::C() / (2 * TMath::Pi())};
@@ -301,18 +314,19 @@ double rad::CircularWaveguide::GetCutoffFrequency(Mode_t modeType, int n,
   }
 }
 
-double rad::CircularWaveguide::GetCutoffWavenumber(Mode_t modeType,
-                                                   unsigned int n,
-                                                   unsigned int m) {
+double rad::CircularWaveguide::GetCutoffWavenumber(WaveguideMode mode) {
+  ModeType mt{mode.GetModeType()};
+  unsigned int n{mode.GetModeIndex1()};
+  unsigned int m{mode.GetModeIndex2()};
   // Invalid mode number
   if (m == 0) {
     return -1;
   } else {
-    if (modeType == kTE) {
+    if (mt == ModeType::kTE) {
       double pnmPrime{GetBesselPrimeZero(n, m)};
       double k_c{pnmPrime / a};
       return k_c;
-    } else if (modeType == kTM) {
+    } else if (mt == ModeType::kTM) {
       double pnm{boost::math::cyl_bessel_j_zero(double(n), m)};
       double k_c{pnm / a};
       return k_c;
@@ -325,8 +339,7 @@ double rad::CircularWaveguide::GetCutoffWavenumber(Mode_t modeType,
   }
 }
 
-double rad::CircularWaveguide::GetEFieldIntegral(Mode_t modeType,
-                                                 unsigned int n, unsigned int m,
+double rad::CircularWaveguide::GetEFieldIntegral(WaveguideMode mode,
                                                  double omega, double A,
                                                  int nSurfPnts, bool state) {
   double integral{0};
@@ -342,8 +355,7 @@ double rad::CircularWaveguide::GetEFieldIntegral(Mode_t modeType,
                      TMath::TwoPi() * double(iPhi) / double(nSurfPnts)};
 
       TVector3 surfacePos{thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0.0};
-      TVector3 eTrans{
-          GetModeEField(surfacePos, modeType, A, n, m, omega, state)};
+      TVector3 eTrans{GetModeEField(surfacePos, mode, A, omega, state)};
       eTrans.SetZ(0);
       integral += eTrans.Dot(eTrans) * area;
     }
@@ -356,7 +368,7 @@ double rad::CircularWaveguide::GetEFieldIntegral(Mode_t modeType,
   }
 }
 
-double rad::CircularWaveguide::GetHFieldIntegral(Mode_t modeType, int n, int m,
+double rad::CircularWaveguide::GetHFieldIntegral(WaveguideMode mode,
                                                  double omega, double A,
                                                  double B, int nSurfPnts) {
   const double dRho{a / double(nSurfPnts)};
@@ -371,8 +383,7 @@ double rad::CircularWaveguide::GetHFieldIntegral(Mode_t modeType, int n, int m,
                      TMath::TwoPi() * double(iPhi) / double(nSurfPnts)};
 
       TVector3 surfacePos{thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0.0};
-      ComplexVector3 hTrans{
-          GetModalHField(modeType, n, m, surfacePos, omega, A, B)};
+      ComplexVector3 hTrans{GetModalHField(mode, surfacePos, omega, A, B)};
       hTrans.SetZ(std::complex<double>{0, 0});
       integral += (hTrans.Dot(hTrans)).real() * area;
     }
@@ -381,18 +392,17 @@ double rad::CircularWaveguide::GetHFieldIntegral(Mode_t modeType, int n, int m,
   return integral;
 }
 
-double rad::CircularWaveguide::GetFieldAmp(Mode_t modeType, unsigned int n,
-                                           unsigned int m, double omega,
+double rad::CircularWaveguide::GetFieldAmp(WaveguideMode mode, double omega,
                                            TVector3 ePos, TVector3 eVel,
                                            double normA, bool state,
                                            bool isPositive) {
-  double waveImp{GetModeImpedance(modeType, n, m, omega)};
+  double waveImp{GetModeImpedance(mode, omega)};
   TVector3 j{-TMath::Qe() * eVel};
   TVector3 jComplex{j};
 
-  TVector3 eTrans{GetModeEField(ePos, modeType, normA, n, m, omega, state)};
+  TVector3 eTrans{GetModeEField(ePos, mode, normA, omega, state)};
   eTrans.SetZ(0);
-  TVector3 eAxial{GetModeEField(ePos, modeType, normA, n, m, omega, state)};
+  TVector3 eAxial{GetModeEField(ePos, mode, normA, omega, state)};
   eAxial.SetX(0);
   eAxial.SetY(0);
   TVector3 eField(0, 0, 0);
@@ -406,8 +416,7 @@ double rad::CircularWaveguide::GetFieldAmp(Mode_t modeType, unsigned int n,
   return A;
 }
 
-void rad::CircularWaveguide::CalculatePn(Mode_t modeType, unsigned int n,
-                                         unsigned int m, double omega,
+void rad::CircularWaveguide::CalculatePn(WaveguideMode mode, double omega,
                                          unsigned int nSurfPnts, double A,
                                          double B) {
   double sum{0};
@@ -426,13 +435,13 @@ void rad::CircularWaveguide::CalculatePn(Mode_t modeType, unsigned int n,
                      GetLength() / 2);
 
       // Get transverse E and H components
-      TVector3 eTrans1{GetModeEField(sPos1, modeType, A, n, m, omega, true)};
+      TVector3 eTrans1{GetModeEField(sPos1, mode, A, omega, true)};
       eTrans1.SetZ(0);
-      TVector3 hTrans1{GetModeHField(modeType, n, m, sPos1, omega, A, B)};
+      TVector3 hTrans1{GetModeHField(mode, sPos1, omega, A, B)};
       hTrans1.SetZ(0);
-      TVector3 eTrans2{GetModeEField(sPos1, modeType, A, n, m, omega, true)};
+      TVector3 eTrans2{GetModeEField(sPos1, mode, A, omega, true)};
       eTrans2.SetZ(0);
-      TVector3 hTrans2{GetModeHField(modeType, n, m, sPos2, omega, A, B)};
+      TVector3 hTrans2{GetModeHField(mode, sPos2, omega, A, B)};
       hTrans2.SetZ(0);
       sum += (eTrans1.Cross(hTrans1)).Z() * elArea;
       sum += (eTrans2.Cross(hTrans2)).Z() * elArea;

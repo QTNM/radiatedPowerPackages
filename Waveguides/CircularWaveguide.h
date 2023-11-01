@@ -36,91 +36,75 @@ class CircularWaveguide : public IWaveguide {
   double GetLength() { return d; }
 
   /// Complex electric field vector
-  /// \param modeType The mode type to get (either TE or TM)
-  /// \param n The angular number of the mode
-  /// \param m The radial number of the mode
+  /// \param mode The mode to get
   /// \param pos The position vector (in metres)
   /// \param omega Angular frequency of the chosen wave
   /// \param A Arbitrary amplitude for part of solution (default = 1)
   /// \param B Arbitrary amplitude for part of solution (default = 0)
   /// \Returns The mode complex electric field vector at the supplied point
-  ComplexVector3 GetModeEFieldComplex(Mode_t modeType, int n, int m,
-                                      TVector3 pos, double omega, double A = 1,
+  ComplexVector3 GetModeEFieldComplex(WaveguideMode mode, TVector3 pos,
+                                      double omega, double A = 1,
                                       double B = 0) override;
 
   /// @brief Gets the electric field vector for a given mode at a point
   /// @param pos Position vector (in metres)
-  /// @param modeType The mode type to get (either TE or TM)
+  /// @param mode The mode to get
   /// @param A Normalisation constant
-  /// @param n The angular number of the mode
-  /// @param m The radial number of the mode
   /// @param omega Angular frequency of the wave
   /// @param state Choose polarisation
   /// @return Electric field vector at that point
-  TVector3 GetModeEField(TVector3 pos, Mode_t modeType, double A,
-                         unsigned int n, unsigned int m, double omega,
-                         bool state) override;
+  TVector3 GetModeEField(TVector3 pos, WaveguideMode mode, double A,
+                         double omega, bool state) override;
 
-  /// Gets the complex magnetic field strength vector for a given mode at a
-  /// point \param modeType The mode type to get (either TE or TM) \param n The
-  /// angular number of the mode \param m The radial number of the mode \param
-  /// pos The position vector (in metres) \param omega Angular frequency of the
-  /// chosen wave \param A Arbitrary amplitude for part of solution (default =
-  /// 1) \param B Arbitrary amplitude for part of solution (default = 0)
-  /// \Returns The mode H field vector at the supplied point
-  ComplexVector3 GetModeHFieldComplex(Mode_t modeType, int n, int m,
-                                      TVector3 pos, double omega, double A = 1,
+  /// @brief Gets the complex magnetic field strength vector for a given mode at
+  /// a point
+  /// @param mode The mode to get
+  /// @param pos The position vector (in metres)
+  /// @param omega Angular frequency of the chosen wave
+  /// @param A Arbitrary amplitude for part of solution (default = 1)
+  /// @param B Arbitrary amplitude for part of solution (default = 0)
+  /// @return The mode H field vector at the supplied point
+  ComplexVector3 GetModeHFieldComplex(WaveguideMode mode, TVector3 pos,
+                                      double omega, double A = 1,
                                       double B = 0) override;
 
   /// Gets the H field vector for a given mode at a point
-  /// \param modeType The mode type to get (either TE or TM)
-  /// \param n The angular number of the mode
-  /// \param m The radial number of the mode
+  /// \param mode The mode to get
   /// \param pos The position vector (in metres)
   /// \param omega Angular frequency of the chosen wave
   /// \param A Arbitrary amplitude for part of solution (default = 1)
   /// \param B Arbitrary amplitude for part of solution (default = 0)
   /// \Returns The mode H field vector at the supplied point
-  TVector3 GetModeHField(Mode_t modeType, int n, int m, TVector3 pos,
-                         double omega, double A = 1, double B = 0) override;
+  TVector3 GetModeHField(WaveguideMode mode, TVector3 pos, double omega,
+                         double A = 1, double B = 0) override;
 
-  ComplexVector3 GetModalHField(Mode_t modeType, int n, int m, TVector3 pos,
-                                double omega, double A = 1, double B = 0);
+  ComplexVector3 GetModalHField(WaveguideMode mode, TVector3 pos, double omega,
+                                double A = 1, double B = 0);
 
-  /// Gets the cutoff frequency for a particular waveguide mode
-  /// \param modeType The mode type to get (TE, TM, TEM)
-  /// \param n The angular number of the mode
-  /// \param m The radial number of the mode
-  /// \Returns The cutoff frequency in Hertz
-  double GetCutoffFrequency(Mode_t modeType, int n, int m) override;
+  /// @brief Gets the cutoff frequency for a particular waveguide mode
+  /// \param mode The mode to get
+  /// @return The cutoff frequency in Hertz
+  double GetCutoffFrequency(WaveguideMode mode) override;
 
-  /// Gets the cutoff wavenumber for a particular waveguide mode
-  /// \param modeType The mode type to get (TE, TM, TEM)
-  /// \param n The angular number of the mode
-  /// \param m The radial number of the mode
-  /// \Returns The cutoff wavenumber in m^-1
-  double GetCutoffWavenumber(Mode_t modeType, unsigned int n,
-                             unsigned int m) override;
+  /// @brief Gets the cutoff wavenumber for a particular waveguide mode
+  /// @param modeType The mode to get
+  /// @return The cutoff wavenumber in m^-1
+  double GetCutoffWavenumber(WaveguideMode mode) override;
 
   /// @brief Calculates the normalisation integral of the mode electric field
-  /// @param modeType The type of mode (TE or TM)
-  /// @param n The angular number of the mode
-  /// @param m The radial number of the mode
+  /// @param modeType The type of mode
   /// @param omega Angular frequency for the chosen wave
   /// @param A The constant factor
   /// @param nSurfPnts Number of points in each dimension to test
   /// @return Electric field integral
-  double GetEFieldIntegral(Mode_t modeType, unsigned int n, unsigned int m,
-                           double omega, double A, int nSurfPnts,
-                           bool state) override;
+  double GetEFieldIntegral(WaveguideMode mode, double omega, double A,
+                           int nSurfPnts, bool state) override;
 
-  double GetHFieldIntegral(Mode_t modeType, int n, int m, double omega,
-                           double A, double B, int nSurfPnts);
+  double GetHFieldIntegral(WaveguideMode mode, double omega, double A, double B,
+                           int nSurfPnts);
 
   /// @brief Gets the field amplitude from a moving electron in the guide
-  /// @param modeType The mode type to get (TE, TM)
-  /// @param n The angular number of the mode
-  /// @param m The radial number of the mode
+  /// @param mode The mode to calculate for
   /// @param omega Angular frequency of the chosen wave
   /// @param ePos The electron position vector
   /// @param eVel The electron velocity vector
@@ -128,20 +112,18 @@ class CircularWaveguide : public IWaveguide {
   /// @param state Choose polarisation state
   /// @param isPositive Do we want the positive or negative amplitude?
   /// @return The field amplitude at a given time
-  double GetFieldAmp(Mode_t modeType, unsigned int n, unsigned int m,
-                     double omega, TVector3 ePos, TVector3 eVel, double normA,
-                     bool state, bool isPositive) override;
+  double GetFieldAmp(WaveguideMode mode, double omega, TVector3 ePos,
+                     TVector3 eVel, double normA, bool state,
+                     bool isPositive) override;
 
   /// @brief Calculate and set Pn for a given circular waveguide mode
-  /// @param modeType TE or TM mode
-  /// @param n Angular mode number
-  /// @param m Radial mode number
+  /// @param mode The mode
   /// @param omega Angular frequency of chosen mode
   /// @param A Constant 1
   /// @param B Constant 2
   /// @param nSurfPnts Number of points to use for integration
-  void CalculatePn(Mode_t modeType, unsigned int n, unsigned int m,
-                   double omega, unsigned int nSurfPnts, double A, double B);
+  void CalculatePn(WaveguideMode mode, double omega, unsigned int nSurfPnts,
+                   double A, double B);
 };
 }  // namespace rad
 

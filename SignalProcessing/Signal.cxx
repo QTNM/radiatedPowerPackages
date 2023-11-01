@@ -481,16 +481,20 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
   std::cout << "\n";
 
   // Calculate mode integrals and resulting normalisation
-  // Just do this for the TE11 mode currently
   const unsigned int nSurfPnts{100};
-  const double intTE11p{waveguide->GetEFieldIntegral(
-      IWaveguide::kTE, 1, 1, omega, 1, nSurfPnts, true)};
-  const double intTE11m{waveguide->GetEFieldIntegral(
-      IWaveguide::kTE, 1, 1, omega, 1, nSurfPnts, false)};
-  const double normTE11p{1 / sqrt(intTE11p)};
-  const double normTE11m{1 / sqrt(intTE11m)};
-  std::cout << "Normalisation constant 1, 2 = " << normTE11p << ", "
-            << normTE11m << std::endl;
+  std::vector<double> modeNorms{};
+  for (size_t iMode{0}; iMode < propagatingModes.size(); iMode++) {
+    WaveguideMode wm{propagatingModes.at(iMode)};
+    const double integralPlus{
+        waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, true)};
+    const double integralMinus{
+        waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, false)};
+    const double normPlus{1 / sqrt(integralPlus)};
+    const double normMinus{1 / sqrt(integralMinus)};
+    std::cout << "Normalisation constant +, - = " << normPlus << ", "
+              << normMinus << std::endl;
+    modeNorms.push_back(normPlus);
+  }
 
   // Figure out where we're going to generate the signal up to
   // By default, just do the whole electron trajectory file
@@ -537,16 +541,17 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       // First get the retarded time to calculate the fields at
       long double tr{GetRetardedTime(sample10Time, 0)};
 
-      // Calculate the mode field amplitudes
-      double ei_p{CalcWaveguideEField(tr, normTE11p).X()};
-      double eq_p{ei_p};
-      double ei_m{CalcWaveguideEField(tr, normTE11m).X()};
-      double eq_m{ei_m};
-
-      DownmixVoltages(ei_p, eq_p, sample10Time);
-
-      grVIInter->SetPoint(grVIInter->GetN(), sample10Time, ei_p);
-      grVQInter->SetPoint(grVQInter->GetN(), sample10Time, eq_p);
+      // Calculate the electric fields amplitudes for each propagating mode
+      double ei{0};
+      for (size_t iMode{0}; iMode < propagatingModes.size(); iMode++) {
+        WaveguideMode wm{propagatingModes.at(iMode)};
+        double normPlus{modeNorms.at(iMode)};
+        ei += CalcWaveguideEField(tr, wm, normPlus, omega).X();
+      }
+      double eq{ei};
+      DownmixVoltages(ei, eq, sample10Time);
+      grVIInter->SetPoint(grVIInter->GetN(), sample10Time, ei);
+      grVQInter->SetPoint(grVQInter->GetN(), sample10Time, eq);
 
       sample10Num++;
       sample10Time = double(sample10Num) * sample10StepSize;
@@ -888,7 +893,8 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
   }
 }
 
-TVector3 rad::Signal::CalcWaveguideEField(double tr, double norm) {
+TVector3 rad::Signal::CalcWaveguideEField(double tr, WaveguideMode mode,
+                                          double norm, double omega) {
   if (tr == -1) {
     // The voltage is from before the signal has reached the probe
     // Therefore there is no electric field there at this time
@@ -906,19 +912,17 @@ TVector3 rad::Signal::CalcWaveguideEField(double tr, double norm) {
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       // Calculate the field amplitudes
-      double aTE11p{waveguide->GetFieldAmp(IWaveguide::kTE, 1, 1,
-                                           TMath::TwoPi() * 19e9, pos, vel,
-                                           norm, true, true)};
-      double aTE11m{waveguide->GetFieldAmp(IWaveguide::kTE, 1, 1,
-                                           TMath::TwoPi() * 19e9, pos, vel,
-                                           norm, false, true)};
+      double ampPlus{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
+      double ampMinus{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
       // Now calculate the actual field at the probe position
-      TVector3 probeFieldPlus{waveguide->GetModeEField(
-          pos, IWaveguide::kTE, norm, 1, 1, TMath::TwoPi() * 19e9, true)};
-      probeFieldPlus *= aTE11p;
-      TVector3 probeFieldMinus{waveguide->GetModeEField(
-          pos, IWaveguide::kTE, norm, 1, 1, TMath::TwoPi() * 19e9, false)};
-      probeFieldMinus *= aTE11m;
+      TVector3 probeFieldPlus{
+          waveguide->GetModeEField(pos, mode, norm, omega, true)};
+      probeFieldPlus *= ampPlus;
+      TVector3 probeFieldMinus{
+          waveguide->GetModeEField(pos, mode, norm, omega, false)};
+      probeFieldMinus *= ampMinus;
       return probeFieldPlus + probeFieldMinus;
     } else if (firstGuessTime < tr) {
       // We are searching upwards
@@ -962,19 +966,17 @@ TVector3 rad::Signal::CalcWaveguideEField(double tr, double norm) {
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       // Calculate the field amplitudes
-      double aTE11p{waveguide->GetFieldAmp(IWaveguide::kTE, 1, 1,
-                                           TMath::TwoPi() * 19e9, pos, vel,
-                                           norm, true, true)};
-      double aTE11m{waveguide->GetFieldAmp(IWaveguide::kTE, 1, 1,
-                                           TMath::TwoPi() * 19e9, pos, vel,
-                                           norm, false, true)};
+      double ampPlus{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
+      double ampMinus{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
       // Now calculate the actual field at the probe position
-      TVector3 probeFieldPlus{waveguide->GetModeEField(
-          pos, IWaveguide::kTE, norm, 1, 1, TMath::TwoPi() * 19e9, true)};
-      probeFieldPlus *= aTE11p;
-      TVector3 probeFieldMinus{waveguide->GetModeEField(
-          pos, IWaveguide::kTE, norm, 1, 1, TMath::TwoPi() * 19e9, false)};
-      probeFieldMinus *= aTE11m;
+      TVector3 probeFieldPlus{
+          waveguide->GetModeEField(pos, mode, norm, omega, true)};
+      probeFieldPlus *= ampPlus;
+      TVector3 probeFieldMinus{
+          waveguide->GetModeEField(pos, mode, norm, omega, false)};
+      probeFieldMinus *= ampMinus;
       TVector3 totalProbeField{probeFieldPlus + probeFieldMinus};
       ExVals.at(0) = totalProbeField.X();
       EyVals.at(0) = totalProbeField.Y();
@@ -988,20 +990,18 @@ TVector3 rad::Signal::CalcWaveguideEField(double tr, double norm) {
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       // Calculate the field amplitudes
-      double aTE11p{waveguide->GetFieldAmp(IWaveguide::kTE, 1, 1,
-                                           TMath::TwoPi() * 19e9, pos, vel,
-                                           norm, true, true)};
-      double aTE11m{waveguide->GetFieldAmp(IWaveguide::kTE, 1, 1,
-                                           TMath::TwoPi() * 19e9, pos, vel,
-                                           norm, false, true)};
+      double ampPlus{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
+      double ampMinus{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
 
       // Now calculate the actual field at the probe position
-      TVector3 probeFieldPlus{waveguide->GetModeEField(
-          pos, IWaveguide::kTE, norm, 1, 1, TMath::TwoPi() * 19e9, true)};
-      probeFieldPlus *= aTE11p;
-      TVector3 probeFieldMinus{waveguide->GetModeEField(
-          pos, IWaveguide::kTE, norm, 1, 1, TMath::TwoPi() * 19e9, false)};
-      probeFieldMinus *= aTE11m;
+      TVector3 probeFieldPlus{
+          waveguide->GetModeEField(pos, mode, norm, omega, true)};
+      probeFieldPlus *= ampPlus;
+      TVector3 probeFieldMinus{
+          waveguide->GetModeEField(pos, mode, norm, omega, false)};
+      probeFieldMinus *= ampMinus;
       TVector3 totalProbeField{probeFieldPlus + probeFieldMinus};
       ExVals.at(iEl) = totalProbeField.X();
       EyVals.at(iEl) = totalProbeField.Y();
