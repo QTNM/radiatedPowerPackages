@@ -100,8 +100,8 @@ int main(int argc, char* argv[]) {
   const double wgLength{8e-2};            // metres
   TVector3 probePos(0, 0, wgLength / 2);  // Probe at the end of the guide
   auto wg = new CircularWaveguide(wgRadius, wgLength, probePos);
-  const double cutoffTE11{wg->GetCutoffFrequency(CircularWaveguide::kTE, 1, 1)};
-  const double cutoffTM01{wg->GetCutoffFrequency(CircularWaveguide::kTM, 0, 1)};
+  const double cutoffTE11{wg->GetCutoffFrequency(WaveguideMode(1, 1, kTE))};
+  const double cutoffTM01{wg->GetCutoffFrequency(WaveguideMode(0, 1, kTM))};
   std::cout << "Cutoff TE11 = " << cutoffTE11 / 1e9 << " GHz\n";
   std::cout << "Cutoff TM01 = " << cutoffTM01 / 1e9 << " GHz\n";
 
