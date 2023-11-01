@@ -283,7 +283,6 @@ double rad::CircularWaveguide::GetCutoffFrequency(Mode_t modeType, int n,
                                                   int m) {
   // Invalid mode number
   if (m == 0) {
-    std::cout << "Cannot have a TEn0/TMn0 mode!\n";
     return -1;
   } else {
     if (modeType == kTE) {
@@ -307,7 +306,6 @@ double rad::CircularWaveguide::GetCutoffWavenumber(Mode_t modeType,
                                                    unsigned int m) {
   // Invalid mode number
   if (m == 0) {
-    std::cout << "Cannot have a TEn0/TMn0 mode!\n";
     return -1;
   } else {
     if (modeType == kTE) {

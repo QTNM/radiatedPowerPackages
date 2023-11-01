@@ -474,6 +474,10 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
         propagatingModes.push_back(modeTM);
     }
   }
+  // Check which modes are propagating
+  std::cout << "Propagating modes are: ";
+  for (auto const& m : propagatingModes) std::cout << m << " ";
+  std::cout << "\n";
 
   // Calculate mode integrals and resulting normalisation
   // Just do this for the TE11 mode currently

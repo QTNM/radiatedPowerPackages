@@ -58,11 +58,11 @@ class Signal {
 
   /// @brief Parametrised constructor using waveguide as RF collection device
   /// @param filePath String to electron trajectory file
-  /// @param wg
-  /// @param lo
-  /// @param sRate
-  /// @param noiseTerms
-  /// @param tAcq
+  /// @param wg Pointer to waveguide
+  /// @param lo Local oscillator
+  /// @param sRate Sample rate in Hertz
+  /// @param noiseTerms Vector of noise to add
+  /// @param tAcq Max acqusition time in seconds
   Signal(TString filePath, IWaveguide* wg, LocalOscillator lo, double sRate,
          std::vector<GaussianNoise> noiseTerms = {}, double tAcq = -1);
 

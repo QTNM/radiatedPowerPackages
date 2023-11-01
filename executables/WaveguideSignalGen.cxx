@@ -41,7 +41,7 @@ bool GenerateElectron(TString file, TVector3 pos, TVector3 vel,
   bool isTrapped{true};
   TFile fT(file, "recreate");
   TTree tree("tree", "tree");
-  long double time{};
+  double time{};
   double xPos{}, yPos{}, zPos{};
   double xVel{}, yVel{}, zVel{};
   double xAcc{}, yAcc{}, zAcc{};
