@@ -27,9 +27,16 @@ rad::RectangularWaveguide::RectangularWaveguide(double longSide,
 double rad::RectangularWaveguide::GetCutoffWavenumber(Mode_t modeType,
                                                       unsigned int m,
                                                       unsigned int n) {
-  double k_c{sqrt(pow(double(m) * TMath::Pi() / a, 2) +
-                  pow(double(n) * TMath::Pi() / b, 2))};
-  return k_c;
+  // Invalid modes
+  if ((m == 0 && n == 0) || m < 0 || n < 0) {
+    std::cout << "Invalid rectangular waveguide mode: " << m << ", " << n
+              << std::endl;
+    return -1;
+  } else {
+    double k_c{sqrt(pow(double(m) * TMath::Pi() / a, 2) +
+                    pow(double(n) * TMath::Pi() / b, 2))};
+    return k_c;
+  }
 }
 
 rad::ComplexVector3 rad::RectangularWaveguide::GetModeEFieldComplex(
@@ -339,8 +346,14 @@ rad::ComplexVector3 rad::RectangularWaveguide::GetNormalisedHField(
 
 double rad::RectangularWaveguide::GetCutoffFrequency(Mode_t modeType, int m,
                                                      int n) {
-  double k_c{GetCutoffWavenumber(modeType, m, n)};
-  return k_c * TMath::C() / (2 * TMath::Pi());
+  if ((m == 0 && n == 0) || m < 0 || n < 0) {
+    std::cout << "Invalid rectangular waveguide mode: " << m << ", " << n
+              << std::endl;
+    return -1;
+  } else {
+    double k_c{GetCutoffWavenumber(modeType, m, n)};
+    return k_c * TMath::C() / (2 * TMath::Pi());
+  }
 }
 
 double rad::RectangularWaveguide::GetEFieldIntegral(Mode_t modeType,
