@@ -197,6 +197,10 @@ class Signal {
 
   /// @brief Sets up voltage graphs for class
   void CreateVoltageGraphs();
+
+  /// @brief Calculates the initial electron frequency from trajectory info
+  /// @return Initial cyclotron frequency in Hertz
+  double CalcInitialFreq();
 };
 
 }  // namespace rad

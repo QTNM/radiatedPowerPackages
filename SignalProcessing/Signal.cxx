@@ -450,11 +450,12 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
 
   // First things first, we need to figure out a rough frequency our electron is
   // radiating at
-  const double omega{18.9e9 * TMath::TwoPi()};  // constant for now
+  const double omega{CalcInitialFreq() * TMath::TwoPi()};
+  std::cout << "Calculated frequency = " << omega * 1e-9 / TMath::TwoPi()
+            << " GHz\n";
 
   // Now need to figure out which modes propagate in our waveguide at this
   // particular frequency
-
   const unsigned int ind1Min{0};
   const unsigned int ind1Max{5};
   const unsigned int ind2Min{0};
@@ -1208,4 +1209,31 @@ void rad::Signal::CreateVoltageGraphs() {
   grVQTime->GetYaxis()->SetTitle("V_{Q}");
   grVITime->GetXaxis()->SetTitle("Time [s]");
   grVQTime->GetXaxis()->SetTitle("Time [s]");
+}
+
+double rad::Signal::CalcInitialFreq() {
+  const double maxCalcTime{1e-6};  // seconds
+  auto grX = new TGraph();
+  for (int i{0}; i < inputTree->GetEntries(); i++) {
+    inputTree->GetEntry(i);
+    if (time > maxCalcTime) break;
+
+    grX->SetPoint(grX->GetN(), time, xPos);
+  }
+  auto grXSpec{MakePowerSpectrumPeriodogram(grX)};
+  delete grX;
+
+  const double minFreq{1e9};  // Hertz
+  double maxPeak{-DBL_MAX};
+  double maxPeakFreq{0};
+  for (int iX{1}; iX < grXSpec->GetN(); iX++) {
+    if (grXSpec->GetPointX(iX) < minFreq) {
+      continue;
+    } else if (grXSpec->GetPointY(iX) > maxPeak) {
+      maxPeak = grXSpec->GetPointY(iX);
+      maxPeakFreq = grXSpec->GetPointX(iX);
+    }
+  }
+  delete grXSpec;
+  return maxPeakFreq;
 }
