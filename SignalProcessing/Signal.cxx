@@ -482,18 +482,22 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
 
   // Calculate mode integrals and resulting normalisation
   const unsigned int nSurfPnts{100};
-  std::vector<double> modeNorms{};
+  std::vector<double> modeNormsP{};
+  std::vector<double> modeNormsM{};
   for (size_t iMode{0}; iMode < propagatingModes.size(); iMode++) {
     WaveguideMode wm{propagatingModes.at(iMode)};
     const double integralPlus{
         waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, true)};
     const double integralMinus{
         waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, false)};
-    const double normPlus{1 / sqrt(integralPlus)};
-    const double normMinus{1 / sqrt(integralMinus)};
+    double normPlus{0};
+    if (integralPlus != 0) normPlus = 1.0 / sqrt(integralPlus);
+    double normMinus{0};
+    if (integralMinus != 0) normMinus = 1.0 / sqrt(integralMinus);
     std::cout << "Normalisation constant +, - = " << normPlus << ", "
               << normMinus << std::endl;
-    modeNorms.push_back(normPlus);
+    modeNormsP.push_back(normPlus);
+    modeNormsM.push_back(normMinus);
   }
 
   // Figure out where we're going to generate the signal up to
@@ -545,8 +549,10 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       double ei{0};
       for (size_t iMode{0}; iMode < propagatingModes.size(); iMode++) {
         WaveguideMode wm{propagatingModes.at(iMode)};
-        double normPlus{modeNorms.at(iMode)};
-        ei += CalcWaveguideEField(tr, wm, normPlus, omega).X();
+        double normPlus{modeNormsP.at(iMode)};
+        double normMinus{modeNormsM.at(iMode)};
+        ei += CalcWaveguideEField(tr, wm, normPlus, omega, true).X();
+        ei += CalcWaveguideEField(tr, wm, normMinus, omega, false).X();
       }
       double eq{ei};
       DownmixVoltages(ei, eq, sample10Time);
@@ -894,7 +900,8 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
 }
 
 TVector3 rad::Signal::CalcWaveguideEField(double tr, WaveguideMode mode,
-                                          double norm, double omega) {
+                                          double norm, double omega,
+                                          bool state) {
   if (tr == -1) {
     // The voltage is from before the signal has reached the probe
     // Therefore there is no electric field there at this time

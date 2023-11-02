@@ -184,7 +184,7 @@ class Signal {
   /// @param omega Angular frequency of cyclotron motion
   /// @return Electric field at point in V/m
   TVector3 CalcWaveguideEField(double tr, WaveguideMode mode, double norm,
-                               double omega);
+                               double omega, bool state);
 
   /// @brief Function for downmixing voltages
   /// @param vi In phase voltage component
