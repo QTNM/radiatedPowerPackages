@@ -315,7 +315,14 @@ int main(int argc, char *argv[]) {
       // to the output file
       auto grV{sig.GetVITimeDomain()};
       fout.cd();
-      grV->Write("grV");
+      grV->Write(Form("grV%d", iEv));
+      auto grVSpec{MakePowerSpectrumPeriodogram(grV)};
+      ScaleGraph(grVSpec, 1e15);
+      grVSpec->SetTitle(
+          Form("%.1f MHz, #theta = %.1f degrees, r_{i} = %.1f mm; Frequency "
+               "[Hz]; Power [fW]",
+               startFreq / 1e6, pitchAngleDeg, rGen * 1e3));
+      grVSpec->Write(Form("grVSpec%d", iEv));
 
       // Create dataspace for dataset
       const unsigned int DSPACE_DIM = grV->GetN();
@@ -370,6 +377,8 @@ int main(int argc, char *argv[]) {
       delete dataset;
       // Close the dataspace
       delete dspace;
+
+      delete grVSpec;
     }
 
     // The track files can get pretty large so it's best to delete them after
