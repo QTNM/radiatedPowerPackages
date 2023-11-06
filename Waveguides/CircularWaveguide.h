@@ -124,6 +124,8 @@ class CircularWaveguide : public IWaveguide {
   /// @param nSurfPnts Number of points to use for integration
   void CalculatePn(WaveguideMode mode, double omega, unsigned int nSurfPnts,
                    double A, double B);
+
+  bool MultiplePolarisations() { return true; }
 };
 }  // namespace rad
 

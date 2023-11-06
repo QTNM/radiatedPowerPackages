@@ -119,6 +119,11 @@ class IWaveguide {
   /// @return Probe position 3-vector
   TVector3 GetProbePosition() { return probe; }
 
+  /// @brief Function for determining if we need to calculate multiple
+  /// polarisations
+  /// @return True is there are multiple polarisations
+  virtual bool MultiplePolarisations() = 0;
+
  private:
   // Normalisation constant
   double Pn;

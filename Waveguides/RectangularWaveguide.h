@@ -124,6 +124,8 @@ class RectangularWaveguide : public IWaveguide {
   /// @param omega Angular frequency
   /// @param nSurfPnts Number of points for integration
   void CalculatePn(WaveguideMode mode, double omega, unsigned int nSurfPnts);
+
+  bool MultiplePolarisations() { return false; }
 };
 }  // namespace rad
 
