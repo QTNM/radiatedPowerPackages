@@ -486,16 +486,23 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
   std::vector<double> modeNormsM{};
   for (size_t iMode{0}; iMode < propagatingModes.size(); iMode++) {
     WaveguideMode wm{propagatingModes.at(iMode)};
-    const double integralPlus{
-        waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, true)};
-    const double integralMinus{
-        waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, false)};
+    double integralPlus{0};
+    double integralMinus{0};
+    if (waveguide->MultiplePolarisations()) {
+      integralPlus =
+          waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, true);
+      integralMinus =
+          waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, false);
+    } else {
+      integralPlus =
+          waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, true) * 2;
+    }
     double normPlus{0};
     if (integralPlus != 0) normPlus = 1.0 / sqrt(integralPlus);
     double normMinus{0};
     if (integralMinus != 0) normMinus = 1.0 / sqrt(integralMinus);
-    std::cout << "Normalisation constant +, - = " << normPlus << ", "
-              << normMinus << std::endl;
+    std::cout << "Normalisation constant " << wm << " +, - = " << normPlus
+              << ", " << normMinus << std::endl;
     modeNormsP.push_back(normPlus);
     modeNormsM.push_back(normMinus);
   }
@@ -545,14 +552,16 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       // First get the retarded time to calculate the fields at
       long double tr{GetRetardedTime(sample10Time, 0)};
 
-      // Calculate the electric fields amplitudes for each propagating mode
       double ei{0};
       for (size_t iMode{0}; iMode < propagatingModes.size(); iMode++) {
         WaveguideMode wm{propagatingModes.at(iMode)};
+        if (wm.GetModeType() != kTE) continue;
+
         double normPlus{modeNormsP.at(iMode)};
         double normMinus{modeNormsM.at(iMode)};
-        ei += CalcWaveguideEField(tr, wm, normPlus, omega, true).X();
-        ei += CalcWaveguideEField(tr, wm, normMinus, omega, false).X();
+        double modeImp{waveguide->GetModeImpedance(wm, omega)};
+        ei += CalcWgAmp(tr, wm, normPlus, omega, true) / sqrt(modeImp);
+        ei += CalcWgAmp(tr, wm, normMinus, omega, false) / sqrt(modeImp);
       }
       double eq{ei};
       DownmixVoltages(ei, eq, sample10Time);
@@ -1020,6 +1029,95 @@ TVector3 rad::Signal::CalcWaveguideEField(double tr, WaveguideMode mode,
     double EyInterp{CubicInterpolation(timeVals, EyVals, tr)};
     double EzInterp{CubicInterpolation(timeVals, EzVals, tr)};
     return TVector3(ExInterp, EyInterp, EzInterp);
+  }
+}
+
+double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
+                              double omega, bool state) {
+  if (tr == -1) {
+    // The voltage is from before the signal has reached the probe
+    // Therefore there is no electric field there at this time
+    return 0;
+  } else {
+    // We actually have to calculate the voltage
+    // Start off with a first guess
+    int firstGuessTInd{int(round(filePntsPerTime * (tr - fileStartTime)))};
+
+    // Find the appropriate time
+    inputTree->GetEntry(firstGuessTInd);
+    double firstGuessTime{time};
+    unsigned int correctIndex{0};
+
+    if (firstGuessTime == tr) {
+      TVector3 pos(xPos, yPos, zPos);
+      TVector3 vel(xVel, yVel, zVel);
+      // Calculate the field amplitudes
+      double ampPlus{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
+      double ampMinus{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
+      return ampPlus + ampMinus;
+    } else if (firstGuessTime < tr) {
+      // We are searching upwards
+      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
+        inputTree->GetEntry(i);
+        double lowerPoint{time};
+        inputTree->GetEntry(i + 1);
+        double upperPoint{time};
+        if (tr > lowerPoint && tr < upperPoint) {
+          correctIndex = i;
+          break;
+        }
+      }
+    } else {
+      // We are searching downwards
+      for (int i{firstGuessTInd}; i >= 0; i--) {
+        inputTree->GetEntry(i);
+        double lowerPoint{time};
+        inputTree->GetEntry(i + 1);
+        double upperPoint{time};
+        if (tr > lowerPoint && tr < upperPoint) {
+          correctIndex = i;
+          break;
+        }
+      }
+    }
+
+    // Now can do some interpolation if we haven't already found the value
+    std::vector<double> timeVals(4);
+    std::vector<double> ampVals(4);
+    if (correctIndex == 0) {
+      timeVals.at(0) = 0;
+      ampVals.at(0) = 0;
+    } else {
+      inputTree->GetEntry(correctIndex - 1);
+      timeVals.at(0) = time;
+      TVector3 pos(xPos, yPos, zPos);
+      TVector3 vel(xVel, yVel, zVel);
+      // Calculate the field amplitudes
+      double ampPlus{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
+      double ampMinus{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
+      ampVals.at(0) = ampMinus + ampPlus;
+    }
+
+    // Now add the other elements for the interpolation
+    for (unsigned int iEl{1}; iEl <= 3; iEl++) {
+      inputTree->GetEntry(correctIndex + iEl - 1);
+      timeVals.at(iEl) = time;
+      TVector3 pos(xPos, yPos, zPos);
+      TVector3 vel(xVel, yVel, zVel);
+      // Calculate the field amplitudes
+      double ampPlus{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
+      double ampMinus{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
+      ampVals.at(iEl) = ampMinus + ampPlus;
+    }
+
+    double ampInterp{CubicInterpolation(timeVals, ampVals, tr)};
+    return ampInterp;
   }
 }
 

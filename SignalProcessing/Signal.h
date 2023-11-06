@@ -186,6 +186,15 @@ class Signal {
   TVector3 CalcWaveguideEField(double tr, WaveguideMode mode, double norm,
                                double omega, bool state);
 
+  /// @brief Calculate electric field at waveguide probe position
+  /// @param tr Retarded time in seconds
+  /// @param mode Waveguide mode to calculate
+  /// @param norm Field normalisation
+  /// @param omega Angular frequency of cyclotron motion
+  /// @return Waveguide mode amplitude
+  double CalcWgAmp(double tr, WaveguideMode mode, double norm, double omega,
+                   bool state);
+
   /// @brief Function for downmixing voltages
   /// @param vi In phase voltage component
   /// @param vq Quadrature voltage component

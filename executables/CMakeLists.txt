@@ -108,3 +108,6 @@ target_link_libraries(P8HarmonicTrap PRIVATE BasicFunctions ElectronDynamics Sig
 add_executable(WaveguideSignalGen WaveguideSignalGen.cxx)
 target_link_libraries(WaveguideSignalGen PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
 target_include_directories(WaveguideSignalGen PRIVATE ${HDF5_INCLUDE_DIRS})
+
+add_executable(P8WaveguidePower P8WaveguidePower.cxx)
+target_link_libraries(P8WaveguidePower PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES})
