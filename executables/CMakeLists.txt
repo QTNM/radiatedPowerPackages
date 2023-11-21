@@ -111,3 +111,5 @@ target_include_directories(WaveguideSignalGen PRIVATE ${HDF5_INCLUDE_DIRS})
 
 add_executable(P8WaveguidePower P8WaveguidePower.cxx)
 target_link_libraries(P8WaveguidePower PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES})
+add_executable(EventRate EventRate.cxx)
+target_link_libraries(EventRate PRIVATE BasicFunctions ${ROOT_LIBRARIES})

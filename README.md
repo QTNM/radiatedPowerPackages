@@ -3,7 +3,7 @@ Designed to offer easy calculation of EM fields and the associated voltage signa
 
 ## Requirements and Dependencies
 
-The core code requires C++17, built with CMake (3.18+) with the following external dependencies for each package:
+The core code requires C++20, built with CMake (3.18+) with the following external dependencies for each package:
 
 |   | BOOST (1.73+) | ROOT (6.14+) | libRootFftwWrapper(*)|
 |:-:|:-------------:|:------------:|:--------------------:|
@@ -12,25 +12,28 @@ The core code requires C++17, built with CMake (3.18+) with the following extern
 | Signal Processing | | x | x
 | Antennas | | x | |
 | Electron Dynamics | x | x | |
+| Scattering | x | | |
 
+HDF5 libraries are also required for some executables purely for I/O.
 
 (*) libRootFftwWrapper available at: https://github.com/nichol77/libRootFftwWrapper. Requires an existing FFTW install.
 
 There are also inter-dependencies between the individual packages:
 
-|   | Basic Functions | Field Classes | Signal Processing | Antennas | Electron Dynamics |
-|:-:|:---------------:|:-------------:|:-----------------:|:--------:|:-----------------:|
+|   | Basic Functions | Field Classes | Signal Processing | Antennas | Electron Dynamics | Scattering |
+|:-:|:---------------:|:-------------:|:-----------------:|:--------:|:-----------------:|:----------:|
 | Basic Functions | | | | | |
 | Field Classes | x | | | | |
 | Signal Processing | x | x | | x | |
-| Antennas | | | | | |
+| Antennas | x | | | | |
 | Electron Dynamics | x | | | | |
+| Scattering | | | | | |
 
 Dependencies are listed row by row, for example the Signal Processing package requires the Basic Functions, Field Classes and Antennas packages.
 
 There are also a set of example programs (radiatedPowerPackages/executables) for which we recommend installing all packages.
 
-A docker image containing the required external libraries is available at: https://hub.docker.com/repository/docker/tomgoffrey/qtnm_deps.
+A docker image containing the required external libraries is available at: https://hub.docker.com/repository/docker/sebj101/qtnm_deps.
 
 A minimal set of instructions to install the required dependencies using Ubuntu 20.04 are:
 
@@ -79,6 +82,11 @@ $ make
 $ make install
 ```
 
+### HDF5
+```
+$ sudo apt-get install -y libhdf5-serial-dev
+```
+
 ## Build instructions
 The package is designed to be built with CMake and the build instructions are as follows.
 
@@ -86,8 +94,9 @@ The package is designed to be built with CMake and the build instructions are as
 $ mkdir build
 $ cd build
 $ cmake ..
-$ cmake --build .
+$ cmake --build . -jN
 ```
+where N is the number of cores used in the build
 
 ## Creating electron trajectories
 All the code required to create magnetic fields and electron trajectories is contained within the ```ElectronDynamics``` folder. 
@@ -138,8 +147,7 @@ If one just wants to view this signal without any downmixing, downsampling or no
 A ```TGraph``` of the time series signal can then be produced using ```GetVoltageGraph```.
 
 ### Signal
-Full signal processing is done using the ```Signal``` class which takes as an input an instance of ```InducedVoltage```, an ```LocalOscillator``` used to define the down-mixing and the sampling rate (in Hertz).
+Full signal processing is done using the ```Signal``` class which takes as an input the path to the electron trajectory file, a pointer to the ```IAntenna```, a ```LocalOscillator``` used to define the down-mixing and the sampling rate (in Hertz).
 Additionally a vector of ```GaussianNoise``` terms can be supplied as well as a maximum acquisition time.
-Note: you do not need to call ```GenerateVoltage``` on the supplied ```InducedVoltage``` to get the signal out, the ```Signal``` machinery handles that for you.
 
 [1]: <https://aip.scitation.org/doi/pdf/10.1063/1.5051077>
