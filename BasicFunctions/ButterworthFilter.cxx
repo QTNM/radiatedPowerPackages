@@ -30,7 +30,6 @@ void rad::ButterworthFilter::SetbVec() {
   // Multiply matrices together to get the correct options
   bmatrix interMatrix{boost::numeric::ublas::prod(Tc, P)};
   bvector bVec{boost::numeric::ublas::prod(B, interMatrix)};
-  std::cout << "b = " << bVec << std::endl;
 
   b.resize(n + 1);
   for (size_t i{0}; i < b.size(); i++) {

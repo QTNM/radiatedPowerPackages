@@ -12,6 +12,7 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 #include <cmath>
+#include <deque>
 #include <iostream>
 #include <vector>
 
@@ -48,6 +49,17 @@ class ButterworthFilter {
   /// @brief Getter function for transfer function coeffs
   /// @return Vector of transfer function denominator coeffs
   std::vector<double> GetbVec() { return b; }
+
+  /// @brief Getter function for difference eqn. coeffs.
+  /// @return Vector of coefficients for unfiltered signal
+  std::vector<double> GetXkVec() { return xk; }
+
+  /// @brief Getter function for difference eqn. coeffs.
+  /// @return Vector of coefficients for filtered signal
+  std::vector<double> GetYkVec() { return yk; }
+
+  double FilterValues(std::deque<double> &unf, std::deque<double> &f,
+                      double newUnf);
 
  private:
   unsigned int n;  // Filter order
