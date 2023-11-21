@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "Antennas/IAntenna.h"
+#include "BasicFunctions/ButterworthFilter.h"
 #include "SignalProcessing/LocalOscillator.h"
 #include "SignalProcessing/NoiseFunc.h"
 #include "TFile.h"

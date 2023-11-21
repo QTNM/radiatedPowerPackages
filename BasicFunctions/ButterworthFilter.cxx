@@ -106,13 +106,35 @@ rad::bmatrix rad::ButterworthFilter::GetTcMatrix(double c) {
 
 void rad::ButterworthFilter::SetDifferenceEqnCoeffs() {
   xk.resize(n + 1, 0);
-  yk.resize(n + 1, 0);
-  for (int i{0}; i < xk.size(); i++) {
-    if (i == 0) {
-      xk.at(i) = a.at(i) / b.at(0);
-    } else {
-      xk.at(i) = a.at(i) / b.at(0);
-      yk.at(i) = -b.at(i) / b.at(0);
-    }
+  yk.resize(n, 0);
+  for (int i{0}; i < xk.size(); i++) xk.at(i) = a.at(i) / b.at(0);
+
+  for (int i{0}; i < b.size(); i++) {
+    if (i == 0)
+      continue;
+    else
+      yk.at(i - 1) = -b.at(i) / b.at(0);
   }
+}
+
+double rad::ButterworthFilter::FilterValues(std::deque<double> &unf,
+                                            std::deque<double> &f,
+                                            double newUnf) {
+  double newFilteredVal{0};  // New filtered value
+  // Add new unfiltered value to the front of the deque
+  unf.push_front(newUnf);
+  // If the vector is too large, remove the last element
+  if (unf.size() > n + 1) unf.pop_back();
+
+  // Add the previously unfiltered elements
+  for (size_t i{0}; i < unf.size(); i++) newFilteredVal += unf.at(i) * xk.at(i);
+
+  // Now add the part of the response from the filtered components
+  for (size_t i{0}; i < f.size(); i++) newFilteredVal += f.at(i) * yk.at(i);
+
+  // Add the new filtered value and shrink deque if necessary
+  f.push_front(newFilteredVal);
+  if (f.size() > n) f.pop_back();
+
+  return newFilteredVal;
 }
