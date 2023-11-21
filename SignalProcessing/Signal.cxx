@@ -85,9 +85,6 @@ rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
 
       DownmixVoltages(vi, vq, sample10Time);
 
-      sample10Num++;
-      sample10Time = double(sample10Num) * sample10StepSize;
-
       // Now we want to filter this value and add it to the deques
       double viFiltered{filter.FilterValues(unfilteredVi, filteredVi, vi)};
       double vqFiltered{filter.FilterValues(unfilteredVq, filteredVq, vq)};
@@ -96,6 +93,9 @@ rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
                                 viFiltered);
       grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(), sample10Time,
                                 vqFiltered);
+
+      sample10Num++;
+      sample10Time = double(sample10Num) * sample10StepSize;
     } else {
       continue;
     }
@@ -147,10 +147,20 @@ rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
   }
 
   // Create some intermediate level graphs before final sampling
-  auto grVIInter = new TGraph();
-  auto grVQInter = new TGraph();
   auto grVIBigFiltered = new TGraph();
   auto grVQBigFiltered = new TGraph();
+
+  // Create a deque for filtered and unfiltered info
+  // Need this for time domain filter
+  std::deque<double> unfilteredVi;
+  std::deque<double> filteredVi;
+  // Copies for quadrature components
+  std::deque<double> unfilteredVq;
+  std::deque<double> filteredVq;
+
+  // Define the Butterworth filter
+  // Want to get rid of frequencies above half the sample rate
+  ButterworthFilter filter(6, sRate / 2, 10 * sRate);
 
   // Loop through tree entries
   // Initially we are just doing the the higher frequency sampling
@@ -182,34 +192,17 @@ rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
       }
       DownmixVoltages(vi, vq, sample10Time);
 
-      grVIInter->SetPoint(grVIInter->GetN(), sample10Time, vi);
-      grVQInter->SetPoint(grVQInter->GetN(), sample10Time, vq);
+      // Now we want to filter this value and add it to the deques
+      double viFiltered{filter.FilterValues(unfilteredVi, filteredVi, vi)};
+      double vqFiltered{filter.FilterValues(unfilteredVq, filteredVq, vq)};
+      // Add to the TGraph
+      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(), sample10Time,
+                                viFiltered);
+      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(), sample10Time,
+                                vqFiltered);
 
       sample10Num++;
       sample10Time = double(sample10Num) * sample10StepSize;
-
-      // We want to filter this signal if it's long enough
-      // Pick a good number to do FFTs with (2^n preferably)
-      if (grVIInter->GetN() == 32768) {
-        auto grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
-        auto grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
-        // Now add these points to the existing graph
-        for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
-          grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
-                                    grVISmallFiltered->GetPointX(iF),
-                                    grVISmallFiltered->GetPointY(iF));
-          grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
-                                    grVQSmallFiltered->GetPointX(iF),
-                                    grVQSmallFiltered->GetPointY(iF));
-        }
-        delete grVISmallFiltered;
-        delete grVQSmallFiltered;
-        // Clear the current graphs and start again
-        delete grVIInter;
-        delete grVQInter;
-        grVIInter = new TGraph();
-        grVQInter = new TGraph();
-      }
     } else {
       continue;
     }
@@ -217,25 +210,6 @@ rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
 
   // Can now safely close the input file
   CloseInputFile();
-
-  // One last filter maybe
-  if (grVIInter->GetN() > 0) {
-    TGraph* grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
-    TGraph* grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
-    delete grVIInter;
-    delete grVQInter;
-    // Add these remaining points to the main filtered graph
-    for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
-      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
-                                grVISmallFiltered->GetPointX(iF),
-                                grVISmallFiltered->GetPointY(iF));
-      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
-                                grVQSmallFiltered->GetPointX(iF),
-                                grVQSmallFiltered->GetPointY(iF));
-    }
-    delete grVISmallFiltered;
-    delete grVQSmallFiltered;
-  }
 
   std::cout << "Second sampling...\n";
   for (int i{0}; i < grVIBigFiltered->GetN(); i++) {
@@ -295,10 +269,19 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
   advancedTimeVec.push_back(std::deque<long double>());
 
   // Create some intermediate level graphs before final sampling
-  auto grVIInter = new TGraph();
-  auto grVQInter = new TGraph();
   auto grVIBigFiltered = new TGraph();
   auto grVQBigFiltered = new TGraph();
+  // Create a deque for filtered and unfiltered info
+  // Need this for time domain filter
+  std::deque<double> unfilteredVi;
+  std::deque<double> filteredVi;
+  // Copies for quadrature components
+  std::deque<double> unfilteredVq;
+  std::deque<double> filteredVq;
+
+  // Define the Butterworth filter
+  // Want to get rid of frequencies above half the sample rate
+  ButterworthFilter filter(6, sRate / 2, 10 * sRate);
 
   // Loop through tree entries
   // Initially we are just doing the the higher frequency sampling
@@ -333,34 +316,17 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
 
       DownmixVoltages(ei_p, eq_p, sample10Time);
 
-      grVIInter->SetPoint(grVIInter->GetN(), sample10Time, ei_p);
-      grVQInter->SetPoint(grVQInter->GetN(), sample10Time, eq_p);
+      // Now we want to filter this value and add it to the deques
+      double viFiltered{filter.FilterValues(unfilteredVi, filteredVi, ei_p)};
+      double vqFiltered{filter.FilterValues(unfilteredVq, filteredVq, eq_p)};
+      // Add to the TGraph
+      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(), sample10Time,
+                                viFiltered);
+      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(), sample10Time,
+                                vqFiltered);
 
       sample10Num++;
       sample10Time = double(sample10Num) * sample10StepSize;
-
-      // We want to filter this signal if it's long enough
-      // Pick a good number to do FFTs with (2^n preferably)
-      if (grVIInter->GetN() == 32768) {
-        auto grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
-        auto grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
-        // Now add these points to the existing graph
-        for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
-          grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
-                                    grVISmallFiltered->GetPointX(iF),
-                                    grVISmallFiltered->GetPointY(iF));
-          grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
-                                    grVQSmallFiltered->GetPointX(iF),
-                                    grVQSmallFiltered->GetPointY(iF));
-        }
-        delete grVISmallFiltered;
-        delete grVQSmallFiltered;
-        // Clear the current graphs and start again
-        delete grVIInter;
-        delete grVQInter;
-        grVIInter = new TGraph();
-        grVQInter = new TGraph();
-      }
     } else {
       continue;
     }
@@ -368,28 +334,6 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
 
   // Can now safely close the input file
   CloseInputFile();
-
-  // There are still potentially signals that haven't been filtered so do those
-  if (grVIInter->GetN() > 0) {
-    TGraph* grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
-    TGraph* grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
-    delete grVIInter;
-    delete grVQInter;
-    // Add these remaining points to the main filtered graph
-    for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
-      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
-                                grVISmallFiltered->GetPointX(iF),
-                                grVISmallFiltered->GetPointY(iF));
-      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
-                                grVQSmallFiltered->GetPointX(iF),
-                                grVQSmallFiltered->GetPointY(iF));
-    }
-    delete grVISmallFiltered;
-    delete grVQSmallFiltered;
-  } else {
-    delete grVIInter;
-    delete grVQInter;
-  }
 
   // Now sample at actual sample rate
   std::cout << "Second sampling...\n";
@@ -495,10 +439,20 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
   advancedTimeVec.push_back(std::deque<long double>());
 
   // Create some intermediate level graphs before final sampling
-  auto grVIInter = new TGraph();
-  auto grVQInter = new TGraph();
   auto grVIBigFiltered = new TGraph();
   auto grVQBigFiltered = new TGraph();
+
+  // Create a deque for filtered and unfiltered info
+  // Need this for time domain filter
+  std::deque<double> unfilteredVi;
+  std::deque<double> filteredVi;
+  // Copies for quadrature components
+  std::deque<double> unfilteredVq;
+  std::deque<double> filteredVq;
+
+  // Define the Butterworth filter
+  // Want to get rid of frequencies above half the sample rate
+  ButterworthFilter filter(6, sRate / 2, 10 * sRate);
 
   // Loop through tree entries
   // Initially we are just doing the the higher frequency sampling
@@ -539,34 +493,18 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       }
       double eq{ei};
       DownmixVoltages(ei, eq, sample10Time);
-      grVIInter->SetPoint(grVIInter->GetN(), sample10Time, ei);
-      grVQInter->SetPoint(grVQInter->GetN(), sample10Time, eq);
+
+      // Now we want to filter this value and add it to the deques
+      double viFiltered{filter.FilterValues(unfilteredVi, filteredVi, ei)};
+      double vqFiltered{filter.FilterValues(unfilteredVq, filteredVq, eq)};
+      // Add to the TGraph
+      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(), sample10Time,
+                                viFiltered);
+      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(), sample10Time,
+                                vqFiltered);
 
       sample10Num++;
       sample10Time = double(sample10Num) * sample10StepSize;
-
-      // We want to filter this signal if it's long enough
-      // Pick a good number to do FFTs with (2^n preferably)
-      if (grVIInter->GetN() == 32768) {
-        auto grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
-        auto grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
-        // Now add these points to the existing graph
-        for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
-          grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
-                                    grVISmallFiltered->GetPointX(iF),
-                                    grVISmallFiltered->GetPointY(iF));
-          grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
-                                    grVQSmallFiltered->GetPointX(iF),
-                                    grVQSmallFiltered->GetPointY(iF));
-        }
-        delete grVISmallFiltered;
-        delete grVQSmallFiltered;
-        // Clear the current graphs and start again
-        delete grVIInter;
-        delete grVQInter;
-        grVIInter = new TGraph();
-        grVQInter = new TGraph();
-      }
     } else {
       continue;
     }
@@ -574,28 +512,6 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
 
   // Safely close input file
   CloseInputFile();
-
-  // There are still potentially signals that haven't been filtered so do those
-  if (grVIInter->GetN() > 0) {
-    TGraph* grVISmallFiltered = BandPassFilter(grVIInter, 0, sRate / 2);
-    TGraph* grVQSmallFiltered = BandPassFilter(grVQInter, 0, sRate / 2);
-    delete grVIInter;
-    delete grVQInter;
-    // Add these remaining points to the main filtered graph
-    for (int iF{0}; iF < grVISmallFiltered->GetN(); iF++) {
-      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(),
-                                grVISmallFiltered->GetPointX(iF),
-                                grVISmallFiltered->GetPointY(iF));
-      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(),
-                                grVQSmallFiltered->GetPointX(iF),
-                                grVQSmallFiltered->GetPointY(iF));
-    }
-    delete grVISmallFiltered;
-    delete grVQSmallFiltered;
-  } else {
-    delete grVIInter;
-    delete grVQInter;
-  }
 
   // Now sample at actual sample rate
   std::cout << "Second sampling...\n";
