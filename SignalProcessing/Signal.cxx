@@ -22,6 +22,9 @@ rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
 
   CreateVoltageGraphs();
 
+  // Need to check what type of file we're opening
+  isG4Input = G4InputFile(trajectoryFilePath);
+
   // Check if input file opens properly
   SetUpTree(trajectoryFilePath);
 
@@ -130,6 +133,9 @@ rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
     : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms), antenna(ant) {
   CreateVoltageGraphs();
 
+  // Need to check what type of file we're opening
+  isG4Input = G4InputFile(trajectoryFilePath);
+
   // Check if input file opens properly
   SetUpTree(trajectoryFilePath);
 
@@ -236,6 +242,9 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
                     double tAcq)
     : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms), cavity(cav) {
   CreateVoltageGraphs();
+
+  // Need to check what type of file we're opening
+  isG4Input = G4InputFile(filePath);
 
   // Check if input file opens properly
   SetUpTree(filePath);
@@ -361,8 +370,13 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
                     double tAcq)
     : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms), waveguide(wg) {
   CreateVoltageGraphs();
+
+  // Need to check what type of file we're opening
+  isG4Input = G4InputFile(filePath);
+
   // Check if input file opens properly
   SetUpTree(filePath);
+
   // Set file info
   GetFileInfo();
 
@@ -459,9 +473,24 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
   double printTime{0};  // seconds
   // Controls how many seconds are processed before we print
   const double printInterval{5e-6};
-  for (unsigned int iE{0}; iE < inputTree->GetEntries(); iE++) {
-    inputTree->GetEntry(iE);
-    const double entryTime{time};
+
+  int nTimeEntries = isG4Input ? vtime->size() : inputTree->GetEntries();
+
+  for (unsigned int iE{0}; iE < nTimeEntries; iE++) {
+    double entryTime{0};
+    TVector3 ePos(0, 0, 0);
+    if (isG4Input) {
+      entryTime = vtime->at(iE);
+      ePos.SetX(vposX->at(iE));
+      ePos.SetY(vposY->at(iE));
+      ePos.SetZ(vposZ->at(iE));
+    } else {
+      inputTree->GetEntry(iE);
+      entryTime = time;
+      ePos.SetX(xPos);
+      ePos.SetY(yPos);
+      ePos.SetZ(zPos);
+    }
 
     // Check we are still within the acquisition time, stop otherwise
     if (entryTime > tAcq) break;
@@ -471,8 +500,7 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       printTime += printInterval;
     }
 
-    AddNewCavWgTimes(entryTime, TVector3(xPos, yPos, zPos),
-                     waveguide->GetProbePosition());
+    AddNewCavWgTimes(entryTime, ePos, waveguide->GetProbePosition());
 
     // Do we need to sample now?
     if (entryTime >= sample10Time) {
@@ -540,17 +568,28 @@ rad::Signal::~Signal() {
 }
 
 void rad::Signal::GetFileInfo() {
-  inputTree->GetEntry(0);
-  fileStartTime = time;
-  inputTree->GetEntry(inputTree->GetEntries() - 1);
-  fileEndTime = time;
-  filePntsPerTime =
-      double(inputTree->GetEntries()) / (fileEndTime - fileStartTime);
+  if (isG4Input) {
+    inputTree->GetEntry(0);
+    fileStartTime = vtime->at(0);
+    inputTree->GetEntry(inputTree->GetEntries() - 1);
+    fileEndTime = vtime->at(vtime->size() - 1);
+    filePntsPerTime = double(vtime->size()) / (fileEndTime - fileStartTime);
+    // Now get the simulation step size
+    inputTree->GetEntry(0);
+    simStepSize = vtime->at(1) - vtime->at(0);
+  } else {
+    inputTree->GetEntry(0);
+    fileStartTime = time;
+    inputTree->GetEntry(inputTree->GetEntries() - 1);
+    fileEndTime = time;
+    filePntsPerTime =
+        double(inputTree->GetEntries()) / (fileEndTime - fileStartTime);
 
-  // Now get the simulation step size
-  inputTree->GetEntry(1);
-  long double time1{time};
-  simStepSize = time1 - fileStartTime;
+    // Now get the simulation step size
+    inputTree->GetEntry(1);
+    long double time1{time};
+    simStepSize = time1 - fileStartTime;
+  }
 }
 
 double rad::Signal::CalcVoltage(long double tr, IAntenna* ant) {
@@ -934,13 +973,29 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
     int firstGuessTInd{int(round(filePntsPerTime * (tr - fileStartTime)))};
 
     // Find the appropriate time
-    inputTree->GetEntry(firstGuessTInd);
-    double firstGuessTime{time};
+    double firstGuessTime{0};
+    if (isG4Input) {
+      firstGuessTime = vtime->at(firstGuessTInd);
+    } else {
+      inputTree->GetEntry(firstGuessTInd);
+      firstGuessTime = time;
+    }
     unsigned int correctIndex{0};
 
     if (firstGuessTime == tr) {
-      TVector3 pos(xPos, yPos, zPos);
-      TVector3 vel(xVel, yVel, zVel);
+      TVector3 pos(0, 0, 0);
+      TVector3 vel(0, 0, 0);
+      if (isG4Input) {
+        pos = TVector3(vposX->at(firstGuessTInd), vposY->at(firstGuessTInd),
+                       vposZ->at(firstGuessTInd));
+        vel = TVector3(vbetaX->at(firstGuessTInd), vbetaY->at(firstGuessTInd),
+                       vbetaZ->at(firstGuessTInd));
+        vel *= TMath::C();
+      } else {
+        pos = TVector3(xPos, yPos, zPos);
+        vel = TVector3(xVel, yVel, zVel);
+      }
+
       // Calculate the field amplitudes
       double ampPlus{
           waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
@@ -948,12 +1003,22 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
           waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
       return ampPlus + ampMinus;
     } else if (firstGuessTime < tr) {
+      int nEntries = isG4Input ? vtime->size() : inputTree->GetEntries();
+
       // We are searching upwards
-      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
+      for (int i{firstGuessTInd}; i < nEntries - 2; i++) {
+        double lowerPoint{};
+        double upperPoint{};
+        if (isG4Input) {
+          lowerPoint = vtime->at(i);
+          upperPoint = vtime->at(i + 1);
+        } else {
+          inputTree->GetEntry(i);
+          lowerPoint = time;
+          inputTree->GetEntry(i + 1);
+          upperPoint = time;
+        }
+
         if (tr > lowerPoint && tr < upperPoint) {
           correctIndex = i;
           break;
@@ -962,10 +1027,18 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
     } else {
       // We are searching downwards
       for (int i{firstGuessTInd}; i >= 0; i--) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
+        double lowerPoint{};
+        double upperPoint{};
+        if (isG4Input) {
+          lowerPoint = vtime->at(i);
+          upperPoint = vtime->at(i + 1);
+        } else {
+          inputTree->GetEntry(i);
+          lowerPoint = time;
+          inputTree->GetEntry(i + 1);
+          upperPoint = time;
+        }
+
         if (tr > lowerPoint && tr < upperPoint) {
           correctIndex = i;
           break;
@@ -980,10 +1053,23 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       timeVals.at(0) = 0;
       ampVals.at(0) = 0;
     } else {
-      inputTree->GetEntry(correctIndex - 1);
-      timeVals.at(0) = time;
-      TVector3 pos(xPos, yPos, zPos);
-      TVector3 vel(xVel, yVel, zVel);
+      TVector3 pos;
+      TVector3 vel;
+      if (isG4Input) {
+        timeVals.at(0) = vtime->at(correctIndex - 1);
+        pos = TVector3(vposX->at(correctIndex - 1), vposY->at(correctIndex - 1),
+                       vposZ->at(correctIndex - 1));
+        vel =
+            TVector3(vbetaX->at(correctIndex - 1), vbetaY->at(correctIndex - 1),
+                     vbetaZ->at(correctIndex - 1));
+        vel *= TMath::C();
+      } else {
+        inputTree->GetEntry(correctIndex - 1);
+        timeVals.at(0) = time;
+        pos = TVector3(xPos, yPos, zPos);
+        vel = TVector3(xVel, yVel, zVel);
+      }
+
       // Calculate the field amplitudes
       double ampPlus{
           waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
@@ -994,10 +1080,24 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
 
     // Now add the other elements for the interpolation
     for (unsigned int iEl{1}; iEl <= 3; iEl++) {
-      inputTree->GetEntry(correctIndex + iEl - 1);
-      timeVals.at(iEl) = time;
-      TVector3 pos(xPos, yPos, zPos);
-      TVector3 vel(xVel, yVel, zVel);
+      TVector3 pos;
+      TVector3 vel;
+      if (isG4Input) {
+        timeVals.at(iEl) = vtime->at(correctIndex + iEl - 1);
+        pos = TVector3(vposX->at(correctIndex + iEl - 1),
+                       vposY->at(correctIndex + iEl - 1),
+                       vposZ->at(correctIndex + iEl - 1));
+        vel = TVector3(vbetaX->at(correctIndex + iEl - 1),
+                       vbetaY->at(correctIndex + iEl - 1),
+                       vbetaZ->at(correctIndex + iEl - 1));
+        vel *= TMath::C();
+      } else {
+        inputTree->GetEntry(correctIndex + iEl - 1);
+        timeVals.at(iEl) = time;
+        pos = TVector3(xPos, yPos, zPos);
+        vel = TVector3(xVel, yVel, zVel);
+      }
+
       // Calculate the field amplitudes
       double ampPlus{
           waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
@@ -1113,17 +1213,31 @@ void rad::Signal::SetUpTree(TString filePath) {
   // Open the input file
   OpenInputFile(filePath);
 
-  inputTree = (TTree*)inputFile->Get("tree");
-  inputTree->SetBranchAddress("time", &time);
-  inputTree->SetBranchAddress("xPos", &xPos);
-  inputTree->SetBranchAddress("yPos", &yPos);
-  inputTree->SetBranchAddress("zPos", &zPos);
-  inputTree->SetBranchAddress("xVel", &xVel);
-  inputTree->SetBranchAddress("yVel", &yVel);
-  inputTree->SetBranchAddress("zVel", &zVel);
-  inputTree->SetBranchAddress("xAcc", &xAcc);
-  inputTree->SetBranchAddress("yAcc", &yAcc);
-  inputTree->SetBranchAddress("zAcc", &zAcc);
+  if (isG4Input) {
+    inputTree = (TTree*)inputFile->Get("ntuple/Signal");
+    inputTree->SetBranchAddress("TimeVec", &vtime, &btime);
+    inputTree->SetBranchAddress("PosxVec", &vposX, &bposX);
+    inputTree->SetBranchAddress("PosyVec", &vposY, &bposY);
+    inputTree->SetBranchAddress("PoszVec", &vposZ, &bposZ);
+    inputTree->SetBranchAddress("BetaxVec", &vbetaX, &bbetaX);
+    inputTree->SetBranchAddress("BetayVec", &vbetaY, &bbetaY);
+    inputTree->SetBranchAddress("BetazVec", &vbetaZ, &bbetaZ);
+    inputTree->SetBranchAddress("AccxVec", &vaccX, &baccX);
+    inputTree->SetBranchAddress("AccyVec", &vaccY, &baccY);
+    inputTree->SetBranchAddress("AcczVec", &vaccZ, &baccZ);
+  } else {
+    inputTree = (TTree*)inputFile->Get("tree");
+    inputTree->SetBranchAddress("time", &time);
+    inputTree->SetBranchAddress("xPos", &xPos);
+    inputTree->SetBranchAddress("yPos", &yPos);
+    inputTree->SetBranchAddress("zPos", &zPos);
+    inputTree->SetBranchAddress("xVel", &xVel);
+    inputTree->SetBranchAddress("yVel", &yVel);
+    inputTree->SetBranchAddress("zVel", &zVel);
+    inputTree->SetBranchAddress("xAcc", &xAcc);
+    inputTree->SetBranchAddress("yAcc", &yAcc);
+    inputTree->SetBranchAddress("zAcc", &zAcc);
+  }
 }
 
 void rad::Signal::OpenInputFile(TString filePath) {
@@ -1209,11 +1323,22 @@ void rad::Signal::CreateVoltageGraphs() {
 double rad::Signal::CalcInitialFreq() {
   const double maxCalcTime{1e-6};  // seconds
   auto grX = new TGraph();
-  for (int i{0}; i < inputTree->GetEntries(); i++) {
-    inputTree->GetEntry(i);
-    if (time > maxCalcTime) break;
 
-    grX->SetPoint(grX->GetN(), time, xPos);
+  if (isG4Input) {
+    inputTree->GetEntry(0);
+    // Loop through vector
+    for (int i{0}; i < vtime->size(); i++) {
+      if (vtime->at(i) > maxCalcTime) break;
+
+      grX->SetPoint(grX->GetN(), vtime->at(i), vposX->at(i));
+    }
+  } else {
+    for (int i{0}; i < inputTree->GetEntries(); i++) {
+      inputTree->GetEntry(i);
+      if (time > maxCalcTime) break;
+
+      grX->SetPoint(grX->GetN(), time, xPos);
+    }
   }
   auto grXSpec{MakePowerSpectrumPeriodogram(grX)};
   delete grX;
@@ -1231,4 +1356,15 @@ double rad::Signal::CalcInitialFreq() {
   }
   delete grXSpec;
   return maxPeakFreq;
+}
+
+bool rad::Signal::G4InputFile(TString trajFilePath) {
+  // Open the file
+  TFile fTest(trajFilePath, "read");
+  // Check if directory exists
+  if (fTest.GetDirectory("ntuple")) {
+    return true;
+  } else {
+    return false;
+  }
 }

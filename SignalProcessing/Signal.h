@@ -100,6 +100,9 @@ class Signal {
   // Simulation step size
   long double simStepSize;
 
+  // Boolean for the input file type
+  bool isG4Input;
+
   // Noise terms
   std::vector<GaussianNoise> noiseVec;
 
@@ -124,6 +127,28 @@ class Signal {
   double xPos{}, yPos{}, zPos{};
   double xVel{}, yVel{}, zVel{};
   double xAcc{}, yAcc{}, zAcc{};
+
+  // Input tree variables for G4 files
+  std::vector<double>* vtime{nullptr};
+  std::vector<double>* vposX{nullptr};
+  std::vector<double>* vposY{nullptr};
+  std::vector<double>* vposZ{nullptr};
+  std::vector<double>* vbetaX{nullptr};
+  std::vector<double>* vbetaY{nullptr};
+  std::vector<double>* vbetaZ{nullptr};
+  std::vector<double>* vaccX{nullptr};
+  std::vector<double>* vaccY{nullptr};
+  std::vector<double>* vaccZ{nullptr};
+  TBranch* btime{nullptr};
+  TBranch* bposX{nullptr};
+  TBranch* bposY{nullptr};
+  TBranch* bposZ{nullptr};
+  TBranch* bbetaX{nullptr};
+  TBranch* bbetaY{nullptr};
+  TBranch* bbetaZ{nullptr};
+  TBranch* baccX{nullptr};
+  TBranch* baccY{nullptr};
+  TBranch* baccZ{nullptr};
 
   // Pointer to the antenna
   std::vector<IAntenna*> antenna;
@@ -214,6 +239,11 @@ class Signal {
   /// @brief Calculates the initial electron frequency from trajectory info
   /// @return Initial cyclotron frequency in Hertz
   double CalcInitialFreq();
+
+  /// @brief Function to check the input file type
+  /// @param trajFilePath File path for input file
+  /// @return True if file is from G4
+  bool G4InputFile(TString trajFilePath);
 };
 
 }  // namespace rad
