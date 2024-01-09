@@ -238,6 +238,10 @@ int main(int argc, char *argv[]) {
     const double rGen{rGenMax * sqrt(uni1(gen))};
     const double thetaPosGen{uni1(gen) * 2 * M_PI};
     TVector3 initPos(rGen * cos(thetaPosGen), rGen * sin(thetaPosGen), zGen);
+    double xStart{initPos.X()};
+    double yStart{initPos.Y()};
+    double zStart{initPos.Z()};
+
     // Generate the initial velocity
     const double phiVelGen{uni1(gen) * 2 * M_PI};
     const double thetaVelGen{uni1(gen) * M_PI};
@@ -269,6 +273,7 @@ int main(int argc, char *argv[]) {
       Signal sig(trackFile, wg, lo, sampleRate);
 
       // We want to have the true carrier frequency as an attribute
+      // so reopen the track file
       TFile fTrack(trackFile, "read");
       auto tr = (TTree *)fTrack.Get("tree");
       double time{};
@@ -293,6 +298,7 @@ int main(int argc, char *argv[]) {
       }
 
       double bMean{0};
+      double zMax{-DBL_MAX};
       uint nFieldPnts{0};
       for (int iE{0}; iE < tr->GetEntries(); iE++) {
         tr->GetEntry(iE);
@@ -301,10 +307,14 @@ int main(int argc, char *argv[]) {
 
         bMean += field->evaluate_field_magnitude(ePos);
         nFieldPnts++;
+
+	if (zPos > zMax) 
+	  zMax = zPos;
       }
       bMean /= double(nFieldPnts);
 
-      double startFreq{CalcCyclotronFreq(eKE, bMean) - loFreq};
+      double startFreq{CalcCyclotronFreq(eKE, bMean)};
+      double startFreqDM{CalcCyclotronFreq(eKE, bMean) - loFreq};
       double axFreq{1 / (zCrossTimes[2] - zCrossTimes[0])};
       cout << "Initial frequency = " << startFreq / 1e6
            << " MHz\tAxial frequency = " << axFreq / 1e6 << " MHz\n";
@@ -354,17 +364,48 @@ int main(int argc, char *argv[]) {
       H5::Attribute radAttr{dataset->createAttribute(
           "Radial offset (metres)", H5::PredType::NATIVE_DOUBLE, radSpace)};
       radAttr.write(H5::PredType::NATIVE_DOUBLE, &rGen);
+
+      // Start x
+      H5::DataSpace xStartSpc(H5S_SCALAR);
+      H5::Attribute xStartAttr{dataset->createAttribute(
+          "x start (metres)", H5::PredType::NATIVE_DOUBLE, xStartSpc)};
+      xStartAttr.write(H5::PredType::NATIVE_DOUBLE, &xStart);
+      // Start y
+      H5::DataSpace yStartSpc(H5S_SCALAR);
+      H5::Attribute yStartAttr{dataset->createAttribute(
+          "y start (metres)", H5::PredType::NATIVE_DOUBLE, yStartSpc)};
+      yStartAttr.write(H5::PredType::NATIVE_DOUBLE, &yStart);
+      // Start z
+      H5::DataSpace zStartSpc(H5S_SCALAR);
+      H5::Attribute zStartAttr{dataset->createAttribute(
+          "z start (metres)", H5::PredType::NATIVE_DOUBLE, zStartSpc)};
+      zStartAttr.write(H5::PredType::NATIVE_DOUBLE, &zStart);
+
       // Start frequency
       H5::DataSpace startFreqSpc(H5S_SCALAR);
       H5::Attribute startFreqAttr{
           dataset->createAttribute("Start frequency (Hertz)",
                                    H5::PredType::NATIVE_DOUBLE, startFreqSpc)};
       startFreqAttr.write(H5::PredType::NATIVE_DOUBLE, &startFreq);
+      // Start frequency (downmixed)
+      H5::DataSpace startFreqDMSpc(H5S_SCALAR);
+      H5::Attribute startFreqDMAttr{
+          dataset->createAttribute("Start frequency, downmixed (Hertz)",
+                                   H5::PredType::NATIVE_DOUBLE, startFreqDMSpc)};
+      startFreqDMAttr.write(H5::PredType::NATIVE_DOUBLE, &startFreqDM);
       // Axial frequency
       H5::DataSpace axFreqSpc(H5S_SCALAR);
       H5::Attribute axFreqAttr{dataset->createAttribute(
           "Axial frequency (Hertz)", H5::PredType::NATIVE_DOUBLE, axFreqSpc)};
       axFreqAttr.write(H5::PredType::NATIVE_DOUBLE, &axFreq);
+
+      // Max displacement
+      H5::DataSpace zMaxSpc(H5S_SCALAR);
+      H5::Attribute zMaxAttr{
+	dataset->createAttribute("z_max (metres)", H5::PredType::NATIVE_DOUBLE, 
+				 zMaxSpc)};
+      zMaxAttr.write(H5::PredType::NATIVE_DOUBLE, &zMax);
+
 
       // Create the buffer for writing in data
       double bufferIn[DSPACE_DIM];
