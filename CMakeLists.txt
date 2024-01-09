@@ -16,6 +16,7 @@ add_definitions(${ROOT_CXX_FLAGS})
 
 # Locate Boost libraries
 find_package(Boost 1.73.0 REQUIRED ALL HINTS $ENV{BOOST_DIR})
+include_directories(${Boost_INCLUDE_DIRS})
 
 # Locate HDF5
 find_package(HDF5 COMPONENTS C CXX HL REQUIRED)

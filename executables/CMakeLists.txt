@@ -91,7 +91,6 @@ target_link_libraries(HelmholtzCoils PRIVATE BasicFunctions ElectronDynamics ${R
 
 add_executable(LeeWhitingCoils LeeWhitingCoils.cxx)
 target_link_libraries(LeeWhitingCoils PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES} ${Boost_MATH_LIBRARY})
-target_include_directories(LeeWhitingCoils PRIVATE ${Boost_INCLUDE_DIRS})
 
 add_executable(TrapCoilTuning TrapCoilTuning.cxx)
 target_link_libraries(TrapCoilTuning PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
