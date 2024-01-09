@@ -179,15 +179,9 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Convert to TString
+  // Want to try writing this to a HDF5 file
   TString outputStem{outputStemStr};
-
-  // Create output file for end products
   std::string outfileExt{make_uuid()};
-  TString outfile{outputStem + Form("/out_%s.root", outfileExt.data())};
-  TFile fout(outfile, "recreate");
-
-  // Also want to try writing this to a HDF5 file
   std::string FILE_NAME{outputStemStr + "/out_" + outfileExt + ".h5"};
   // Open the file
   auto file = new H5::H5File(FILE_NAME, H5F_ACC_TRUNC);
@@ -321,18 +315,7 @@ int main(int argc, char *argv[]) {
       delete tr;
       fTrack.Close();
 
-      // Write the TGraph actually containing the information about the signal
-      // to the output file
       auto grV{sig.GetVITimeDomain()};
-      fout.cd();
-      grV->Write(Form("grV%d", iEv));
-      auto grVSpec{MakePowerSpectrumPeriodogram(grV)};
-      ScaleGraph(grVSpec, 1e15);
-      grVSpec->SetTitle(
-          Form("%.1f MHz, #theta = %.1f degrees, r_{i} = %.1f mm; Frequency "
-               "[Hz]; Power [fW]",
-               startFreq / 1e6, pitchAngleDeg, rGen * 1e3));
-      grVSpec->Write(Form("grVSpec%d", iEv));
 
       // Create dataspace for dataset
       const unsigned int DSPACE_DIM = grV->GetN();
@@ -419,7 +402,7 @@ int main(int argc, char *argv[]) {
       // Close the dataspace
       delete dspace;
 
-      delete grVSpec;
+      delete grV;
     }
 
     // The track files can get pretty large so it's best to delete them after
@@ -438,8 +421,6 @@ int main(int argc, char *argv[]) {
     // Assume we're going to be taking roughly 4200s to generate each event
     if (maxRunTime > 0 & runTime > maxRunTime - 4400) break;
   }
-
-  fout.Close();
 
   // Close the group
   delete group;
