@@ -265,6 +265,7 @@ int main(int argc, char *argv[]) {
       LocalOscillator lo(2 * M_PI * loFreq);
       // Do noiseless for now since it's not normalised properly
       Signal sig(trackFile, wg, lo, sampleRate);
+      auto grV{sig.GetVITimeDomain()};
 
       // We want to have the true carrier frequency as an attribute
       // so reopen the track file
@@ -312,10 +313,52 @@ int main(int argc, char *argv[]) {
       double axFreq{1 / (zCrossTimes[2] - zCrossTimes[0])};
       cout << "Initial frequency = " << startFreq / 1e6
            << " MHz\tAxial frequency = " << axFreq / 1e6 << " MHz\n";
+
+      // Now have a go at calculating the motion of the guiding centre
+      double xAvg{0};
+      double yAvg{0};
+      double zAvg{0};
+      int nTrkPnts{0};
+      const unsigned int CENTRE_POS_DIM1{3};
+      const unsigned int CENTRE_POS_DIM2 = grV->GetN() - 1;
+      const unsigned int CENTRE_POS_RANK{2};
+      hsize_t CENTRE_POS_DIMS[CENTRE_POS_RANK] = {CENTRE_POS_DIM1, CENTRE_POS_DIM2};
+      double centrePosBuffer[CENTRE_POS_DIM1][CENTRE_POS_DIM2];
+      /*
+      centrePosBuffer[0][0] = xAvg;
+      centrePosBuffer[1][0] = yAvg;
+      centrePosBuffer[2][0] = zAvg;
+      */
+      const double sampleStep{1.0 / sampleRate};
+      double nextSampleTime{sampleStep};
+      unsigned int sampleNum{0};
+      for (int iE{1}; iE < tr->GetEntries(); iE++) {
+        tr->GetEntry(iE);
+	xAvg += xPos;
+	yAvg += yPos;
+	zAvg += zPos;
+	nTrkPnts++;
+
+	if (time > nextSampleTime) {
+	  xAvg /= double(nTrkPnts);
+	  yAvg /= double(nTrkPnts);
+	  zAvg /= double(nTrkPnts);
+	  centrePosBuffer[0][sampleNum] = xAvg;
+	  centrePosBuffer[1][sampleNum] = yAvg;
+	  centrePosBuffer[2][sampleNum] = zAvg;
+	  sampleNum++;
+	  nextSampleTime = double(sampleNum + 1) * sampleStep;
+
+	  // Reset to new values
+	  xAvg = 0;
+	  yAvg = 0;
+	  zAvg = 0;
+	  nTrkPnts = 0;
+	}
+      }
+
       delete tr;
       fTrack.Close();
-
-      auto grV{sig.GetVITimeDomain()};
 
       // Create dataspace for dataset
       const unsigned int DSPACE_DIM = grV->GetN();
@@ -347,6 +390,11 @@ int main(int argc, char *argv[]) {
       H5::Attribute radAttr{dataset->createAttribute(
           "Radial offset (metres)", H5::PredType::NATIVE_DOUBLE, radSpace)};
       radAttr.write(H5::PredType::NATIVE_DOUBLE, &rGen);
+      // Electron initial energy
+      H5::DataSpace ESpace(H5S_SCALAR);
+      H5::Attribute EAttr{dataset->createAttribute(
+          "Start E (eV)", H5::PredType::NATIVE_DOUBLE, ESpace)};
+      EAttr.write(H5::PredType::NATIVE_DOUBLE, &eKE);
 
       // Start x
       H5::DataSpace xStartSpc(H5S_SCALAR);
@@ -367,13 +415,13 @@ int main(int argc, char *argv[]) {
       // Start frequency
       H5::DataSpace startFreqSpc(H5S_SCALAR);
       H5::Attribute startFreqAttr{
-          dataset->createAttribute("Start frequency (Hertz)",
+          dataset->createAttribute("Start frequency (hertz)",
                                    H5::PredType::NATIVE_DOUBLE, startFreqSpc)};
       startFreqAttr.write(H5::PredType::NATIVE_DOUBLE, &startFreq);
       // Start frequency (downmixed)
       H5::DataSpace startFreqDMSpc(H5S_SCALAR);
       H5::Attribute startFreqDMAttr{
-          dataset->createAttribute("Start frequency, downmixed (Hertz)",
+          dataset->createAttribute("Start frequency, downmixed (hertz)",
                                    H5::PredType::NATIVE_DOUBLE, startFreqDMSpc)};
       startFreqDMAttr.write(H5::PredType::NATIVE_DOUBLE, &startFreqDM);
       // Axial frequency
@@ -389,20 +437,55 @@ int main(int argc, char *argv[]) {
 				 zMaxSpc)};
       zMaxAttr.write(H5::PredType::NATIVE_DOUBLE, &zMax);
 
+      // Write the metadata for the trap config
+      H5::DataSpace rCoilSpc(H5S_SCALAR);
+      H5::Attribute rCoilAttr{
+	dataset->createAttribute("r_coil (metres)", H5::PredType::NATIVE_DOUBLE, 
+				 rCoilSpc)};
+      rCoilAttr.write(H5::PredType::NATIVE_DOUBLE, &rCoil);
+      H5::DataSpace iCoilSpc(H5S_SCALAR);
+      H5::Attribute iCoilAttr{
+	dataset->createAttribute("i_coil (amps)", H5::PredType::NATIVE_DOUBLE, 
+				 iCoilSpc)};
+      iCoilAttr.write(H5::PredType::NATIVE_DOUBLE, &iCoil);
+      H5::DataSpace bkgFieldSpc(H5S_SCALAR);
+      H5::Attribute bkgFieldAttr{
+	dataset->createAttribute("B_bkg (tesla)", H5::PredType::NATIVE_DOUBLE, 
+				 bkgFieldSpc)};
+      bkgFieldAttr.write(H5::PredType::NATIVE_DOUBLE, &bkgField);
 
-      // Create the buffer for writing in data
+      // Write the metadata for the waveguide dimenstions as well
+      H5::DataSpace rWgSpc(H5S_SCALAR);      
+      H5::Attribute rWgAttr{
+	dataset->createAttribute("r_wg (metres)", H5::PredType::NATIVE_DOUBLE, 
+				 rWgSpc)};
+      rWgAttr.write(H5::PredType::NATIVE_DOUBLE, &wgRadius);
+
+      // Create the buffer for writing in the voltage data
       double bufferIn[DSPACE_DIM];
       for (uint i{0}; i < grV->GetN(); i++) {
         bufferIn[i] = grV->GetPointY(i);
       }
       dataset->write(bufferIn, H5::PredType::NATIVE_DOUBLE, *dspace);
 
-      // Close the dataset
+      // Close the dataset and dataspace
       delete dataset;
-      // Close the dataspace
       delete dspace;
 
-      delete grV;
+      // delete grV;
+
+      // Now create a dataspace for the guiding centre
+      auto dspaceCentre = new H5::DataSpace(CENTRE_POS_RANK, CENTRE_POS_DIMS);
+      const std::string CENTRE_POS_DSET_NAME(GROUP_NAME + "/centre" +
+                                     std::to_string(iEv));
+      auto dsetCentre = new H5::DataSet(file->createDataSet(
+          CENTRE_POS_DSET_NAME, H5::PredType::NATIVE_DOUBLE, *dspaceCentre, plist));
+      // Buffer already created 
+      dsetCentre->write(centrePosBuffer, H5::PredType::NATIVE_DOUBLE, *dspaceCentre);
+
+      // Close dataset and dataspace
+      delete dsetCentre;
+      delete dspaceCentre;
     }
 
     // The track files can get pretty large so it's best to delete them after
@@ -416,10 +499,6 @@ int main(int argc, char *argv[]) {
                          CLOCKS_PER_SEC};
     cout << "Event took " << eventTime
          << " seconds to generate\tTotal time = " << runTime << "s\n\n";
-
-    // Stop generating events if we're getting close to the time limit
-    // Assume we're going to be taking roughly 4200s to generate each event
-    if (maxRunTime > 0 & runTime > maxRunTime - 4400) break;
   }
 
   // Close the group
