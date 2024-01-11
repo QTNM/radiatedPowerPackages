@@ -296,9 +296,18 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
   // Initially we are just doing the the higher frequency sampling
   double printTime{0};  // seconds
   const double printInterval{5e-6};
-  for (unsigned int iE{0}; iE < inputTree->GetEntries(); iE++) {
-    inputTree->GetEntry(iE);
-    const double entryTime{time};
+
+  inputTree->GetEntry(0);
+  const int nTimeEntries = isG4Input ? vtime->size() : inputTree->GetEntries();
+
+  for (unsigned int iE{0}; iE < nTimeEntries; iE++) {
+    double entryTime{};
+    if (isG4Input) {
+      entryTime = vtime->at(iE);
+    } else {
+      inputTree->GetEntry(iE);
+      entryTime = time;
+    }
 
     // Check we are still within the acquisition time, stop otherwise
     if (entryTime > tAcq) break;
@@ -478,18 +487,14 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
 
   for (unsigned int iE{0}; iE < nTimeEntries; iE++) {
     double entryTime{0};
-    TVector3 ePos(0, 0, 0);
+    TVector3 ePos;
     if (isG4Input) {
       entryTime = vtime->at(iE);
-      ePos.SetX(vposX->at(iE));
-      ePos.SetY(vposY->at(iE));
-      ePos.SetZ(vposZ->at(iE));
+      ePos.SetXYZ(vposX->at(iE), vposY->at(iE), vposZ->at(iE));
     } else {
       inputTree->GetEntry(iE);
       entryTime = time;
-      ePos.SetX(xPos);
-      ePos.SetY(yPos);
-      ePos.SetZ(zPos);
+      ePos.SetXYZ(xPos, yPos, zPos);
     }
 
     // Check we are still within the acquisition time, stop otherwise
@@ -704,14 +709,28 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
     unsigned int correctIndex{0};
     if (firstGuessTime == tr) {
       // Easy, no need for interpolation
-      TVector3 pos(xPos, yPos, zPos);
+      TVector3 pos;
+      if (isG4Input) {
+        pos.SetXYZ(vposX->at(firstGuessTInd), vposY->at(firstGuessTInd),
+                   vposZ->at(firstGuessTInd));
+      } else {
+        pos.SetXYZ(xPos, yPos, zPos);
+      }
       ComplexVector3 modeFieldPlus{cavity->GetModalEField(
           pos, ICavity::kTE, norm.real(), 1, 1, 1, true)};
       ComplexVector3 modeFieldMinus{cavity->GetModalEField(
           pos, ICavity::kTE, norm.real(), 1, 1, 1, false)};
       // Calculate the current density
-      ComplexVector3 J(xVel, yVel, zVel);
-      J *= -TMath::Qe();
+      ComplexVector3 J(0, 0, 0);
+      if (isG4Input) {
+        J.SetX(vbetaX->at(firstGuessTInd) * TMath::C() * -TMath::Qe());
+        J.SetY(vbetaX->at(firstGuessTInd) * TMath::C() * -TMath::Qe());
+        J.SetZ(vbetaX->at(firstGuessTInd) * TMath::C() * -TMath::Qe());
+      } else {
+        J.SetX(xVel * -TMath::Qe());
+        J.SetY(yVel * -TMath::Qe());
+        J.SetZ(zVel * -TMath::Qe());
+      }
 
       // Now calculate the field amplitudes
       // Assume we're at the resonance
@@ -983,17 +1002,17 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
     unsigned int correctIndex{0};
 
     if (firstGuessTime == tr) {
-      TVector3 pos(0, 0, 0);
-      TVector3 vel(0, 0, 0);
+      TVector3 pos;
+      TVector3 vel;
       if (isG4Input) {
-        pos = TVector3(vposX->at(firstGuessTInd), vposY->at(firstGuessTInd),
-                       vposZ->at(firstGuessTInd));
-        vel = TVector3(vbetaX->at(firstGuessTInd), vbetaY->at(firstGuessTInd),
-                       vbetaZ->at(firstGuessTInd));
+        pos.SetXYZ(vposX->at(firstGuessTInd), vposY->at(firstGuessTInd),
+                   vposZ->at(firstGuessTInd));
+        vel.SetXYZ(vbetaX->at(firstGuessTInd), vbetaY->at(firstGuessTInd),
+                   vbetaZ->at(firstGuessTInd));
         vel *= TMath::C();
       } else {
-        pos = TVector3(xPos, yPos, zPos);
-        vel = TVector3(xVel, yVel, zVel);
+        pos.SetXYZ(xPos, yPos, zPos);
+        vel.SetXYZ(xVel, yVel, zVel);
       }
 
       // Calculate the field amplitudes
@@ -1057,17 +1076,16 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       TVector3 vel;
       if (isG4Input) {
         timeVals.at(0) = vtime->at(correctIndex - 1);
-        pos = TVector3(vposX->at(correctIndex - 1), vposY->at(correctIndex - 1),
-                       vposZ->at(correctIndex - 1));
-        vel =
-            TVector3(vbetaX->at(correctIndex - 1), vbetaY->at(correctIndex - 1),
-                     vbetaZ->at(correctIndex - 1));
+        pos.SetXYZ(vposX->at(correctIndex - 1), vposY->at(correctIndex - 1),
+                   vposZ->at(correctIndex - 1));
+        vel.SetXYZ(vbetaX->at(correctIndex - 1), vbetaY->at(correctIndex - 1),
+                   vbetaZ->at(correctIndex - 1));
         vel *= TMath::C();
       } else {
         inputTree->GetEntry(correctIndex - 1);
         timeVals.at(0) = time;
-        pos = TVector3(xPos, yPos, zPos);
-        vel = TVector3(xVel, yVel, zVel);
+        pos.SetXYZ(xPos, yPos, zPos);
+        vel.SetXYZ(xVel, yVel, zVel);
       }
 
       // Calculate the field amplitudes
@@ -1084,18 +1102,18 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       TVector3 vel;
       if (isG4Input) {
         timeVals.at(iEl) = vtime->at(correctIndex + iEl - 1);
-        pos = TVector3(vposX->at(correctIndex + iEl - 1),
-                       vposY->at(correctIndex + iEl - 1),
-                       vposZ->at(correctIndex + iEl - 1));
-        vel = TVector3(vbetaX->at(correctIndex + iEl - 1),
-                       vbetaY->at(correctIndex + iEl - 1),
-                       vbetaZ->at(correctIndex + iEl - 1));
+        pos.SetXYZ(vposX->at(correctIndex + iEl - 1),
+                   vposY->at(correctIndex + iEl - 1),
+                   vposZ->at(correctIndex + iEl - 1));
+        vel.SetXYZ(vbetaX->at(correctIndex + iEl - 1),
+                   vbetaY->at(correctIndex + iEl - 1),
+                   vbetaZ->at(correctIndex + iEl - 1));
         vel *= TMath::C();
       } else {
         inputTree->GetEntry(correctIndex + iEl - 1);
         timeVals.at(iEl) = time;
-        pos = TVector3(xPos, yPos, zPos);
-        vel = TVector3(xVel, yVel, zVel);
+        pos.SetXYZ(xPos, yPos, zPos);
+        vel.SetXYZ(xVel, yVel, zVel);
       }
 
       // Calculate the field amplitudes
