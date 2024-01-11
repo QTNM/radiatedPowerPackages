@@ -40,10 +40,6 @@ rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
   // Create just one deque
   advancedTimeVec.push_back(std::deque<long double>());
 
-  // Create some intermediate level graphs before final sampling
-  auto grVIBigFiltered = new TGraph();
-  auto grVQBigFiltered = new TGraph();
-
   // Create a deque for filtered and unfiltered info
   // Need this for time domain filter
   std::deque<double> unfilteredVi;
@@ -88,11 +84,11 @@ rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
       // Now we want to filter this value and add it to the deques
       double viFiltered{filter.FilterValues(unfilteredVi, filteredVi, vi)};
       double vqFiltered{filter.FilterValues(unfilteredVq, filteredVq, vq)};
-      // Add to the TGraph
-      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(), sample10Time,
-                                viFiltered);
-      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(), sample10Time,
-                                vqFiltered);
+      // Only need to add 1 in 10 of these to the final signal graph
+      if (sample10Num % 10 == 0) {
+        grVITime->SetPoint(grVITime->GetN(), sample10Time, viFiltered);
+        grVQTime->SetPoint(grVQTime->GetN(), sample10Time, vqFiltered);
+      }
 
       sample10Num++;
       sample10Time = double(sample10Num) * sample10StepSize;
@@ -103,19 +99,6 @@ rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
 
   // Can now safely close the input file
   CloseInputFile();
-
-  std::cout << "Second sampling...\n";
-  for (int i{0}; i < grVIBigFiltered->GetN(); i++) {
-    // We need to sample every 10th point
-    if (i % 10 == 0) {
-      grVITime->SetPoint(grVITime->GetN(), grVIBigFiltered->GetPointX(i),
-                         grVIBigFiltered->GetPointY(i));
-      grVQTime->SetPoint(grVQTime->GetN(), grVQBigFiltered->GetPointX(i),
-                         grVQBigFiltered->GetPointY(i));
-    }
-  }
-  delete grVIBigFiltered;
-  delete grVQBigFiltered;
 
   // Now need to add noise (if noise terms exist)
   if (!noiseTerms.empty()) {
@@ -136,19 +119,15 @@ rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
   // Set file info
   GetFileInfo();
 
-  double sampleTime{0};         // Second sample time in seconds
-  long double sample10Time{0};  // First sample time in seconds
-  unsigned int sample10Num{0};
-  double sample10StepSize{1 / (10 * sRate)};
+  double sampleTime{0};                       // Second sample time in seconds
+  long double sample10Time{0};                // First sample time in seconds
+  unsigned int sample10Num{0};                // First sample number
+  double sample10StepSize{1 / (10 * sRate)};  // Initial sampling step size
 
   // Create number of deques equal to number of antennas
   for (size_t i{0}; i < antenna.size(); i++) {
     advancedTimeVec.push_back(std::deque<long double>());
   }
-
-  // Create some intermediate level graphs before final sampling
-  auto grVIBigFiltered = new TGraph();
-  auto grVQBigFiltered = new TGraph();
 
   // Create a deque for filtered and unfiltered info
   // Need this for time domain filter
@@ -195,11 +174,11 @@ rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
       // Now we want to filter this value and add it to the deques
       double viFiltered{filter.FilterValues(unfilteredVi, filteredVi, vi)};
       double vqFiltered{filter.FilterValues(unfilteredVq, filteredVq, vq)};
-      // Add to the TGraph
-      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(), sample10Time,
-                                viFiltered);
-      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(), sample10Time,
-                                vqFiltered);
+      // Only need to add 1 in 10 of these to the final signal graph
+      if (sample10Num % 10 == 0) {
+        grVITime->SetPoint(grVITime->GetN(), sample10Time, viFiltered);
+        grVQTime->SetPoint(grVQTime->GetN(), sample10Time, vqFiltered);
+      }
 
       sample10Num++;
       sample10Time = double(sample10Num) * sample10StepSize;
@@ -210,19 +189,6 @@ rad::Signal::Signal(TString trajectoryFilePath, std::vector<IAntenna*> ant,
 
   // Can now safely close the input file
   CloseInputFile();
-
-  std::cout << "Second sampling...\n";
-  for (int i{0}; i < grVIBigFiltered->GetN(); i++) {
-    // We need to sample every 10th point
-    if (i % 10 == 0) {
-      grVITime->SetPoint(grVITime->GetN(), grVIBigFiltered->GetPointX(i),
-                         grVIBigFiltered->GetPointY(i));
-      grVQTime->SetPoint(grVQTime->GetN(), grVQBigFiltered->GetPointX(i),
-                         grVQBigFiltered->GetPointY(i));
-    }
-  }
-  delete grVIBigFiltered;
-  delete grVQBigFiltered;
 
   // Now need to add noise (if noise terms exist)
   if (!noiseTerms.empty()) {
@@ -268,9 +234,6 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
   // To do: allow multiple probes
   advancedTimeVec.push_back(std::deque<long double>());
 
-  // Create some intermediate level graphs before final sampling
-  auto grVIBigFiltered = new TGraph();
-  auto grVQBigFiltered = new TGraph();
   // Create a deque for filtered and unfiltered info
   // Need this for time domain filter
   std::deque<double> unfilteredVi;
@@ -319,11 +282,12 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
       // Now we want to filter this value and add it to the deques
       double viFiltered{filter.FilterValues(unfilteredVi, filteredVi, ei_p)};
       double vqFiltered{filter.FilterValues(unfilteredVq, filteredVq, eq_p)};
-      // Add to the TGraph
-      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(), sample10Time,
-                                viFiltered);
-      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(), sample10Time,
-                                vqFiltered);
+      // We only need to save 1 out of every 10 of these values to the final
+      // signal graphs
+      if (sample10Num % 10 == 0) {
+        grVITime->SetPoint(grVITime->GetN(), sample10Time, viFiltered);
+        grVQTime->SetPoint(grVQTime->GetN(), sample10Time, vqFiltered);
+      }
 
       sample10Num++;
       sample10Time = double(sample10Num) * sample10StepSize;
@@ -334,20 +298,6 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
 
   // Can now safely close the input file
   CloseInputFile();
-
-  // Now sample at actual sample rate
-  std::cout << "Second sampling...\n";
-  for (int i{0}; i < grVIBigFiltered->GetN(); i++) {
-    // We need to sample every 10th point
-    if (i % 10 == 0) {
-      grVITime->SetPoint(grVITime->GetN(), grVIBigFiltered->GetPointX(i),
-                         grVIBigFiltered->GetPointY(i));
-      grVQTime->SetPoint(grVQTime->GetN(), grVQBigFiltered->GetPointX(i),
-                         grVQBigFiltered->GetPointY(i));
-    }
-  }
-  delete grVIBigFiltered;
-  delete grVQBigFiltered;
 
   // Now need to add noise (if noise terms exist)
   if (!noiseTerms.empty()) {
@@ -438,10 +388,6 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
   // TO DO: Allow for multiple probes
   advancedTimeVec.push_back(std::deque<long double>());
 
-  // Create some intermediate level graphs before final sampling
-  auto grVIBigFiltered = new TGraph();
-  auto grVQBigFiltered = new TGraph();
-
   // Create a deque for filtered and unfiltered info
   // Need this for time domain filter
   std::deque<double> unfilteredVi;
@@ -497,11 +443,12 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       // Now we want to filter this value and add it to the deques
       double viFiltered{filter.FilterValues(unfilteredVi, filteredVi, ei)};
       double vqFiltered{filter.FilterValues(unfilteredVq, filteredVq, eq)};
-      // Add to the TGraph
-      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(), sample10Time,
-                                viFiltered);
-      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(), sample10Time,
-                                vqFiltered);
+      // We only need to save 1 out of every 10 of these values to the final
+      // signal graphs
+      if (sample10Num % 10 == 0) {
+        grVITime->SetPoint(grVITime->GetN(), sample10Time, viFiltered);
+        grVQTime->SetPoint(grVQTime->GetN(), sample10Time, vqFiltered);
+      }
 
       sample10Num++;
       sample10Time = double(sample10Num) * sample10StepSize;
@@ -512,20 +459,6 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
 
   // Safely close input file
   CloseInputFile();
-
-  // Now sample at actual sample rate
-  std::cout << "Second sampling...\n";
-  for (int i{0}; i < grVIBigFiltered->GetN(); i++) {
-    // We need to sample every 10th point
-    if (i % 10 == 0) {
-      grVITime->SetPoint(grVITime->GetN(), grVIBigFiltered->GetPointX(i),
-                         grVIBigFiltered->GetPointY(i));
-      grVQTime->SetPoint(grVQTime->GetN(), grVQBigFiltered->GetPointX(i),
-                         grVQBigFiltered->GetPointY(i));
-    }
-  }
-  delete grVIBigFiltered;
-  delete grVQBigFiltered;
 
   // Now need to add noise (if noise terms exist)
   if (!noiseTerms.empty()) {
