@@ -461,10 +461,6 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
   // TO DO: Allow for multiple probes
   advancedTimeVec.push_back(std::deque<long double>());
 
-  // Create some intermediate level graphs before final sampling
-  auto grVIBigFiltered = new TGraph();
-  auto grVQBigFiltered = new TGraph();
-
   // Create a deque for filtered and unfiltered info
   // Need this for time domain filter
   std::deque<double> unfilteredVi;
@@ -530,11 +526,11 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       // Now we want to filter this value and add it to the deques
       double viFiltered{filter.FilterValues(unfilteredVi, filteredVi, ei)};
       double vqFiltered{filter.FilterValues(unfilteredVq, filteredVq, eq)};
-      // Add to the TGraph
-      grVIBigFiltered->SetPoint(grVIBigFiltered->GetN(), sample10Time,
-                                viFiltered);
-      grVQBigFiltered->SetPoint(grVQBigFiltered->GetN(), sample10Time,
-                                vqFiltered);
+
+      if (sample10Num % 10 == 0) {
+        grVITime->SetPoint(grVITime->GetN(), sample10Time, viFiltered);
+        grVQTime->SetPoint(grVQTime->GetN(), sample10Time, vqFiltered);
+      }
 
       sample10Num++;
       sample10Time = double(sample10Num) * sample10StepSize;
@@ -545,20 +541,6 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
 
   // Safely close input file
   CloseInputFile();
-
-  // Now sample at actual sample rate
-  std::cout << "Second sampling...\n";
-  for (int i{0}; i < grVIBigFiltered->GetN(); i++) {
-    // We need to sample every 10th point
-    if (i % 10 == 0) {
-      grVITime->SetPoint(grVITime->GetN(), grVIBigFiltered->GetPointX(i),
-                         grVIBigFiltered->GetPointY(i));
-      grVQTime->SetPoint(grVQTime->GetN(), grVQBigFiltered->GetPointX(i),
-                         grVQBigFiltered->GetPointY(i));
-    }
-  }
-  delete grVIBigFiltered;
-  delete grVQBigFiltered;
 
   // Now need to add noise (if noise terms exist)
   if (!noiseTerms.empty()) {
