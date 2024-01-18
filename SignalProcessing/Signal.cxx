@@ -485,7 +485,7 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
     double entryTime{0};
     TVector3 ePos;
     if (isG4Input) {
-      entryTime = vtime->at(iE);
+      entryTime = vtime->at(iE) * 1e-9;
       ePos.SetXYZ(vposX->at(iE), vposY->at(iE), vposZ->at(iE));
     } else {
       inputTree->GetEntry(iE);
@@ -557,13 +557,14 @@ rad::Signal::~Signal() {
 void rad::Signal::GetFileInfo() {
   if (isG4Input) {
     inputTree->GetEntry(0);
-    fileStartTime = vtime->at(0);
+    fileStartTime = vtime->at(0) * 1e-9;
     inputTree->GetEntry(inputTree->GetEntries() - 1);
-    fileEndTime = vtime->at(vtime->size() - 1);
-    filePntsPerTime = double(vtime->size()) / (fileEndTime - fileStartTime);
+    fileEndTime = vtime->at(vtime->size() - 1) * 1e-9;
+    filePntsPerTime =
+        double(vtime->size() * 1e-9) / (fileEndTime - fileStartTime);
     // Now get the simulation step size
     inputTree->GetEntry(0);
-    simStepSize = vtime->at(1) - vtime->at(0);
+    simStepSize = (vtime->at(1) - vtime->at(0)) * 1e-9;
   } else {
     inputTree->GetEntry(0);
     fileStartTime = time;
@@ -976,7 +977,7 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
     // Find the appropriate time
     double firstGuessTime{0};
     if (isG4Input) {
-      firstGuessTime = vtime->at(firstGuessTInd);
+      firstGuessTime = vtime->at(firstGuessTInd) * 1e-9;
     } else {
       inputTree->GetEntry(firstGuessTInd);
       firstGuessTime = time;
@@ -1011,8 +1012,8 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
         double lowerPoint{};
         double upperPoint{};
         if (isG4Input) {
-          lowerPoint = vtime->at(i);
-          upperPoint = vtime->at(i + 1);
+          lowerPoint = vtime->at(i) * 1e-9;
+          upperPoint = vtime->at(i + 1) * 1e-9;
         } else {
           inputTree->GetEntry(i);
           lowerPoint = time;
@@ -1031,8 +1032,8 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
         double lowerPoint{};
         double upperPoint{};
         if (isG4Input) {
-          lowerPoint = vtime->at(i);
-          upperPoint = vtime->at(i + 1);
+          lowerPoint = vtime->at(i) * 1e-9;
+          upperPoint = vtime->at(i + 1) * 1e-9;
         } else {
           inputTree->GetEntry(i);
           lowerPoint = time;
@@ -1057,7 +1058,7 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       TVector3 pos;
       TVector3 vel;
       if (isG4Input) {
-        timeVals.at(0) = vtime->at(correctIndex - 1);
+        timeVals.at(0) = vtime->at(correctIndex - 1) * 1e-9;
         pos.SetXYZ(vposX->at(correctIndex - 1), vposY->at(correctIndex - 1),
                    vposZ->at(correctIndex - 1));
         vel.SetXYZ(vbetaX->at(correctIndex - 1), vbetaY->at(correctIndex - 1),
@@ -1083,7 +1084,7 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       TVector3 pos;
       TVector3 vel;
       if (isG4Input) {
-        timeVals.at(iEl) = vtime->at(correctIndex + iEl - 1);
+        timeVals.at(iEl) = vtime->at(correctIndex + iEl - 1) * 1e-9;
         pos.SetXYZ(vposX->at(correctIndex + iEl - 1),
                    vposY->at(correctIndex + iEl - 1),
                    vposZ->at(correctIndex + iEl - 1));
@@ -1328,9 +1329,9 @@ double rad::Signal::CalcInitialFreq() {
     inputTree->GetEntry(0);
     // Loop through vector
     for (int i{0}; i < vtime->size(); i++) {
-      if (vtime->at(i) > maxCalcTime) break;
+      if (vtime->at(i) * 1e-9 > maxCalcTime) break;
 
-      grX->SetPoint(grX->GetN(), vtime->at(i), vposX->at(i));
+      grX->SetPoint(grX->GetN(), vtime->at(i) * 1e-9, vposX->at(i));
     }
   } else {
     for (int i{0}; i < inputTree->GetEntries(); i++) {
@@ -1363,8 +1364,10 @@ bool rad::Signal::G4InputFile(TString trajFilePath) {
   TFile fTest(trajFilePath, "read");
   // Check if directory exists
   if (fTest.GetDirectory("ntuple")) {
+    std::cout << "Reading in a G4 file\n";
     return true;
   } else {
+    std::cout << "Reading in a homemade file\n";
     return false;
   }
 }
