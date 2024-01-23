@@ -187,8 +187,8 @@ TVector3 rad::InhomogeneousBathtubField::evaluate_field_at_point(
 
 rad::HarmonicField::HarmonicField(const double radius, const double current,
                                   const double background) {
-  coil = CoilField(radius, current, 0.0, MU0);
-  btBkg = TVector3(0, 0, -background);
+  coil = CoilField(radius, -current, 0.0, MU0);
+  btBkg = TVector3(0, 0, background);
 }
 
 TVector3 rad::HarmonicField::evaluate_field_at_point(const TVector3 vec) {
