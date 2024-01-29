@@ -653,3 +653,10 @@ TVector3 rad::RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
   newVector = newVector.Unit();
   return newVector;
 }
+
+double rad::CalcLarmorPower(double ke, double B, double theta, double m) {
+  const double f0{TMath::Qe() * B / (m * TMath::TwoPi())};
+  const double beta{GetSpeedFromKE(ke, m) / TMath::C()};
+  return TMath::TwoPi() * pow(TMath::Qe() * f0 * beta * sin(theta), 2) /
+         ((3 * EPSILON0 * TMath::C()) * (1 - beta * beta));
+}

@@ -242,6 +242,14 @@ double ChirpSignal(double A, double t, double phi0, double f0, double c);
 /// @return
 TVector3 RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
                         TVector3 newZ);
+
+/// @brief Larmor radiated power
+/// @param ke Kinetic energy in eV
+/// @param B Magnetic field strength in tesla
+/// @param theta Pitch angle in radians
+/// @param m Particle mass in kg
+/// @return Larmor power in Watts
+double CalcLarmorPower(double ke, double B, double theta, double m = ME);
 }  // namespace rad
 
 #endif

@@ -73,3 +73,6 @@ target_link_libraries(LongTimeGeneration PRIVATE BasicFunctions ElectronDynamics
 
 add_executable(EventRate EventRate.cxx)
 target_link_libraries(EventRate PRIVATE BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(SyntheticSignals SyntheticSignals.cxx)
+target_link_libraries(SyntheticSignals PRIVATE Antennas BasicFunctions ElectronDynamics FieldClasses ${ROOT_LIBRARIES})
