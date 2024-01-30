@@ -17,26 +17,46 @@
 #include "ElectronDynamics/QTNMFields.h"
 #include "ElectronDynamics/TrajectoryGen.h"
 #include "FieldClasses/FieldClasses.h"
+#include "TCanvas.h"
 #include "TFile.h"
+#include "TH2.h"
 #include "TString.h"
+#include "TStyle.h"
 #include "TTree.h"
 #include "TVector3.h"
 
 using namespace rad;
 
-TVector3 EFieldMagneticDipole(double rho, double theta, double t, double f,
-                              double phase = 0, double m0 = 1) {
+TVector3 EFieldMagneticDipole(double r, double theta, double phi, double t,
+                              double f, double phase = 0, double m0 = 1) {
   const double omega{2 * M_PI * f};
-  const double prefac{MU0 * m0 * sin(theta) / (4 * M_PI * rho)};
+  const double prefac{MU0 * m0 * sin(theta) / (4 * M_PI * r)};
   const double ePhi{(omega * omega / TMath::C()) *
-                        cos(omega * (t - rho / TMath::C())) +
-                    (omega / rho) * sin(omega * (t - rho / TMath::C()))};
-  return prefac * TVector3(-ePhi * sin(theta), ePhi * cos(theta), 0);
+                        cos(omega * (t - r / TMath::C())) +
+                    (omega / r) * sin(omega * (t - r / TMath::C()))};
+  return prefac * TVector3(-ePhi * sin(phi), ePhi * cos(phi), 0);
 }
 
 TVector3 EFieldMagneticDipole(TVector3 vec, double t, double f,
                               double phase = 0, double m0 = 1) {
-  return EFieldMagneticDipole(vec.Perp(), vec.Theta(), t, f, phase, m0);
+  return EFieldMagneticDipole(vec.Mag(), vec.Theta(), vec.Phi(), t, f, phase,
+                              m0);
+}
+
+TVector3 EFieldElectricDipole(TVector3 r, TVector3 p0, double f, double t,
+                              double phase = 0) {
+  double omega{2 * M_PI * f};
+  TVector3 eUnit{(p0.Cross(r.Unit())).Cross(r.Unit())};
+  double prefac{-MU0 * omega * omega / (4 * M_PI * r.Mag())};
+  return eUnit * prefac * cos(omega * (t - r.Mag() / TMath::C()) + phase);
+}
+
+TVector3 EFieldCrossedDipole(TVector3 r, double f, double t) {
+  TVector3 dipole1(1, 0, 0);
+  TVector3 dipole2(0, 1, 0);
+  double omega{2 * M_PI * f};
+  return EFieldElectricDipole(r, dipole1, f, t, 0) +
+         EFieldElectricDipole(r, dipole2, f, t, M_PI_2);
 }
 
 double PRadMagneticDipole(double f, double m0) {
@@ -118,12 +138,25 @@ int main(int argc, char *argv[]) {
   setGraphAttr(grMagDY);
   auto grMagDZ = new TGraph();
   setGraphAttr(grMagDZ);
+
+  auto grEleCDX = new TGraph();
+  setGraphAttr(grEleCDX);
+  auto grEleCDY = new TGraph();
+  setGraphAttr(grEleCDY);
+  auto grEleCDZ = new TGraph();
+  setGraphAttr(grEleCDZ);
+
   for (int iE{0}; iE < tr->GetEntries(); iE++) {
     tr->GetEntry(iE);
-    TVector3 E{(EFieldMagneticDipole(fieldPoint, time, fCyc, 0, m0))};
+    TVector3 E{EFieldMagneticDipole(fieldPoint, time, fCyc, 0, m0)};
+    TVector3 ECD{EFieldCrossedDipole(fieldPoint, fCyc, time)};
     grMagDX->SetPoint(grMagDX->GetN(), time, E.X());
     grMagDY->SetPoint(grMagDY->GetN(), time, E.Y());
     grMagDZ->SetPoint(grMagDZ->GetN(), time, E.Z());
+
+    grEleCDX->SetPoint(grEleCDX->GetN(), time, ECD.X());
+    grEleCDY->SetPoint(grEleCDY->GetN(), time, ECD.Y());
+    grEleCDZ->SetPoint(grEleCDZ->GetN(), time, ECD.Z());
   }
   fin.Close();
 
@@ -131,6 +164,94 @@ int main(int argc, char *argv[]) {
   grMagDX->Write("grMagDX");
   grMagDY->Write("grMagDY");
   grMagDZ->Write("grMagDZ");
+
+  grEleCDX->Write("grEleCDX");
+  grEleCDY->Write("grEleCDY");
+  grEleCDZ->Write("grEleCDZ");
+
+  const uint nTimeSteps{40};
+  const double timePeriod{1 / fCyc};
+
+  double maxMagD{-DBL_MAX};
+  double maxEleCD{-DBL_MAX};
+  std::vector<TH2D> MagDVec;
+  std::vector<TH2D> EleCDVec;
+  for (uint iStep{0}; iStep < nTimeSteps; iStep++) {
+    const double thisTime{timePeriod * double(iStep) / double(nTimeSteps)};
+
+    // Now make some 2D plots
+    const double nBinsX{200};
+    const double nBinsY{150};
+    const double xMax{70};
+    const double yMax{70};
+    TH2D h2MagD(Form("h2MagD_%d", iStep),
+                Form("Magnetic dipole: %.1f ps; x [mm]; y [mm]; E_{#phi}",
+                     thisTime * 1e12),
+                nBinsX, -xMax, xMax, nBinsY, -yMax, yMax);
+    SetHistAttr(h2MagD);
+    TH2D h2EleCD(
+        Form("h2EleCD_%d", iStep),
+        Form("Crossed electric dipoles: %.1f ps; x [mm]; y [mm]; E_{#phi}",
+             thisTime * 1e12),
+        nBinsX, -xMax, xMax, nBinsY, -yMax, yMax);
+    SetHistAttr(h2EleCD);
+    TH2D h2Real(Form("h2Real_%d", iStep),
+                Form("Real electron: %.1f ps; x [mm]; y [mm]; E_{#phi}",
+                     thisTime * 1e12),
+                nBinsX, -xMax, xMax, nBinsY, -yMax, yMax);
+    SetHistAttr(h2Real);
+
+    for (int ix{1}; ix <= h2MagD.GetNbinsX(); ix++) {
+      double x{h2MagD.GetXaxis()->GetBinCenter(ix) * 1e-3};
+      for (int iy{1}; iy <= h2MagD.GetNbinsY(); iy++) {
+        double y{h2MagD.GetYaxis()->GetBinCenter(iy) * 1e-3};
+        TVector3 pos(x, y, 0);
+        if (pos.Perp() < 5e-3) continue;
+
+        double phi{atan2(y, x)};
+        TVector3 phiHat(-sin(phi), cos(phi), 0);
+
+        TVector3 eFieldMagD{EFieldMagneticDipole(pos, thisTime, fCyc, 0, m0)};
+        double eFieldMagDDot{eFieldMagD.Dot(phiHat)};
+        h2MagD.SetBinContent(ix, iy, eFieldMagDDot);
+        if (eFieldMagDDot > maxMagD) maxMagD = eFieldMagDDot;
+        TVector3 eFieldEleCD{EFieldCrossedDipole(pos, fCyc, thisTime)};
+        double eFieldEleCDDot{eFieldEleCD.Dot(phiHat)};
+        if (eFieldEleCDDot > maxEleCD) maxEleCD = eFieldEleCDDot;
+        h2EleCD.SetBinContent(ix, iy, eFieldEleCDDot);
+      }
+    }
+
+    MagDVec.push_back(h2MagD);
+    EleCDVec.push_back(h2EleCD);
+  }
+
+  gStyle->SetOptStat(0);
+  gStyle->SetPalette(56);
+  gStyle->SetNumberContours(80);
+  for (int ii{0}; ii < MagDVec.size(); ii++) {
+    MagDVec.at(ii).Scale(1 / maxMagD);
+    MagDVec.at(ii).GetZaxis()->SetRangeUser(-1, 1);
+    MagDVec.at(ii).GetZaxis()->SetTitleSize(0.05);
+    TCanvas c1(Form("cMagD%d", ii), Form("cMagD%d", ii), 500, 500);
+    c1.SetRightMargin(0.18);
+    c1.SetLeftMargin(0.15);
+    MagDVec.at(ii).Draw("colz");
+    c1.Print(Form("~/work/qtnm/SyntheticSignals/cMagD%02d.pdf", ii));
+    c1.Print(Form("~/work/qtnm/SyntheticSignals/cMagD%02d.png", ii));
+    c1.Print(Form("~/work/qtnm/SyntheticSignals/cMagD%02d.tex", ii));
+
+    EleCDVec.at(ii).Scale(1 / maxEleCD);
+    EleCDVec.at(ii).GetZaxis()->SetRangeUser(-1, 1);
+    EleCDVec.at(ii).GetZaxis()->SetTitleSize(0.05);
+    TCanvas c2(Form("cEleCD%d", ii), Form("cEleCD%d", ii), 500, 500);
+    c2.SetRightMargin(0.18);
+    c2.SetLeftMargin(0.15);
+    EleCDVec.at(ii).Draw("colz");
+    c2.Print(Form("~/work/qtnm/SyntheticSignals/cEleCD%02d.pdf", ii));
+    c2.Print(Form("~/work/qtnm/SyntheticSignals/cEleCD%02d.png", ii));
+    c2.Print(Form("~/work/qtnm/SyntheticSignals/cEleCD%02d.tex", ii));
+  }
 
   fout.Close();
   return 0;
