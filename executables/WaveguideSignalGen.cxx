@@ -7,6 +7,7 @@
 #include <getopt.h>
 #include <unistd.h>
 
+#include <array>
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
@@ -20,6 +21,8 @@
 
 #include "BasicFunctions/BasicFunctions.h"
 #include "BasicFunctions/Constants.h"
+#include "BasicFunctions/NuFitValues.h"
+#include "BasicFunctions/TritiumSpectrum.h"
 #include "ElectronDynamics/BorisSolver.h"
 #include "ElectronDynamics/QTNMFields.h"
 #include "H5Cpp.h"
@@ -118,6 +121,25 @@ std::string make_uuid() {
   return boost::lexical_cast<std::string>((boost::uuids::random_generator())());
 }
 
+/// @brief Calculate masses from mBeta
+/// @param mBeta Effective neutrino mass in eV
+/// @param m1 Mass of the m1 eigenstate (in eV/c^2)
+/// @param m2 Mass of the m2 eigenstate (in eV/c^2)
+/// @param m3 Mass of the m3 eigenstate (in eV/c^2)
+void GetMassesFromMBeta(double mBeta, double &m1, double &m2, double &m3) {
+  // PMNS matrix elements
+  const double Ue1Sq{pow(cos(kNuFitTh12NH) * cos(kNuFitTh13NH), 2)};
+  const double Ue2Sq{pow(sin(kNuFitTh12NH) * cos(kNuFitTh13NH), 2)};
+  const double Ue3Sq{pow(sin(kNuFitTh13NH), 2)};
+
+  const double denom{Ue1Sq + Ue2Sq + Ue3Sq};
+  m1 = sqrt((mBeta * mBeta - Ue2Sq * kNuFitDmsq21 -
+             Ue3Sq * (kNuFitDmsq32NH + kNuFitDmsq21)) /
+            denom);
+  m2 = sqrt(kNuFitDmsq21 + m1 * m1);
+  m3 = sqrt(kNuFitDmsq32NH + m2 * m2);
+}
+
 /// @brief Main executable
 int main(int argc, char *argv[]) {
   // Start a clock
@@ -128,8 +150,9 @@ int main(int argc, char *argv[]) {
   std::string outputStemStr{" "};  // Directory in which to store files
   unsigned int nEvents{1000};      // Number of electrons to attempt to generate
   double maxRunTime{-1};           // Maximum run time in seconds
+  bool useSpectrum{false};         // Use tritium beta spectrum for generation
 
-  while ((opt = getopt(argc, argv, ":o:t:n:r:")) != -1) {
+  while ((opt = getopt(argc, argv, ":o:t:n:r:s")) != -1) {
     switch (opt) {
       case 'o':
         outputStemStr = optarg;
@@ -145,6 +168,11 @@ int main(int argc, char *argv[]) {
 
       case 'r':
         maxRunTime = std::stod(optarg);
+        break;
+
+      case 's':
+        useSpectrum = true;
+        std::cout << "Using tritium beta spectrum for electron generation\n";
         break;
 
       case ':':
@@ -165,7 +193,7 @@ int main(int argc, char *argv[]) {
   }
 
   cout << "Attempting to write out to directory: " << outputStemStr << endl;
-  cout << "Simulating electron for " << maxSimTime * 1e6 << " us\n";
+  cout << "Simulating electrons for " << maxSimTime * 1e6 << " us\n";
   cout << "Attempting to generate " << nEvents << " electrons\n";
 
   // Check if the chosen output directory exists
@@ -193,9 +221,9 @@ int main(int argc, char *argv[]) {
   H5::DSetCreatPropList plist;
   plist.setFillValue(H5::PredType::NATIVE_DOUBLE, &fillValue);
 
-  // Constant electron kinematics
-  const double eKE{18.6e3};
-  const double eSpeed{GetSpeedFromKE(eKE, ME)};  // m/s
+  // Electron kinematics
+  double eKE{18.6e3};
+  double eSpeed{GetSpeedFromKE(eKE, ME)};  // m/s
 
   // Define the field. Do a harmonic trap.
   const double rCoil{15e-3};                        // metres
@@ -217,9 +245,33 @@ int main(int argc, char *argv[]) {
   TVector3 probePos{0, 0, wgLength / 2};  // Place probe at end of guide
   auto wg = new CircularWaveguide(wgRadius, wgLength, probePos);
 
+  // Generate a distribution to draw the electron energy from
+  const double mBeta{200};  // Effective neutrino mass in eV
+  // Calculate the values of the mass eigenstates
+  double m1{}, m2{}, m3{};
+  GetMassesFromMBeta(mBeta, m1, m2, m3);
+  // Generate an array of 1eV spaced energies from 15.6 keV to 18.6 keV
+  const unsigned int nEnergies{3000};
+  std::array<double, nEnergies> energies{};
+  std::array<double, nEnergies> rates{};
+
+  for (uint iE{0}; iE < nEnergies; iE++) {
+    energies[iE] = 15e3 + iE * 1.0;
+    rates[iE] = TritiumDecayRate(energies[iE], m1, m2, m3);
+  }
+  // Create the decay distribution
+  std::piecewise_linear_distribution<double> decayDist(
+      energies.begin(), energies.end(), rates.begin());
+
   // Random number stuff
   std::random_device rd;
   std::mt19937 gen(rd());
+
+  // Signal processing stuff
+  const double sampleRate{1e9};  // Samples per second
+  const double loFreq{centralCycFreq - sampleRate / 4 + 150e6};  // Hz
+  // Define local oscillator
+  LocalOscillator lo(2 * M_PI * loFreq);
 
   for (uint iEv{0}; iEv < nEvents; iEv++) {
     const double rGenMax{6e-3};  // metres
@@ -239,6 +291,11 @@ int main(int argc, char *argv[]) {
     // Generate the initial velocity
     const double phiVelGen{uni1(gen) * 2 * M_PI};
     const double thetaVelGen{uni1(gen) * M_PI};
+    if (useSpectrum) {
+      // Draw the energy from the distribution
+      eKE = decayDist(gen);
+      eSpeed = GetSpeedFromKE(eKE, ME);
+    }
     TVector3 initVel(eSpeed * cos(phiVelGen) * sin(thetaVelGen),
                      eSpeed * sin(phiVelGen) * sin(thetaVelGen),
                      eSpeed * cos(thetaVelGen));
@@ -246,8 +303,8 @@ int main(int argc, char *argv[]) {
     // Calculate pitch angle
     const double pitchAngleRad{abs(atan(initVel.Perp() / initVel.Z()))};
     const double pitchAngleDeg{pitchAngleRad * 180 / M_PI};
-    cout << "Event " << iEv << ": Pitch angle = " << pitchAngleDeg
-         << " degrees\n";
+    cout << "Event " << iEv << ": Energy = " << eKE
+         << " eV\tPitch angle = " << pitchAngleDeg << " degrees\n";
 
     // Actually generate the trajectory
     std::string trackFileExt{make_uuid()};
@@ -257,12 +314,6 @@ int main(int argc, char *argv[]) {
 
     // Only do signal processing if our electron is trapped
     if (isTrapped) {
-      // Signal processing stuff
-      const double sampleRate{1e9};  // Samples per second
-      const double loFreq{centralCycFreq - sampleRate / 4};  // Hz
-      // Define local oscillator which should put us in the middle
-      // of the sample space
-      LocalOscillator lo(2 * M_PI * loFreq);
       // Do noiseless for now since it's not normalised properly
       Signal sig(trackFile, wg, lo, sampleRate);
       auto grV{sig.GetVITimeDomain()};
@@ -310,7 +361,7 @@ int main(int argc, char *argv[]) {
       double startFreq{CalcCyclotronFreq(eKE, bMean)};
       double startFreqDM{CalcCyclotronFreq(eKE, bMean) - loFreq};
       double axFreq{1 / (zCrossTimes[2] - zCrossTimes[0])};
-      cout << "Initial frequency = " << startFreq / 1e6
+      cout << "Initial frequency = " << startFreqDM / 1e6
            << " MHz\tAxial frequency = " << axFreq / 1e6 << " MHz\n";
 
       // Now have a go at calculating the motion of the guiding centre
