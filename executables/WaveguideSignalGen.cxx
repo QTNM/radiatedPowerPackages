@@ -365,6 +365,7 @@ int main(int argc, char *argv[]) {
            << " MHz\tAxial frequency = " << axFreq / 1e6 << " MHz\n";
 
       // Now have a go at calculating the motion of the guiding centre
+      /*
       double xAvg{0};
       double yAvg{0};
       double zAvg{0};
@@ -375,11 +376,7 @@ int main(int argc, char *argv[]) {
       hsize_t CENTRE_POS_DIMS[CENTRE_POS_RANK] = {CENTRE_POS_DIM1,
                                                   CENTRE_POS_DIM2};
       double centrePosBuffer[CENTRE_POS_DIM1][CENTRE_POS_DIM2];
-      /*
-      centrePosBuffer[0][0] = xAvg;
-      centrePosBuffer[1][0] = yAvg;
-      centrePosBuffer[2][0] = zAvg;
-      */
+
       const double sampleStep{1.0 / sampleRate};
       double nextSampleTime{sampleStep};
       unsigned int sampleNum{0};
@@ -407,6 +404,7 @@ int main(int argc, char *argv[]) {
           nTrkPnts = 0;
         }
       }
+      */
 
       delete tr;
       fTrack.Close();
@@ -526,6 +524,7 @@ int main(int argc, char *argv[]) {
       // delete grV;
 
       // Now create a dataspace for the guiding centre
+      /*
       auto dspaceCentre = new H5::DataSpace(CENTRE_POS_RANK, CENTRE_POS_DIMS);
       const std::string CENTRE_POS_DSET_NAME(GROUP_NAME + "/centre" +
                                              std::to_string(iEv));
@@ -539,6 +538,7 @@ int main(int argc, char *argv[]) {
       // Close dataset and dataspace
       delete dsetCentre;
       delete dspaceCentre;
+      */
     }
 
     // The track files can get pretty large so it's best to delete them after
