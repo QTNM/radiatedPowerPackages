@@ -303,8 +303,7 @@ int main(int argc, char *argv[]) {
         bMean += field->evaluate_field_magnitude(ePos);
         nFieldPnts++;
 
-	if (zPos > zMax) 
-	  zMax = zPos;
+        if (zPos > zMax) zMax = zPos;
       }
       bMean /= double(nFieldPnts);
 
@@ -322,7 +321,8 @@ int main(int argc, char *argv[]) {
       const unsigned int CENTRE_POS_DIM1{3};
       const unsigned int CENTRE_POS_DIM2 = grV->GetN() - 1;
       const unsigned int CENTRE_POS_RANK{2};
-      hsize_t CENTRE_POS_DIMS[CENTRE_POS_RANK] = {CENTRE_POS_DIM1, CENTRE_POS_DIM2};
+      hsize_t CENTRE_POS_DIMS[CENTRE_POS_RANK] = {CENTRE_POS_DIM1,
+                                                  CENTRE_POS_DIM2};
       double centrePosBuffer[CENTRE_POS_DIM1][CENTRE_POS_DIM2];
       /*
       centrePosBuffer[0][0] = xAvg;
@@ -334,27 +334,27 @@ int main(int argc, char *argv[]) {
       unsigned int sampleNum{0};
       for (int iE{1}; iE < tr->GetEntries(); iE++) {
         tr->GetEntry(iE);
-	xAvg += xPos;
-	yAvg += yPos;
-	zAvg += zPos;
-	nTrkPnts++;
+        xAvg += xPos;
+        yAvg += yPos;
+        zAvg += zPos;
+        nTrkPnts++;
 
-	if (time > nextSampleTime) {
-	  xAvg /= double(nTrkPnts);
-	  yAvg /= double(nTrkPnts);
-	  zAvg /= double(nTrkPnts);
-	  centrePosBuffer[0][sampleNum] = xAvg;
-	  centrePosBuffer[1][sampleNum] = yAvg;
-	  centrePosBuffer[2][sampleNum] = zAvg;
-	  sampleNum++;
-	  nextSampleTime = double(sampleNum + 1) * sampleStep;
+        if (time > nextSampleTime) {
+          xAvg /= double(nTrkPnts);
+          yAvg /= double(nTrkPnts);
+          zAvg /= double(nTrkPnts);
+          centrePosBuffer[0][sampleNum] = xAvg;
+          centrePosBuffer[1][sampleNum] = yAvg;
+          centrePosBuffer[2][sampleNum] = zAvg;
+          sampleNum++;
+          nextSampleTime = double(sampleNum + 1) * sampleStep;
 
-	  // Reset to new values
-	  xAvg = 0;
-	  yAvg = 0;
-	  zAvg = 0;
-	  nTrkPnts = 0;
-	}
+          // Reset to new values
+          xAvg = 0;
+          yAvg = 0;
+          zAvg = 0;
+          nTrkPnts = 0;
+        }
       }
 
       delete tr;
@@ -420,10 +420,15 @@ int main(int argc, char *argv[]) {
       startFreqAttr.write(H5::PredType::NATIVE_DOUBLE, &startFreq);
       // Start frequency (downmixed)
       H5::DataSpace startFreqDMSpc(H5S_SCALAR);
-      H5::Attribute startFreqDMAttr{
-          dataset->createAttribute("Start frequency, downmixed (hertz)",
-                                   H5::PredType::NATIVE_DOUBLE, startFreqDMSpc)};
+      H5::Attribute startFreqDMAttr{dataset->createAttribute(
+          "Start frequency, downmixed (hertz)", H5::PredType::NATIVE_DOUBLE,
+          startFreqDMSpc)};
       startFreqDMAttr.write(H5::PredType::NATIVE_DOUBLE, &startFreqDM);
+      // Local oscillator frequency
+      H5::DataSpace loFreqSpc(H5S_SCALAR);
+      H5::Attribute loFreqAttr{dataset->createAttribute(
+          "LO frequency (hertz)", H5::PredType::NATIVE_DOUBLE, loFreqSpc)};
+      loFreqAttr.write(H5::PredType::NATIVE_DOUBLE, &loFreq);
       // Axial frequency
       H5::DataSpace axFreqSpc(H5S_SCALAR);
       H5::Attribute axFreqAttr{dataset->createAttribute(
@@ -432,33 +437,28 @@ int main(int argc, char *argv[]) {
 
       // Max displacement
       H5::DataSpace zMaxSpc(H5S_SCALAR);
-      H5::Attribute zMaxAttr{
-	dataset->createAttribute("z_max (metres)", H5::PredType::NATIVE_DOUBLE, 
-				 zMaxSpc)};
+      H5::Attribute zMaxAttr{dataset->createAttribute(
+          "z_max (metres)", H5::PredType::NATIVE_DOUBLE, zMaxSpc)};
       zMaxAttr.write(H5::PredType::NATIVE_DOUBLE, &zMax);
 
       // Write the metadata for the trap config
       H5::DataSpace rCoilSpc(H5S_SCALAR);
-      H5::Attribute rCoilAttr{
-	dataset->createAttribute("r_coil (metres)", H5::PredType::NATIVE_DOUBLE, 
-				 rCoilSpc)};
+      H5::Attribute rCoilAttr{dataset->createAttribute(
+          "r_coil (metres)", H5::PredType::NATIVE_DOUBLE, rCoilSpc)};
       rCoilAttr.write(H5::PredType::NATIVE_DOUBLE, &rCoil);
       H5::DataSpace iCoilSpc(H5S_SCALAR);
-      H5::Attribute iCoilAttr{
-	dataset->createAttribute("i_coil (amps)", H5::PredType::NATIVE_DOUBLE, 
-				 iCoilSpc)};
+      H5::Attribute iCoilAttr{dataset->createAttribute(
+          "i_coil (amps)", H5::PredType::NATIVE_DOUBLE, iCoilSpc)};
       iCoilAttr.write(H5::PredType::NATIVE_DOUBLE, &iCoil);
       H5::DataSpace bkgFieldSpc(H5S_SCALAR);
-      H5::Attribute bkgFieldAttr{
-	dataset->createAttribute("B_bkg (tesla)", H5::PredType::NATIVE_DOUBLE, 
-				 bkgFieldSpc)};
+      H5::Attribute bkgFieldAttr{dataset->createAttribute(
+          "B_bkg (tesla)", H5::PredType::NATIVE_DOUBLE, bkgFieldSpc)};
       bkgFieldAttr.write(H5::PredType::NATIVE_DOUBLE, &bkgField);
 
       // Write the metadata for the waveguide dimenstions as well
-      H5::DataSpace rWgSpc(H5S_SCALAR);      
-      H5::Attribute rWgAttr{
-	dataset->createAttribute("r_wg (metres)", H5::PredType::NATIVE_DOUBLE, 
-				 rWgSpc)};
+      H5::DataSpace rWgSpc(H5S_SCALAR);
+      H5::Attribute rWgAttr{dataset->createAttribute(
+          "r_wg (metres)", H5::PredType::NATIVE_DOUBLE, rWgSpc)};
       rWgAttr.write(H5::PredType::NATIVE_DOUBLE, &wgRadius);
 
       // Create the buffer for writing in the voltage data
@@ -477,11 +477,13 @@ int main(int argc, char *argv[]) {
       // Now create a dataspace for the guiding centre
       auto dspaceCentre = new H5::DataSpace(CENTRE_POS_RANK, CENTRE_POS_DIMS);
       const std::string CENTRE_POS_DSET_NAME(GROUP_NAME + "/centre" +
-                                     std::to_string(iEv));
-      auto dsetCentre = new H5::DataSet(file->createDataSet(
-          CENTRE_POS_DSET_NAME, H5::PredType::NATIVE_DOUBLE, *dspaceCentre, plist));
-      // Buffer already created 
-      dsetCentre->write(centrePosBuffer, H5::PredType::NATIVE_DOUBLE, *dspaceCentre);
+                                             std::to_string(iEv));
+      auto dsetCentre = new H5::DataSet(
+          file->createDataSet(CENTRE_POS_DSET_NAME, H5::PredType::NATIVE_DOUBLE,
+                              *dspaceCentre, plist));
+      // Buffer already created
+      dsetCentre->write(centrePosBuffer, H5::PredType::NATIVE_DOUBLE,
+                        *dspaceCentre);
 
       // Close dataset and dataspace
       delete dsetCentre;
