@@ -112,3 +112,6 @@ add_executable(P8WaveguidePower P8WaveguidePower.cxx)
 target_link_libraries(P8WaveguidePower PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES})
 add_executable(EventRate EventRate.cxx)
 target_link_libraries(EventRate PRIVATE BasicFunctions ${ROOT_LIBRARIES})
+
+add_executable(LargeVolumeCavityP8 LargeVolumeCavityP8.cxx)
+target_link_libraries(LargeVolumeCavityP8 PRIVATE BasicFunctions Waveguides ${ROOT_LIBRARIES})
