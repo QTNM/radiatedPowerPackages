@@ -1,2 +1,2 @@
-add_library(BasicFunctions BasicFunctions.cxx EMFunctions.cxx TritiumSpectrum.cxx ButterworthFilter.cxx)
-target_link_libraries(BasicFunctions PUBLIC ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
+add_library(BasicFunctions BasicFunctions.cxx EMFunctions.cxx TritiumSpectrum.cxx ButterworthFilter.cxx FFTWComplex.cxx FourierTransforms.cxx)
+target_link_libraries(BasicFunctions PUBLIC ${ROOT_LIBRARIES} ${FFTW3_LIBRARIES})

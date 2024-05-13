@@ -23,19 +23,8 @@ find_package(HDF5 COMPONENTS C CXX HL REQUIRED)
 link_directories(${HDF5_LIBRARY_DIRS})
 include_directories(${HDF5_INCLUDE_DIRS})
 
-# Add the FFTW ROOT wrapper library
-# Need to check if the helper variable is set
-if(DEFINED ENV{FFTW_WRAPPER_INSTALL})
-	message("Detected sugggested location for ROOT FFTW wrapper")
-	set(FFTW_WRAPPER_LIB_DIR $ENV{FFTW_WRAPPER_INSTALL}/lib)
-	set(FFTW_WRAPPER_INC_DIR $ENV{FFTW_WRAPPER_INSTALL}/include)
-	find_library(ROOTFFTW_LIB RootFftwWrapper REQUIRED HINTS ${FFTW_WRAPPER_LIB_DIR})
-	include_directories(${FFTW_WRAPPER_INC_DIR})
-else()
-	message("Looking for ROOT FFTW wrapper in default location")
-	find_library(ROOTFFTW_LIB RootFftwWrapper REQUIRED)
-endif()
-message("ROOTFFTW_LIB is set to ${ROOTFFTW_LIB}")
+# Locate FFTW3
+find_package(FFTW3 REQUIRED)
 
 # Set build locations for libraries and binaries
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -63,4 +52,3 @@ add_subdirectory(ElectronDynamics)
 add_subdirectory(Scattering)
 
 add_subdirectory(executables)
-

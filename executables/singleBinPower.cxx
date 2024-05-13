@@ -4,7 +4,6 @@
 
 #include "Antennas/HalfWaveDipole.h"
 #include "BasicFunctions/BasicFunctions.h"
-#include "FFTtools.h"
 #include "SignalProcessing/InducedVoltage.h"
 #include "SignalProcessing/LocalOscillator.h"
 #include "SignalProcessing/NoiseFunc.h"
@@ -55,10 +54,9 @@ int main(int argc, char** argv) {
   TGraph* grVIPeriodogram = signal.GetVIPowerPeriodogram(loadResistance);
   TGraph* grVIPeriodogramNoNoise =
       signalNoNoise.GetVIPowerPeriodogram(loadResistance);
-  std::cout << "Power integral " << FFTtools::sumPower(grVIPeriodogram)
+  std::cout << "Power integral " << SumPower(grVIPeriodogram) << std::endl;
+  std::cout << "Power integral no noise " << SumPower(grVIPeriodogramNoNoise)
             << std::endl;
-  std::cout << "Power integral no noise "
-            << FFTtools::sumPower(grVIPeriodogramNoNoise) << std::endl;
   grVIPeriodogram->Write("grVIPeriodogram");
   grVIPeriodogramNoNoise->Write("grVIPeriodogramNoNoise");
 
