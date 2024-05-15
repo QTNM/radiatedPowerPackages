@@ -1,9 +1,9 @@
 # Add any executables
 add_executable(sineTest sineTest.cxx)
-target_link_libraries(sineTest PRIVATE BasicFunctions ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
+target_link_libraries(sineTest PRIVATE BasicFunctions ${ROOT_LIBRARIES})
 
 add_executable(normTest normTest.cxx)
-target_link_libraries(normTest PRIVATE BasicFunctions FieldClasses ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
+target_link_libraries(normTest PRIVATE BasicFunctions FieldClasses ${ROOT_LIBRARIES})
 
 add_executable(noiseTests noiseTests.cxx)
 target_link_libraries(noiseTests PRIVATE Antennas BasicFunctions SignalProcessing ${ROOT_LIBRARIES})
@@ -12,7 +12,7 @@ add_executable(signalSum signalSum.cxx)
 target_link_libraries(signalSum PRIVATE Antennas BasicFunctions SignalProcessing ${ROOT_LIBRARIES})
 
 add_executable(perpendicularAntenna perpendicularAntenna.cxx)
-target_link_libraries(perpendicularAntenna PRIVATE Antennas BasicFunctions SignalProcessing ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
+target_link_libraries(perpendicularAntenna PRIVATE Antennas BasicFunctions SignalProcessing ${ROOT_LIBRARIES})
 
 add_executable(rayleighDistributionChecks rayleighDistributionChecks.cxx)
 target_link_libraries(rayleighDistributionChecks PUBLIC BasicFunctions SignalProcessing Antennas ${ROOT_LIBRARIES})
@@ -21,7 +21,7 @@ add_executable(writeTrajectory writeTrajectory.cxx)
 target_link_libraries(writeTrajectory PUBLIC ElectronDynamics ${ROOT_LIBRARIES})
 
 add_executable(singleBinPower singleBinPower.cxx)
-target_link_libraries(singleBinPower PUBLIC SignalProcessing Antennas BasicFunctions ${ROOT_LIBRARIES} ${ROOTFFTW_LIB})
+target_link_libraries(singleBinPower PUBLIC SignalProcessing Antennas BasicFunctions ${ROOT_LIBRARIES})
 
 add_executable(crudeEnergyResolution crudeEnergyResolution.cxx)
 target_link_libraries(crudeEnergyResolution PUBLIC ElectronDynamics SignalProcessing Antennas BasicFunctions ${ROOT_LIBRARIES})
@@ -110,8 +110,15 @@ target_include_directories(WaveguideSignalGen PRIVATE ${HDF5_INCLUDE_DIRS})
 
 add_executable(P8WaveguidePower P8WaveguidePower.cxx)
 target_link_libraries(P8WaveguidePower PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES})
+
 add_executable(EventRate EventRate.cxx)
 target_link_libraries(EventRate PRIVATE BasicFunctions ${ROOT_LIBRARIES})
 
 add_executable(LargeVolumeCavityP8 LargeVolumeCavityP8.cxx)
 target_link_libraries(LargeVolumeCavityP8 PRIVATE BasicFunctions Waveguides ${ROOT_LIBRARIES})
+
+add_executable(SyntheticSignals SyntheticSignals.cxx)
+target_link_libraries(SyntheticSignals PRIVATE Antennas BasicFunctions ElectronDynamics FieldClasses ${ROOT_LIBRARIES})
+
+add_executable(TwoElectronSim TwoElectronSim.cxx)
+target_link_libraries(TwoElectronSim PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})

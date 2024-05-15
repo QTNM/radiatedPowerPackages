@@ -9,7 +9,6 @@
 
 #include "Antennas/HalfWaveDipole.h"
 #include "BasicFunctions/BasicFunctions.h"
-#include "FFTtools.h"
 #include "SignalProcessing/LocalOscillator.h"
 #include "SignalProcessing/NoiseFunc.h"
 #include "SignalProcessing/Signal.h"
@@ -94,11 +93,10 @@ int main(int argc, char** argv) {
   grVI1SpecNoNoise->Write("grVI1SpecNoNoise");
   grVI2SpecNoNoise->Write("grVI2SpecNoNoise");
 
-  TGraph* grCorrelation = FFTtools::getCorrelationGraph(grVI1, grVI2);
-  TGraph* grNormCorrelation =
-      FFTtools::getNormalisedCorrelationGraph(grVI1, grVI2);
+  TGraph* grCorrelation = GetCorrelationGraph(grVI1, grVI2);
+  TGraph* grNormCorrelation = GetNormalisedCorrelationGraph(grVI1, grVI2);
   TGraph* grNormCorrelationTime =
-      FFTtools::getNormalisedCorrelationGraphTimeDomain(grVI1, grVI2);
+      GetNormalisedCorrelationGraphTimeDomain(grVI1, grVI2);
   setGraphAttr(grCorrelation);
   setGraphAttr(grNormCorrelation);
   setGraphAttr(grNormCorrelationTime);
@@ -110,7 +108,7 @@ int main(int argc, char** argv) {
   grCorrelationFFT->Write("grCorrelationFFT");
 
   TGraph* grCorrelationNoNoise =
-      FFTtools::getCorrelationGraph(grVI1NoNoise, grVI2NoNoise);
+      GetCorrelationGraph(grVI1NoNoise, grVI2NoNoise);
   TGraph* grCorrelationNoNoiseFFT = MakeFFTMagGraph(grCorrelationNoNoise);
   grCorrelationNoNoiseFFT->Write("grCorrelationNoNoiseFFT");
 

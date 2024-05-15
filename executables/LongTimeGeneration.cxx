@@ -25,6 +25,7 @@
 #include "TH1.h"
 #include "TMath.h"
 #include "TString.h"
+#include "TSystem.h"
 #include "TTree.h"
 #include "TVector3.h"
 
@@ -67,7 +68,7 @@ int main(int argc, char *argv[]) {
   const double coilCurrent{2 * trapDepth * coilRadius / MU0};  // T
   const double bkg{0.7};                                       // Tesla
   auto field = new HarmonicField(coilRadius, coilCurrent, bkg);
-  const double tritiumDensity{1e18};                           // atoms m^-3
+  const double tritiumDensity{1e18};  // atoms m^-3
   const double zLimit{0.1};
 
   // Set up random number stuff
@@ -82,8 +83,8 @@ int main(int argc, char *argv[]) {
   for (unsigned int i{0}; i < nElectrons; i++) {
     cout << "Electron " << i << endl;
     // Generate a random position in a cylinder
-    const double rMax{0.015};                // m
-    const double zMax{0.025};                // m
+    const double rMax{0.015};  // m
+    const double zMax{0.025};  // m
 
     double eKE{18.6e3};                      // eV
     double eSpeed{GetSpeedFromKE(eKE, ME)};  // m/s

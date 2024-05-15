@@ -72,7 +72,8 @@ int main(int argc, char *argv[]) {
   TString outputFile{"/home/sjones/work/qtnm/storageSize/plots.root"};
   TFile fout(outputFile, "recreate");
 
-  const double eMax{18.6e3};                           // eV
+  const double energyBeyondEndpoint{5};
+  const double eMax{18.6e3 + energyBeyondEndpoint};    // eV
   const double fMin{CalcCyclotronFreq(eMax, bField)};  // Hz
   const double fMax{fMin + deltaF};                    // Hz
   const double eMin{CalcEFromFreq(fMax, bField)};      // eV
@@ -101,5 +102,13 @@ int main(int argc, char *argv[]) {
             << " s^-1 atom^-1\tN decays in 1 year = " << nDecays1Yr
             << std::endl;
 
+  // Try and do a calculation for CRESDA
+  const double densCRESDA{1e18}; // m^-3
+  const double volCRESDA{TMath::Pi() * 80e-3 * 30e-3 * 30e-3}; // Uniform field region
+  const double nAtomsCRESDA{densCRESDA * volCRESDA};
+  const double nDecaysCRESDA{nAtomsCRESDA * decayRateInt * seconds1Yr};
+  std::cout << "CRESDA0 volume is " << volCRESDA << " m^3, " << volCRESDA * 1e6 << " cm^3\n";
+  std::cout << "Number of atoms in CRESDA0 = " << nAtomsCRESDA << std::endl;
+  std::cout << "Visible CRESDA decays in one year = " << nDecaysCRESDA << std::endl;
   return 0;
 }

@@ -99,13 +99,13 @@ int main(int argc, char** argv) {
   grVQPgram->GetYaxis()->SetTitle("Power [W]");
   ScaleGraph(grVIPgram, 1 / loadResistance);
   ScaleGraph(grVQPgram, 1 / loadResistance);
-  double totalPowerVI = FFTtools::sumPower(grVIPgram) * 1e15;
-  double totalPowerVQ = FFTtools::sumPower(grVQPgram) * 1e15;
+  double totalPowerVI = SumPower(grVIPgram) * 1e15;
+  double totalPowerVQ = SumPower(grVQPgram) * 1e15;
   grVIPgram->SetTitle(Form("Total power %.4f fW", totalPowerVI));
   grVQPgram->SetTitle(Form("Total power %.4f fW", totalPowerVQ));
   TGraph* grSum = SumGraphs(vecV);
   TGraph* grSumPgram = MakePowerSpectrumPeriodogram(grSum);
-  double totalPowerSum = FFTtools::sumPower(grSumPgram) * 1e15;
+  double totalPowerSum = SumPower(grSumPgram) * 1e15;
   ScaleGraph(grSumPgram, 1 / loadResistance);
   grSumPgram->SetTitle(Form("Total power %.4f fW", totalPowerSum));
 

@@ -5,7 +5,8 @@
 #include <vector>
 
 #include "BasicFunctions/Constants.h"
-#include "FFTtools.h"
+#include "BasicFunctions/FFTWComplex.h"
+#include "BasicFunctions/FourierTransforms.h"
 #include "Math/Point3D.h"
 #include "Math/Vector3D.h"
 #include "TGraph.h"
@@ -288,6 +289,60 @@ double CalcLarmorPower(double ke, double B, double theta, double m = ME);
 /// @return 3-vector of rotated vector
 TVector3 RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
                         TVector3 newZ);
+
+/// @brief The linear sum of the power in a TGraph
+/// @param gr A pointer to the input TGraph
+/// @param firstBin The first bin to include in the sum
+/// @param lastBin The last bin to include in the sum
+/// @return The integral of the power
+double SumPower(const TGraph *gr, int firstBin = -1, int lastBin = -1);
+
+/// @brief The sum of the voltage squared in a waveform.
+/// @param gr A pointer to the input TGraph
+/// @param firstBin The first bin to include in the sum.
+/// @param lastBin The last bin to include in the sum.
+/// @return The value of the sum.
+double SumVoltageSquared(const TGraph *gr, int firstBin = -1, int lastBin = -1);
+
+/// @brief Computes the correlation of two arrays
+/// @param length The length of the two arrays
+/// @param oldY1 The first array in the correlation
+/// @param oldY2 The second array in the correlation
+/// @return The correlation as an array of *length* real numbers
+double *GetCorrelation(int length, double *oldY1, double *oldY2);
+
+/// @brief Computes the correlation of two TGraphs
+/// @param gr1 The first graph in the correlation
+/// @param gr2 The second graph in the correlation
+/// @return A pointer to a tgraph containing the correaltion of gr1 and gr2
+TGraph *GetCorrelationGraph(const TGraph *gr1, const TGraph *gr2,
+                            int *zeroOffset = 0);
+
+/// @brief Returns the normalised correlation of two TGraphs
+/// @param gr1 The first graph in the correlation
+/// @param gr2 The second graph in the correlation
+/// @return A pointer to a TGraph containing the correlation of gr1 and
+/// gr2 where each point is normalised by the number of valid samples in
+/// the correlation and by the product of the RMS of the input graphs.
+TGraph *GetNormalisedCorrelationGraph(const TGraph *gr1, const TGraph *gr2,
+                                      int *zeroOffset = 0);
+
+/// @brief Returns the normalised correlation of two TGraphs
+/// @param gr1 The first input TGraph (must be zero meaned)
+/// @param gr2 The second input TGraph (must be zero meaned)
+/// @param zeroOffset A pointer to an integer where the sample corresponding to
+/// zero offset will be stored
+/// @param useDtRange A flag to enable the setting of a limited range of
+/// deltat's to try
+/// @param dtMin The minimum delta-t to include in the correlation, the maximum
+/// delta-t to include in the correlation
+/// @param dtMax
+/// @return A pointer to a TGraph containing the correlation of <i>gr1</i> and
+/// <i>gr2</i> where each point is normalised by the number of valid samples in
+/// the correlation and by the product of the RMS of the input graphs.
+TGraph *GetNormalisedCorrelationGraphTimeDomain(
+    const TGraph *gr1, const TGraph *gr2, int *zeroOffset = 0,
+    int useDtRange = 0, double dtMin = -1000, double dtMax = 1000);
 }  // namespace rad
 
 #endif
