@@ -76,3 +76,6 @@ target_link_libraries(EventRate PRIVATE BasicFunctions ${ROOT_LIBRARIES})
 
 add_executable(SyntheticSignals SyntheticSignals.cxx)
 target_link_libraries(SyntheticSignals PRIVATE Antennas BasicFunctions ElectronDynamics FieldClasses ${ROOT_LIBRARIES})
+
+add_executable(TwoElectronSim TwoElectronSim.cxx)
+target_link_libraries(TwoElectronSim PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
