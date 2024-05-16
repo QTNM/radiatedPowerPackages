@@ -24,7 +24,7 @@ class InelasticScatter : public BaseScatter {
 
   double G_B() { return 2.9; }
 
-  double n() { return 2.5; }
+  double n() { return 2.4; }
 
   double A1() { return 0.74; }
 
@@ -32,34 +32,36 @@ class InelasticScatter : public BaseScatter {
 
   double A3() { return -0.60; }
 
-  double S() { return 4 * TMath::Pi() * pow(A0, 2); }
+  double S() {
+    return 4 * TMath::Pi() * pow(A0, 2) * pow(RYDBERG_EV / TRITIUM_I, 2);
+  }
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @return
-  double G2(double omega, double t);
+  double G2(double W, double T);
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @return
-  double G3(double omega, double t);
+  double G3(double W, double T);
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @return
-  double G4(double omega, double t);
+  double G4(double W, double T);
 
   double G5() { return 0.33; }
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @param theta Angle in radians
   /// @return
-  double f_BE(double omega, double t, double theta);
+  double f_BE(double W, double T, double theta);
 
   /// @brief
   /// @param theta Angle in radians
@@ -67,27 +69,39 @@ class InelasticScatter : public BaseScatter {
   double f_b(double theta);
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @return
-  double g_BE(double omega, double t);
+  double g_BE(double W, double T);
 
   /// @brief
-  /// @param t
+  /// @param T
   /// @return
-  double F(double t);
+  double F(double T);
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @return
-  double f_1(double omega, double t);
+  double f_1(double W, double T);
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @return
-  double G1(double omega, double t);
+  double G1(double W, double T);
+
+  /// @brief
+  /// @param W
+  /// @param T
+  /// @param theta
+  /// @return
+  double G4fb(double W, double T, double theta);
+
+  /// @brief
+  /// @param T
+  /// @return
+  double g1(double T);
 
  public:
   /// @brief Override constructor
@@ -103,6 +117,11 @@ class InelasticScatter : public BaseScatter {
   /// @param theta Scattering angle of secondary electron in radians
   /// @return Cross-section in m^2 / eV / rad
   double GetDoubleDiffXSec(double W, double theta);
+
+  /// @brief Single differential cross-section (in W)
+  /// @param W Kinetic energy of ejected electron in eV
+  /// @return Cross-section in m^2 / eV
+  double GetSDCS_W(double W);
 
   /// @brief Get a random secondary electron KE
   /// @return Energy in eV
