@@ -602,24 +602,16 @@ int main(int argc, char *argv[]) {
       // Close the HDF5 file
       delete file;
 
-      // Open a TFile and write the signal there
-      TFile rootFile(outputDir + "/out_" + outfileExt + ".root", "RECREATE");
-      rootFile.cd();
-      grV->Write("grV");
-      // Close the ROOT file
-      rootFile.Close();
-
       const clock_t endEventClock{clock()};
       const double eventTime{(endEventClock - startEventClock) /
                              (double)CLOCKS_PER_SEC};
       cout << "Event " << nGenerated << " took " << eventTime
            << " seconds to generate.\n";
       nGenerated++;
-    } else {
-      // Delete the track file
-      cout << "Too short, deleting file\n\n";
-      gSystem->Exec("rm -f " + trackFile);
     }
+    // Delete the track file
+    cout << "Too short, deleting file\n\n";
+    gSystem->Exec("rm -f " + trackFile);
   }
   cout << "Finished generating all events.\n";
 
