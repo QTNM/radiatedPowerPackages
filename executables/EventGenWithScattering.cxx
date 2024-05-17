@@ -161,7 +161,7 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
     // Advance the electron
     auto outputStep = solver.advance_step(stepSize, p, v);
     p = std::get<0>(outputStep);
-    if (abs(p.Z()) > 10e-2) {
+    if (abs(p.Z()) > 7.5e-2) {
       std::cout << "Electron escaped after " << time * 1e6 << " us\n";
       isTrapped = false;
       break;
@@ -382,7 +382,7 @@ int main(int argc, char *argv[]) {
   const double simStepSize{1 / (10 * centralCycFreq)};  // seconds
 
   // Now define the waveguide that we want to collect our signal with
-  const double wgLength{10e-2};           // metres
+  const double wgLength{20e-2};           // metres
   const double wgRadius{7.14e-3};         // metres
   TVector3 probePos{0, 0, wgLength / 2};  // Place probe at end of guide
   auto wg = new CircularWaveguide(wgRadius, wgLength, probePos);
@@ -526,6 +526,11 @@ int main(int argc, char *argv[]) {
       H5::Attribute rWgAttr{dataset->createAttribute(
           "r_wg [metres]", H5::PredType::NATIVE_DOUBLE, rWgSpc)};
       rWgAttr.write(H5::PredType::NATIVE_DOUBLE, &wgRadius);
+      // Metadata for gas density
+      H5::DataSpace gasDensitySpc(H5S_SCALAR);
+      H5::Attribute gasDensityAttr{dataset->createAttribute(
+          "Gas density [m^-3]", H5::PredType::NATIVE_DOUBLE, gasDensitySpc)};
+      gasDensityAttr.write(H5::PredType::NATIVE_DOUBLE, &tritiumGasDensity);
 
       // Now create the attributes for each scattering event
       const unsigned int SCATTERSPACE_DIM = eiVec.size();
