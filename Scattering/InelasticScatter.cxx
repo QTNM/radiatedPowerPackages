@@ -88,18 +88,18 @@ double rad::InelasticScatter::GetSDCS_W(double W) {
 
 double rad::InelasticScatter::GetRandomW() {
   const unsigned int nBins{400};
-  const double WMin{GetIncidentKE() / 2};
-  const double WMax{GetIncidentKE() - TRITIUM_I - 1e-4};
   // We want the differences between the points to be logarithmically spaced
   const double diffMin{1e-5};
   const double diffMax{GetIncidentKE() / 2};
-  const double WDiff{log(WMax / WMin) / double(nBins - 1)};
+  const double WDiff{log10(diffMax / diffMin) / double(nBins - 1)};
 
   // Build the distribution of differential cross-section
   std::vector<double> WVec{};
   std::vector<double> xsecVec{};
-  for (unsigned int iW{0}; iW < nBins; iW++) {
-    double W{WMin * exp(double(iW) * WDiff)};
+  for (int iW{nBins - 1}; iW >= 0; iW--) {
+    double W{GetIncidentKE() - TRITIUM_I -
+             diffMin * pow(10, double(iW) * WDiff)};
+    WVec.push_back(W);
     xsecVec.push_back(GetSDCS_W(W));
   }
 
