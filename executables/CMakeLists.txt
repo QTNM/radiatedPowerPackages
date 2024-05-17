@@ -122,3 +122,7 @@ target_link_libraries(SyntheticSignals PRIVATE Antennas BasicFunctions ElectronD
 
 add_executable(TwoElectronSim TwoElectronSim.cxx)
 target_link_libraries(TwoElectronSim PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(EventGenWithScattering EventGenWithScattering.cxx)
+target_link_libraries(EventGenWithScattering PRIVATE BasicFunctions ElectronDynamics Scattering SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
+target_include_directories(EventGenWithScattering PRIVATE ${HDF5_INCLUDE_DIRS})
