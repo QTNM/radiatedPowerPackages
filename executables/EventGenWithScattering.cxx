@@ -615,7 +615,7 @@ int main(int argc, char *argv[]) {
       nGenerated++;
     }
     // Delete the track file
-    cout << "Too short, deleting file\n\n";
+    cout << "Deleting track file\n\n";
     gSystem->Exec("rm -f " + trackFile);
   }
   cout << "Finished generating all events.\n";
