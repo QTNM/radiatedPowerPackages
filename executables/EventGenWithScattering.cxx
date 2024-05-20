@@ -148,8 +148,11 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
   double oldZ{pos.Z()};
 
   // Set up some things for start frequency calculation
+  const double fieldMeasurementTime{1e-6};  // seconds
   double bMean{0};
   uint nFieldPoints{0};
+
+  bool haveSavedInfo{false};
 
   unsigned long nSteps{1};
   while (time <= maxSimTime && isTrapped) {
@@ -184,36 +187,42 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
       tree.Fill();
 
       if (zCrossings < 3) {
-        if (zPos > eiTemp.zMax) eiTemp.zMax = zPos;
+        if ((oldZ > 0 && zPos < 0) || (oldZ < 0 && zPos > 0)) {
+          zCrossTimes[zCrossings] = time;
+          zCrossings++;
+        }
+        oldZ = zPos;
+      }
+
+      // We don't want to calculate all the time
+      if (time < fieldMeasurementTime) {
+        bMean += bField->evaluate_field_magnitude(p);
+        nFieldPoints++;
 
         // Calculate the instantaneous pitch angle
         double pitchAngleDeg{abs(atan(v.Perp() / v.Z())) * 180 / M_PI};
         if (pitchAngleDeg < eiTemp.pitchAngle)
           eiTemp.pitchAngle = pitchAngleDeg;
 
-        bMean += bField->evaluate_field_magnitude(p);
-        nFieldPoints++;
-        if ((oldZ > 0 && zPos < 0) || (oldZ < 0 && zPos > 0)) {
-          zCrossTimes[zCrossings] = time;
-          zCrossings++;
-          if (zCrossings > 2) {
-            // Now calculate the axial frequency
-            bMean /= double(nFieldPoints);
-            gamma = 1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2));
-            ke = (gamma - 1) * ME_EV;
-            double startF{CalcCyclotronFreq(ke, bMean)};
-            double axFreq{1 / (zCrossTimes[2] - zCrossTimes[0])};
-            cout << "f_c = " << startF / 1e9 << " GHz\tf_a = " << axFreq / 1e6
-                 << " MHz\tz_max = " << eiTemp.zMax * 100
-                 << " cm\tPitch angle = " << eiTemp.pitchAngle << " degrees\n";
-            eiTemp.axialF = axFreq;
-            eiTemp.startF = startF;
-            ei.push_back(eiTemp);
-          }
-        }
+        // Update the maximum z position if necessary
+        if (zPos > eiTemp.zMax) eiTemp.zMax = zPos;
+      } else if (!haveSavedInfo && time >= fieldMeasurementTime) {
+        // Now calculate the axial frequency
+        bMean /= double(nFieldPoints);
+        gamma = 1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2));
+        ke = (gamma - 1) * ME_EV;
+        double startF{CalcCyclotronFreq(ke, bMean)};
+        double axFreq{1 / (zCrossTimes[2] - zCrossTimes[0])};
+        cout << "f_c = " << startF / 1e9 << " GHz\tf_a = " << axFreq / 1e6
+             << " MHz\tz_max = " << eiTemp.zMax * 100
+             << " cm\tPitch angle = " << eiTemp.pitchAngle << " degrees\n";
+        eiTemp.axialF = axFreq;
+        eiTemp.startF = startF;
+        ei.push_back(eiTemp);
+        haveSavedInfo = true;
       }
-      oldZ = zPos;
 
+      oldZ = zPos;
     } else {
       // Rest some variables used for calculating truth info
       zCrossings = 0;
@@ -221,6 +230,7 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
       bMean = 0;
       nFieldPoints = 0;
       eiTemp.Reset();
+      haveSavedInfo = false;
 
       // Time to do a scattering calculation
       gamma = 1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2));
