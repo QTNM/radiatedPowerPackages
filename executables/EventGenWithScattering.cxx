@@ -149,6 +149,7 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
 
   // Set up some things for start frequency calculation
   const double fieldMeasurementTime{1e-6};  // seconds
+  double currentInfoWriteTime{0};
   double bMean{0};
   uint nFieldPoints{0};
 
@@ -157,6 +158,7 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
   unsigned long nSteps{1};
   while (time <= maxSimTime && isTrapped) {
     time = (long double)nSteps * stepSize;
+    currentInfoWriteTime += stepSize;
     if (std::fmod(time, 5e-6) < stepSize) {
       std::cout << "Simulated " << time * 1e6 << " us\n";
     }
@@ -164,14 +166,36 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
     // Advance the electron
     auto outputStep = solver.advance_step(stepSize, p, v);
     p = std::get<0>(outputStep);
+    v = std::get<1>(outputStep);
     if (abs(p.Z()) > 7.5e-2) {
       std::cout << "Electron escaped after " << time * 1e6 << " us\n";
       isTrapped = false;
+
+      // If we haven't saved the information yet for the previous scattering
+      // then do so now
+      if (!haveSavedInfo) {
+        // Calculate start frequency
+        gamma = 1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2));
+        ke = (gamma - 1) * ME_EV;
+        bMean /= double(nFieldPoints);
+        double startF{CalcCyclotronFreq(ke, bMean)};
+        eiTemp.startF = startF;
+        // We may or may not be able to do our axial frequency calculation
+        cout << "Electron escaped after only " << zCrossings
+             << " z crossings.\n";
+        if (zCrossings == 2) {
+          double axFreq{1 / (2 * (zCrossTimes[1] - zCrossTimes[0]))};
+          eiTemp.axialF = axFreq;
+        }
+
+        ei.push_back(eiTemp);
+        haveSavedInfo = true;
+      }
+
       break;
     }
 
     if (time < nextScatterTime) {
-      v = std::get<1>(outputStep);
       acc = solver.acc(p, v);
 
       // Write to tree
@@ -195,7 +219,7 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
       }
 
       // We don't want to calculate all the time
-      if (time < fieldMeasurementTime) {
+      if (currentInfoWriteTime < fieldMeasurementTime) {
         bMean += bField->evaluate_field_magnitude(p);
         nFieldPoints++;
 
@@ -225,6 +249,7 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
       oldZ = zPos;
     } else {
       // Rest some variables used for calculating truth info
+      currentInfoWriteTime = 0;
       zCrossings = 0;
       oldZ = zPos;
       bMean = 0;
