@@ -78,6 +78,14 @@ class Signal {
   /// @return Time domain voltage graph
   TGraph* GetVQTimeDomain() { return grVQTime; }
 
+  /// @brief Getter function for in-phase voltage component
+  /// @return Time domain voltage vector
+  std::vector<double>* GetVITimeDomainVec() { return vecVITime; }
+
+  /// @brief Getter function for in-phase voltage component
+  /// @return Time domain voltage vector
+  std::vector<double>* GetVQTimeDomainVec() { return vecVQTime; }
+
   /// @brief Returns the power spectrum of the in-phase voltage component after
   /// all signal processing Power spectrum in this case is the periodogram
   /// @param loadResistance The load resistance used for the power calculation
@@ -105,6 +113,8 @@ class Signal {
 
   TGraph* grVITime = 0;  // In phase component
   TGraph* grVQTime = 0;  // Quadrature component
+  std::vector<double>* vecVITime = 0;
+  std::vector<double>* vecVQTime = 0;
 
   std::deque<long double> timeVec;
   std::vector<std::deque<long double>>

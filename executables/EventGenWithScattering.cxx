@@ -504,7 +504,7 @@ int main(int argc, char *argv[]) {
       // Now generate the signal
       Signal signal(trackFile, wg, lo, sampleRate);
       // Get the output voltage
-      auto grV{signal.GetVITimeDomain()};
+      auto grV{signal.GetVITimeDomainVec()};
 
       // Set up one output file per event. This prevents us losing all the data
       // if one event fails.
@@ -521,7 +521,7 @@ int main(int argc, char *argv[]) {
       plist.setFillValue(H5::PredType::NATIVE_DOUBLE, &fillValue);
 
       // Create dataspace for dataset
-      const unsigned int DSPACE_DIM = grV->GetN();
+      const unsigned int DSPACE_DIM = grV->size();
       cout << "Time series is " << DSPACE_DIM << " entries long\n";
       const unsigned int DSPACE_RANK{1};
       hsize_t dim[] = {DSPACE_DIM};
@@ -536,7 +536,7 @@ int main(int argc, char *argv[]) {
       H5::DataSpace timeStepSpace(H5S_SCALAR);
       H5::Attribute timeStepAttr{dataset->createAttribute(
           "Time step [seconds]", H5::PredType::NATIVE_DOUBLE, timeStepSpace)};
-      double timeStep{grV->GetPointX(1) - grV->GetPointX(0)};
+      double timeStep{grV->at(1) - grV->at(0)};
       timeStepAttr.write(H5::PredType::NATIVE_DOUBLE, &timeStep);
       // Local oscillator frequency
       H5::DataSpace loFreqSpc(H5S_SCALAR);
@@ -629,8 +629,8 @@ int main(int argc, char *argv[]) {
 
       // Create the buffer for writing in the voltage data
       double bufferIn[DSPACE_DIM];
-      for (uint i{0}; i < grV->GetN(); i++) {
-        bufferIn[i] = grV->GetPointY(i);
+      for (uint i{0}; i < grV->size(); i++) {
+        bufferIn[i] = grV->at(i);
       }
       dataset->write(bufferIn, H5::PredType::NATIVE_DOUBLE, *dspace);
 
