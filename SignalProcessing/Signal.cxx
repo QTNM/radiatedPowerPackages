@@ -446,12 +446,8 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       // We only need to save 1 out of every 10 of these values to the final
       // signal graphs
       if (sample10Num % 10 == 0) {
-        /*
         grVITime->SetPoint(grVITime->GetN(), sample10Time, viFiltered);
         grVQTime->SetPoint(grVQTime->GetN(), sample10Time, vqFiltered);
-        */
-        vecVITime->push_back(viFiltered);
-        vecVQTime->push_back(vqFiltered);
       }
 
       sample10Num++;
@@ -474,8 +470,6 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
 rad::Signal::~Signal() {
   delete grVITime;
   delete grVQTime;
-  delete vecVITime;
-  delete vecVQTime;
 }
 
 void rad::Signal::GetFileInfo() {
@@ -1143,8 +1137,6 @@ void rad::Signal::CreateVoltageGraphs() {
   grVQTime->GetYaxis()->SetTitle("V_{Q}");
   grVITime->GetXaxis()->SetTitle("Time [s]");
   grVQTime->GetXaxis()->SetTitle("Time [s]");
-  vecVITime = new std::vector<double>;
-  vecVQTime = new std::vector<double>;
 }
 
 double rad::Signal::CalcInitialFreq() {
