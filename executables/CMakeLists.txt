@@ -126,3 +126,7 @@ target_link_libraries(TwoElectronSim PRIVATE BasicFunctions ElectronDynamics ${R
 add_executable(EventGenWithScattering EventGenWithScattering.cxx)
 target_link_libraries(EventGenWithScattering PRIVATE BasicFunctions ElectronDynamics Scattering SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
 target_include_directories(EventGenWithScattering PRIVATE ${HDF5_INCLUDE_DIRS})
+
+add_executable(TemplateGeneration TemplateGeneration.cxx)
+target_link_libraries(TemplateGeneration PRIVATE BasicFunctions ElectronDynamics Scattering SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
+target_include_directories(TemplateGeneration PRIVATE ${HDF5_INCLUDE_DIRS})
