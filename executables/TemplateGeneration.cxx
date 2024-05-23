@@ -41,6 +41,82 @@ using namespace rad;
 using std::cout;
 using std::endl;
 
+bool GenerateElectron(TString file, TVector3 pos, TVector3 vel,
+                      BaseField* field, long double stepSize, double simTime) {
+  bool isTrapped{true};
+  TFile fT(file, "recreate");
+  TTree tree("tree", "tree");
+  double time{};
+  double xPos{}, yPos{}, zPos{};
+  double xVel{}, yVel{}, zVel{};
+  double xAcc{}, yAcc{}, zAcc{};
+  tree.Branch("time", &time);
+  tree.Branch("xPos", &xPos);
+  tree.Branch("yPos", &yPos);
+  tree.Branch("zPos", &zPos);
+  tree.Branch("xVel", &xVel);
+  tree.Branch("yVel", &yVel);
+  tree.Branch("zVel", &zVel);
+  tree.Branch("xAcc", &xAcc);
+  tree.Branch("yAcc", &yAcc);
+  tree.Branch("zAcc", &zAcc);
+  time = 0;
+  xPos = pos.X();
+  yPos = pos.Y();
+  zPos = pos.Z();
+  xVel = pos.X();
+  yVel = pos.Y();
+  zVel = pos.Z();
+  const double tau{2 * R_E / (3 * TMath::C())};
+  BorisSolver solver(field, -TMath::Qe(), ME, tau);
+  TVector3 acc{solver.acc(pos, vel)};
+  xAcc = acc.X();
+  yAcc = acc.Y();
+  zAcc = acc.Z();
+  tree.Fill();
+
+  TVector3 p{pos};
+  TVector3 v{vel};
+
+  unsigned long nSteps{1};
+  while (time <= simTime && isTrapped) {
+    time = (long double)nSteps * stepSize;
+    if (std::fmod(time, 5e-6) < stepSize) {
+      std::cout << "Simulated " << time * 1e6 << " us\n";
+    }
+
+    // Advance the electron
+    auto outputStep = solver.advance_step(stepSize, p, v);
+    p = std::get<0>(outputStep);
+    if (abs(p.Z()) > 7.5e-2) {
+      std::cout << "Electron escaped after " << time * 1e6 << " us\n";
+      isTrapped = false;
+      break;
+    }
+
+    v = std::get<1>(outputStep);
+    acc = solver.acc(p, v);
+
+    // Write to tree
+    xPos = p.X();
+    yPos = p.Y();
+    zPos = p.Z();
+    xVel = v.X();
+    yVel = v.Y();
+    zVel = v.Z();
+    xAcc = acc.X();
+    yAcc = acc.Y();
+    zAcc = acc.Z();
+    tree.Fill();
+    nSteps++;
+  }
+
+  fT.cd();
+  tree.Write("", TObject::kOverwrite);
+  fT.Close();
+  return isTrapped;
+}
+
 /// @brief Function for generating a random file string
 /// @return A unique string which can be used for file names
 std::string make_uuid() {
@@ -200,27 +276,19 @@ int main(int argc, char* argv[]) {
         std::string trackFileExt{make_uuid()};
         TString trackFile{trackDir +
                           Form("/track_%s.root", trackFileExt.data())};
-        ElectronTrajectoryGen traj(trackFile, field, startPos, initialVel,
-                                   simStepSize, maxSimTime);
-        // Check that the electron is actually trapped
-        TFile fTrack(trackFile, "READ");
-        TTree* tTrack = (TTree*)fTrack.Get("tree");
-        double zEnd{0};
-        tTrack->SetBranchAddress("zPos", &zEnd);
-        tTrack->GetEntry(tTrack->GetEntries() - 1);
 
-        if (abs(zEnd) > 10e-2) {
-          cout << "Electron escaped trap. Skipping.\n";
+        bool isTrapped{GenerateElectron(trackFile, startPos, initialVel, field,
+                                        simStepSize, maxSimTime)};
+
+        // If the electron is not trapped, delete the file and move on
+        if (!isTrapped) {
           // Delete the track file
           gSystem->Exec("rm -f " + trackFile);
-          simCounter++;
           continue;
         }
-        fTrack.Close();
 
-        // Now generate the signal
+        // Generate the signal
         Signal signal(trackFile, wg, lo, sampleRate);
-        // Get the output voltage
         auto grV{signal.GetVITimeDomain()};
 
         // Delete the track file
