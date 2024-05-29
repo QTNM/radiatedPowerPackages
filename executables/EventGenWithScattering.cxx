@@ -436,7 +436,7 @@ int main(int argc, char *argv[]) {
   uint nGenerated{0};
   const double rhoGenMax{5e-3};     // metres
   const double energyWindow{1000};  // eV
-  const double zLimit{wgLength / 2};
+  const double zLimit{wgLength / 8};
   while (nGenerated < nEvents) {
     const clock_t startEventClock{clock()};
 

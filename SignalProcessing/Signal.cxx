@@ -1028,6 +1028,10 @@ long double rad::Signal::GetRetardedTime(long double ts, unsigned int antInd) {
       timeVals.at(0) = timeVec.at(chosenInd) - deltaT;
       advancedTimeVals.at(0) =
           advancedTimeVec.at(antInd).at(chosenInd) - deltaAT;
+    } else if (chosenInd > advancedTimeVec.at(antInd).size() - 3) {
+      chosenInd = advancedTimeVec.at(antInd).size() - 3;
+      timeVals.at(0) = timeVec.at(chosenInd - 1);
+      advancedTimeVals.at(0) = advancedTimeVec.at(antInd).at(chosenInd - 1);
     } else {
       timeVals.at(0) = timeVec.at(chosenInd - 1);
       advancedTimeVals.at(0) = advancedTimeVec.at(antInd).at(chosenInd - 1);
@@ -1078,6 +1082,8 @@ int rad::Signal::GetFirstGuessPoint(long double ts, unsigned int antInd) {
       int(round(pntsPerTime * (ts - advancedTimeVec.at(antInd).at(0))))};
   if (firstGuessPnt < 0)
     return 0;
+  else if (firstGuessPnt >= taVecSize)
+    return taVecSize - 1;
   else
     return firstGuessPnt;
 }
