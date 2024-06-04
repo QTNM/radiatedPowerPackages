@@ -443,7 +443,7 @@ int main(int argc, char *argv[]) {
     // Create a uniform distribution
     std::uniform_real_distribution<double> uni1(0, 1);
     // Generate the initial electron position
-    double zGen{-zLimit + uni1(gen) * 2 * zLimit};
+    double zGen{0};
     const double rhoGen{rhoGenMax * sqrt(uni1(gen))};
     const double phiPosGen{uni1(gen) * 2 * M_PI};
     TVector3 initPos(rhoGen * cos(phiPosGen), rhoGen * sin(phiPosGen), zGen);
