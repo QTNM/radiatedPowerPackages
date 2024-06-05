@@ -536,7 +536,7 @@ int main(int argc, char *argv[]) {
       H5::DataSpace timeStepSpace(H5S_SCALAR);
       H5::Attribute timeStepAttr{dataset->createAttribute(
           "Time step [seconds]", H5::PredType::NATIVE_DOUBLE, timeStepSpace)};
-      double timeStep{grV->GetPointX(1) - grV->GetPointX(0)};
+      double timeStep{1.0 / sampleRate};
       timeStepAttr.write(H5::PredType::NATIVE_DOUBLE, &timeStep);
       // Local oscillator frequency
       H5::DataSpace loFreqSpc(H5S_SCALAR);
