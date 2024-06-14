@@ -219,15 +219,11 @@ int main(int argc, char* argv[]) {
   // Figure out which points to run
   const double rhoGenMin{0};     // metres
   const double rhoGenMax{6e-3};  // metres
-  const uint nRhoPnts{15};
-  const double phiGenMin{0};         // radians
-  const double phiGenMax{2 * M_PI};  // radians
-  const uint nPhiPnts{15};
+  const uint nRhoPnts{55};
   const double pitchAngleGenMin{86 * M_PI / 180};  // radians
   const double pitchAngleGenMax{90 * M_PI / 180};  // radians
-  const uint nPitchAnglePnts{15};
-  const uint nTotalSims{nRhoPnts * nPhiPnts * nPitchAnglePnts -
-                        (nPhiPnts - 1) * nPitchAnglePnts};
+  const uint nPitchAnglePnts{55};
+  const uint nTotalSims{nRhoPnts * nPitchAnglePnts};
   uint simCounter{1};
 
   // Convert kinetic energy to string
@@ -248,135 +244,129 @@ int main(int argc, char* argv[]) {
   for (uint iRho{0}; iRho < nRhoPnts; iRho++) {
     double rho{rhoGenMin +
                double(iRho) * (rhoGenMax - rhoGenMin) / double(nRhoPnts - 1)};
-    for (uint iPhi{0}; iPhi < nPhiPnts; iPhi++) {
-      double phi{phiGenMin +
-                 double(iPhi) * (phiGenMax - phiGenMin) / double(nPhiPnts)};
-      if (rho == 0 && phi != 0) continue;
 
-      for (uint iPitch{0}; iPitch < nPitchAnglePnts; iPitch++) {
-        const clock_t startEventClock = clock();
-        double pitchAngle{pitchAngleGenMin +
-                          double(iPitch) *
-                              (pitchAngleGenMax - pitchAngleGenMin) /
-                              double(nPitchAnglePnts - 1)};
+    for (uint iPitch{0}; iPitch < nPitchAnglePnts; iPitch++) {
+      const clock_t startEventClock = clock();
+      double pitchAngle{pitchAngleGenMin +
+                        double(iPitch) * (pitchAngleGenMax - pitchAngleGenMin) /
+                            double(nPitchAnglePnts - 1)};
 
-        cout << "Generating electron " << simCounter << " of " << nTotalSims
-             << " with (x, y) = (" << rho * cos(phi) << ", " << rho * sin(phi)
-             << ")" << " and pitch angle = " << pitchAngle * 180 / M_PI
-             << " degrees\n";
-        const double zGen{0};  // metres
-        TVector3 startPos{rho * cos(phi), rho * sin(phi), zGen};
-        double xStart{startPos.X()};
-        double yStart{startPos.Y()};
-        double initialSpeed{GetSpeedFromKE(kineticEnergy, ME)};
-        TVector3 initialVel(sin(pitchAngle), 0, cos(pitchAngle));
-        initialVel *= initialSpeed;
+      cout << "Generating electron " << simCounter << " of " << nTotalSims
+           << " with rho = " << rho * 1e3
+           << " mm and pitch angle = " << pitchAngle * 180 / M_PI
+           << " degrees\n";
 
-        // Create the electron
-        std::string trackFileExt{make_uuid()};
-        TString trackFile{trackDir +
-                          Form("/track_%s.root", trackFileExt.data())};
+      TVector3 initialVel(sin(pitchAngle), 0, cos(pitchAngle));
+      double initialSpeed{GetSpeedFromKE(kineticEnergy, ME)};
+      initialVel *= initialSpeed;
+      const double gyroradius{GetGyroradius(initialVel, centralField, ME)};
+      const double zGen{0};  // metres
+      TVector3 startPos{rho, 0, zGen};
+      double xStart{startPos.X()};
+      double yStart{startPos.Y()};
 
-        bool isTrapped{GenerateElectron(trackFile, startPos, initialVel, field,
-                                        simStepSize, maxSimTime)};
+      // Create the electron
+      std::string trackFileExt{make_uuid()};
+      TString trackFile{trackDir + Form("/track_%s.root", trackFileExt.data())};
 
-        // If the electron is not trapped, delete the file and move on
-        if (!isTrapped) {
-          // Delete the track file
-          gSystem->Exec("rm -f " + trackFile);
-          continue;
-        }
+      bool isTrapped{GenerateElectron(trackFile, startPos, initialVel, field,
+                                      simStepSize, maxSimTime)};
 
-        // Generate the signal
-        Signal signal(trackFile, wg, lo, sampleRate);
-        auto grV{signal.GetVITimeDomain()};
-
+      // If the electron is not trapped, delete the file and move on
+      if (!isTrapped) {
         // Delete the track file
         gSystem->Exec("rm -f " + trackFile);
-
-        // Create dataspace for the signal
-        const unsigned int DSPACE_DIM = grV->GetN();
-        const unsigned int DSPACE_RANK{1};
-        hsize_t dim[] = {DSPACE_DIM};
-        auto dspace = new H5::DataSpace(DSPACE_RANK, dim);
-
-        // Create dataset and write it into the file
-        const std::string DATASET_NAME(GROUP_NAME + "/signal" +
-                                       std::to_string(simCounter));
-        auto dataset = new H5::DataSet(file->createDataSet(
-            DATASET_NAME, H5::PredType::NATIVE_DOUBLE, *dspace, plist));
-
-        // Define attributes for the dataset
-        dataset
-            ->createAttribute("Time step [seconds]",
-                              H5::PredType::NATIVE_DOUBLE,
-                              H5::DataSpace(H5S_SCALAR))
-            .write(H5::PredType::NATIVE_DOUBLE, &simStepSize);
-        dataset
-            ->createAttribute("Rho [metres]", H5::PredType::NATIVE_DOUBLE,
-                              H5::DataSpace(H5S_SCALAR))
-            .write(H5::PredType::NATIVE_DOUBLE, &rho);
-        dataset
-            ->createAttribute("Phi [radians]", H5::PredType::NATIVE_DOUBLE,
-                              H5::DataSpace(H5S_SCALAR))
-            .write(H5::PredType::NATIVE_DOUBLE, &phi);
-        dataset
-            ->createAttribute("Pitch angle [radians]",
-                              H5::PredType::NATIVE_DOUBLE,
-                              H5::DataSpace(H5S_SCALAR))
-            .write(H5::PredType::NATIVE_DOUBLE, &pitchAngle);
-        dataset
-            ->createAttribute("Kinetic energy [eV]",
-                              H5::PredType::NATIVE_DOUBLE,
-                              H5::DataSpace(H5S_SCALAR))
-            .write(H5::PredType::NATIVE_DOUBLE, &kineticEnergy);
-        dataset
-            ->createAttribute("xStart [metres]", H5::PredType::NATIVE_DOUBLE,
-                              H5::DataSpace(H5S_SCALAR))
-            .write(H5::PredType::NATIVE_DOUBLE, &xStart);
-        dataset
-            ->createAttribute("yStart [metres]", H5::PredType::NATIVE_DOUBLE,
-                              H5::DataSpace(H5S_SCALAR))
-            .write(H5::PredType::NATIVE_DOUBLE, &yStart);
-        dataset
-            ->createAttribute("f_LO [Hertz]", H5::PredType::NATIVE_DOUBLE,
-                              H5::DataSpace(H5S_SCALAR))
-            .write(H5::PredType::NATIVE_DOUBLE, &loFreq);
-
-        // Trap and coil config
-        dataset
-            ->createAttribute("r_coil [metres]", H5::PredType::NATIVE_DOUBLE,
-                              H5::DataSpace(H5S_SCALAR))
-            .write(H5::PredType::NATIVE_DOUBLE, &rCoil);
-        dataset
-            ->createAttribute("i_coil [Amps]", H5::PredType::NATIVE_DOUBLE,
-                              H5::DataSpace(H5S_SCALAR))
-            .write(H5::PredType::NATIVE_DOUBLE, &iCoil);
-        dataset
-            ->createAttribute("B_bkg [Tesla]", H5::PredType::NATIVE_DOUBLE,
-                              H5::DataSpace(H5S_SCALAR))
-            .write(H5::PredType::NATIVE_DOUBLE, &bkgField);
-        dataset
-            ->createAttribute("r_wg [metres]", H5::PredType::NATIVE_DOUBLE,
-                              H5::DataSpace(H5S_SCALAR))
-            .write(H5::PredType::NATIVE_DOUBLE, &wgRadius);
-
-        // Create the buffer for writing in the voltage data
-        double bufferIn[DSPACE_DIM];
-        for (uint i{0}; i < grV->GetN(); i++) {
-          bufferIn[i] = grV->GetPointY(i);
-        }
-        dataset->write(bufferIn, H5::PredType::NATIVE_DOUBLE, *dspace);
-
-        simCounter++;
-        const clock_t endEventClock = clock();
-        cout << "Event generation took "
-             << double(endEventClock - startEventClock) / CLOCKS_PER_SEC
-             << " s\n";
-
-        delete dataset;
-        delete dspace;
+        continue;
       }
+
+      // Generate the signal
+      Signal signal(trackFile, wg, lo, sampleRate);
+      auto grV{signal.GetVITimeDomain()};
+
+      // Delete the track file
+      gSystem->Exec("rm -f " + trackFile);
+
+      // Create dataspace for the signal
+      const unsigned int DSPACE_DIM = grV->GetN();
+      const unsigned int DSPACE_RANK{1};
+      hsize_t dim[] = {DSPACE_DIM};
+      auto dspace = new H5::DataSpace(DSPACE_RANK, dim);
+
+      // Create dataset and write it into the file
+      const std::string DATASET_NAME(GROUP_NAME + "/signal" +
+                                     std::to_string(simCounter));
+      auto dataset = new H5::DataSet(file->createDataSet(
+          DATASET_NAME, H5::PredType::NATIVE_DOUBLE, *dspace, plist));
+
+      // Define attributes for the dataset
+      dataset
+          ->createAttribute("Time step [seconds]", H5::PredType::NATIVE_DOUBLE,
+                            H5::DataSpace(H5S_SCALAR))
+          .write(H5::PredType::NATIVE_DOUBLE, &simStepSize);
+      dataset
+          ->createAttribute("Rho [metres]", H5::PredType::NATIVE_DOUBLE,
+                            H5::DataSpace(H5S_SCALAR))
+          .write(H5::PredType::NATIVE_DOUBLE, &rho);
+      double phi{0};
+      dataset
+          ->createAttribute("Phi [radians]", H5::PredType::NATIVE_DOUBLE,
+                            H5::DataSpace(H5S_SCALAR))
+          .write(H5::PredType::NATIVE_DOUBLE, &phi);
+      dataset
+          ->createAttribute("Pitch angle [radians]",
+                            H5::PredType::NATIVE_DOUBLE,
+                            H5::DataSpace(H5S_SCALAR))
+          .write(H5::PredType::NATIVE_DOUBLE, &pitchAngle);
+      dataset
+          ->createAttribute("Kinetic energy [eV]", H5::PredType::NATIVE_DOUBLE,
+                            H5::DataSpace(H5S_SCALAR))
+          .write(H5::PredType::NATIVE_DOUBLE, &kineticEnergy);
+      dataset
+          ->createAttribute("xStart [metres]", H5::PredType::NATIVE_DOUBLE,
+                            H5::DataSpace(H5S_SCALAR))
+          .write(H5::PredType::NATIVE_DOUBLE, &xStart);
+      dataset
+          ->createAttribute("yStart [metres]", H5::PredType::NATIVE_DOUBLE,
+                            H5::DataSpace(H5S_SCALAR))
+          .write(H5::PredType::NATIVE_DOUBLE, &yStart);
+      dataset
+          ->createAttribute("f_LO [Hertz]", H5::PredType::NATIVE_DOUBLE,
+                            H5::DataSpace(H5S_SCALAR))
+          .write(H5::PredType::NATIVE_DOUBLE, &loFreq);
+
+      // Trap and coil config
+      dataset
+          ->createAttribute("r_coil [metres]", H5::PredType::NATIVE_DOUBLE,
+                            H5::DataSpace(H5S_SCALAR))
+          .write(H5::PredType::NATIVE_DOUBLE, &rCoil);
+      dataset
+          ->createAttribute("i_coil [Amps]", H5::PredType::NATIVE_DOUBLE,
+                            H5::DataSpace(H5S_SCALAR))
+          .write(H5::PredType::NATIVE_DOUBLE, &iCoil);
+      dataset
+          ->createAttribute("B_bkg [Tesla]", H5::PredType::NATIVE_DOUBLE,
+                            H5::DataSpace(H5S_SCALAR))
+          .write(H5::PredType::NATIVE_DOUBLE, &bkgField);
+      dataset
+          ->createAttribute("r_wg [metres]", H5::PredType::NATIVE_DOUBLE,
+                            H5::DataSpace(H5S_SCALAR))
+          .write(H5::PredType::NATIVE_DOUBLE, &wgRadius);
+
+      // Create the buffer for writing in the voltage data
+      double bufferIn[DSPACE_DIM];
+      for (uint i{0}; i < grV->GetN(); i++) {
+        bufferIn[i] = grV->GetPointY(i);
+      }
+      dataset->write(bufferIn, H5::PredType::NATIVE_DOUBLE, *dspace);
+
+      simCounter++;
+      const clock_t endEventClock = clock();
+      cout << "Event generation took "
+           << double(endEventClock - startEventClock) / CLOCKS_PER_SEC
+           << " s\n";
+
+      delete dataset;
+      delete dspace;
     }
   }
 
