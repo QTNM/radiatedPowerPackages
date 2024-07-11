@@ -920,9 +920,11 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       // Calculate the field amplitudes
       double ampPlus{
           waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
+      /*
       double ampMinus{
           waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
-      ampVals.at(0) = ampMinus + ampPlus;
+      */
+      ampVals.at(0) = /*ampMinus +*/ ampPlus;
     }
 
     // Now add the other elements for the interpolation
@@ -934,9 +936,9 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       // Calculate the field amplitudes
       double ampPlus{
           waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
-      double ampMinus{
-          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
-      ampVals.at(iEl) = ampMinus + ampPlus;
+      // double ampMinus{
+      //    waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
+      ampVals.at(iEl) = /*ampMinus +*/ ampPlus;
     }
 
     double ampInterp{CubicInterpolation(timeVals, ampVals, tr)};
