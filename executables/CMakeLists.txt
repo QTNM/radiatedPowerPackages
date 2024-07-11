@@ -130,3 +130,7 @@ target_include_directories(EventGenWithScattering PRIVATE ${HDF5_INCLUDE_DIRS})
 add_executable(TemplateGeneration TemplateGeneration.cxx)
 target_link_libraries(TemplateGeneration PRIVATE BasicFunctions ElectronDynamics Scattering SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
 target_include_directories(TemplateGeneration PRIVATE ${HDF5_INCLUDE_DIRS})
+
+add_executable(EventGenWithScatteringBathtub EventGenWithScatteringBathtub.cxx)
+target_link_libraries(EventGenWithScatteringBathtub PRIVATE BasicFunctions ElectronDynamics Scattering SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
+target_include_directories(EventGenWithScatteringBathtub PRIVATE ${HDF5_INCLUDE_DIRS})
