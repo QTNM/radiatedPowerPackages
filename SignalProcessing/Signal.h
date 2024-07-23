@@ -65,7 +65,8 @@ class Signal {
   /// @param noiseTerms Vector of noise to add
   /// @param tAcq Max acqusition time in seconds
   Signal(TString filePath, IWaveguide* wg, LocalOscillator lo, double sRate,
-         std::vector<GaussianNoise> noiseTerms = {}, double tAcq = -1);
+         std::vector<GaussianNoise> noiseTerms = {}, double tAcq = -1,
+         bool polarisation = true);
 
   /// Destructor
   ~Signal();

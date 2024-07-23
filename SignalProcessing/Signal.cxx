@@ -308,7 +308,7 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
 
 rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
                     double sRate, std::vector<GaussianNoise> noiseTerms,
-                    double tAcq)
+                    double tAcq, bool polarisation)
     : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms), waveguide(wg) {
   CreateVoltageGraphs();
   // Check if input file opens properly
@@ -426,7 +426,7 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       // First get the retarded time to calculate the fields at
       long double tr{GetRetardedTime(sample10Time, 0)};
 
-      double ei{0};
+      double vi{0};
       for (size_t iMode{0}; iMode < propagatingModes.size(); iMode++) {
         WaveguideMode wm{propagatingModes.at(iMode)};
         if (wm.GetModeType() != kTE) continue;
@@ -434,15 +434,18 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
         double normPlus{modeNormsP.at(iMode)};
         double normMinus{modeNormsM.at(iMode)};
         double modeImp{waveguide->GetModeImpedance(wm, omega)};
-        ei += CalcWgAmp(tr, wm, normPlus, omega, true) / sqrt(modeImp);
-        ei += CalcWgAmp(tr, wm, normMinus, omega, false) / sqrt(modeImp);
+        if (polarisation) {
+          vi += CalcWgAmp(tr, wm, normPlus, omega, polarisation);
+        } else {
+          vi += CalcWgAmp(tr, wm, normMinus, omega, polarisation);
+        }
       }
-      double eq{ei};
-      DownmixVoltages(ei, eq, sample10Time);
+      double vq{vi};
+      DownmixVoltages(vi, vq, sample10Time);
 
       // Now we want to filter this value and add it to the deques
-      double viFiltered{filter.FilterValues(unfilteredVi, filteredVi, ei)};
-      double vqFiltered{filter.FilterValues(unfilteredVq, filteredVq, eq)};
+      double viFiltered{filter.FilterValues(unfilteredVi, filteredVi, vi)};
+      double vqFiltered{filter.FilterValues(unfilteredVq, filteredVq, vq)};
       // We only need to save 1 out of every 10 of these values to the final
       // signal graphs
       if (sample10Num % 10 == 0) {
@@ -875,11 +878,9 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       // Calculate the field amplitudes
-      double ampPlus{
-          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
-      double ampMinus{
-          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
-      return ampPlus + ampMinus;
+      double amp{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, state, true)};
+      return amp;
     } else if (firstGuessTime < tr) {
       // We are searching upwards
       for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
@@ -918,13 +919,9 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       // Calculate the field amplitudes
-      double ampPlus{
-          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
-      /*
-      double ampMinus{
-          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
-      */
-      ampVals.at(0) = /*ampMinus +*/ ampPlus;
+      double amp{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, state, true)};
+      ampVals.at(0) = amp;
     }
 
     // Now add the other elements for the interpolation
@@ -934,11 +931,9 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       // Calculate the field amplitudes
-      double ampPlus{
-          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
-      // double ampMinus{
-      //    waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
-      ampVals.at(iEl) = /*ampMinus +*/ ampPlus;
+      double amp{
+          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, state, true)};
+      ampVals.at(iEl) = amp;
     }
 
     double ampInterp{CubicInterpolation(timeVals, ampVals, tr)};
