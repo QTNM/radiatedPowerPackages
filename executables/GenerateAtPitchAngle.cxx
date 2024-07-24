@@ -190,8 +190,9 @@ int main(int argc, char *argv[]) {
   auto wg = new CircularWaveguide(wgRadius, wgLength, probePos);
 
   // Signal processing things
-  const double sampleRate{1e9};                                  // Hz
-  const double loFreq{centralCycFreq - sampleRate / 4 + 150e6};  // Hz
+  const double sampleRate{1e9};  // Hz
+  double extraOffset = (bathtubTrap) ? 50e6 : 0;
+  const double loFreq{centralCycFreq - sampleRate / 4 + extraOffset};  // Hz
   // Define local oscillator
   LocalOscillator lo(2 * M_PI * loFreq);
 
@@ -221,9 +222,14 @@ int main(int argc, char *argv[]) {
     // Generate the initial velocity. The pitch angle is fixed but vary the
     // cyclotron phase
     const double cycPhase{uni1(gen) * 2 * M_PI};
+    // Randomly choose positive or negative z velocity
+    double zComp{1};
+    if (uni1(gen) < 0.5) {
+      zComp = -1;
+    }
     TVector3 initVel(sin(pitchAngleRadians) * cos(cycPhase),
                      sin(pitchAngleRadians) * sin(cycPhase),
-                     cos(pitchAngleRadians));
+                     zComp * cos(pitchAngleRadians));
     initVel *= initialSpeed;
 
     // Now generate the trajectory
@@ -355,6 +361,18 @@ int main(int argc, char *argv[]) {
     downmixCycFreqAttr = dataset2->createAttribute(
         "Downmixed cyclotron frequency [Hertz]", H5::PredType::NATIVE_DOUBLE,
         downmixCycFreqSpc);
+
+    // Calculate the impedance of the waveguide and write as an attribute
+    WaveguideMode te11Mode(1, 1, kTE);
+    const double zWg{wg->GetModeImpedance(te11Mode, 2 * M_PI * trueCycFreq)};
+    cout << "Mode impedance = " << zWg << " Ohms\n";
+    H5::DataSpace zWgSpc(H5S_SCALAR);
+    H5::Attribute zWgAttr{dataset1->createAttribute(
+        "Waveguide impedance [Ohms]", H5::PredType::NATIVE_DOUBLE, zWgSpc)};
+    zWgAttr.write(H5::PredType::NATIVE_DOUBLE, &zWg);
+    zWgAttr = dataset2->createAttribute("Waveguide impedance [Ohms]",
+                                        H5::PredType::NATIVE_DOUBLE, zWgSpc);
+    zWgAttr.write(H5::PredType::NATIVE_DOUBLE, &zWg);
 
     // Write the metadata for the trap config
     H5::DataSpace rCoilSpc(H5S_SCALAR);
