@@ -207,6 +207,7 @@ int main(int argc, char *argv[]) {
 
   // Start generating events
   for (unsigned int iEvent{0}; iEvent < nEvents; iEvent++) {
+    cout << "Generating event " << iEvent + 1 << " of " << nEvents << "\n";
     const clock_t startEventClock{clock()};
     // Create a uniform distribution
     std::uniform_real_distribution<double> uni1(0, 1);
@@ -440,6 +441,7 @@ int main(int argc, char *argv[]) {
 
     const clock_t endEventClock = clock();
     cout << "Event generation took "
-         << double(endEventClock - startEventClock) / CLOCKS_PER_SEC << " s\n";
+         << double(endEventClock - startEventClock) / CLOCKS_PER_SEC
+         << " s\n\n";
   }
 }
