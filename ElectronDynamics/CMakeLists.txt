@@ -1,2 +1,2 @@
-add_library(ElectronDynamics BaseField.cxx QTNMFields.cxx BorisSolver.cxx TrajectoryGen.cxx ComsolFields.cxx PenningTraps.cxx)
+add_library(ElectronDynamics BaseField.cxx QTNMFields.cxx BorisSolver.cxx TrajectoryGen.cxx ComsolFields.cxx PenningTraps.cxx Particle.cxx ManyParticleSolver.cxx)
 target_link_libraries(ElectronDynamics PUBLIC BasicFunctions ${ROOT_LIBRARIES} ${Boost_MATH_LIBRARY})
