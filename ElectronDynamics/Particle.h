@@ -14,9 +14,6 @@
 namespace rad {
 class Particle {
  private:
-  unsigned int id;
-  static unsigned int counter;
-
   TVector3 position;
   TVector3 velocity;
   TVector3 acceleration;
@@ -27,13 +24,9 @@ class Particle {
   /// @brief Parameterised constructor
   /// @param pos Initial position vector of the particle in metres
   /// @param vel Initial velocity vector of the particle in m/s
-  /// @param acc Initial acceleration vector of the particle in m/s^2
   /// @param m Mass of the particle in kg
   /// @param q Charge of the particle in C
-  Particle(TVector3 pos, TVector3 vel, TVector3 acc, double m = ME,
-           double q = -TMath::Qe());
-
-  unsigned int GetID() { return id; }
+  Particle(TVector3 pos, TVector3 vel, double m = ME, double q = -TMath::Qe());
 
   /// @brief Getter for particle position
   /// @return Particle position vector in metres
@@ -54,6 +47,18 @@ class Particle {
   /// @brief Getter for particle charge
   /// @return Particle charge in C
   double GetCharge() { return charge; }
+
+  /// @brief Setter for particle position
+  /// @param pos New position vector of the particle in metres
+  void SetPosition(TVector3 pos) { position = pos; }
+
+  /// @brief Setter for particle velocity
+  /// @param vel New velocity vector of the particle in m/s
+  void SetVelocity(TVector3 vel) { velocity = vel; }
+
+  /// @brief Setter for particle acceleration
+  /// @param acc New acceleration vector of the particle in m/s^2
+  void SetAcceleration(TVector3 acc) { acceleration = acc; }
 
   /// @brief Function to update the state of the particle
   /// @param newpos New position vector of the particle in metres
