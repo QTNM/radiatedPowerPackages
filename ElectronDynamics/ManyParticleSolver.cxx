@@ -63,8 +63,8 @@ TVector3 rad::ManyParticleSolver::radiation_acceleration(TVector3 pos,
   return acc;
 }
 
-TVector3 rad::ManyParticleSolver::calc_b_field(size_t pID) {
-  return field->evaluate_field_at_point(particles.at(pID).GetPosition());
+TVector3 rad::ManyParticleSolver::calc_b_field(TVector3 pos) {
+  return field->evaluate_field_at_point(pos);
 }
 
 TVector3 rad::ManyParticleSolver::calc_e_field(std::vector<Particle> &parts,
@@ -105,10 +105,10 @@ void rad::ManyParticleSolver::AdvanceParticles(double dt) {
 
   for (size_t iPart{0}; iPart < particles.size(); iPart++) {
     Particle p{particles.at(iPart)};
-    double gamma_n{1 / sqrt(1 - p.GetVelocity().Mag2() / pow(TMath::C(), 2))};
-    TVector3 u_n{p.GetVelocity() * gamma_n};
     TVector3 x_n{p.GetPosition()};
     TVector3 v_n{p.GetVelocity()};
+    double gamma_n{1 / sqrt(1 - v_n.Dot(v_n) / pow(TMath::C(), 2))};
+    TVector3 u_n{v_n * gamma_n};
 
     // Half position step
     TVector3 x_nplushalf{x_n + v_n * (dt / 2.0)};
@@ -120,10 +120,10 @@ void rad::ManyParticleSolver::AdvanceParticles(double dt) {
                              (p.GetMass() / p.GetCharge())};
     TVector3 u_minus{u_n +
                      (dt * p.GetCharge() / (2 * p.GetMass())) * E_tot_minus};
-    double gamma_minus{sqrt(1.0 + u_n.Mag2() / pow(TMath::C(), 2))};
+    double gamma_minus{sqrt(1.0 + u_n.Dot(u_n) / pow(TMath::C(), 2))};
 
     // Rotation step
-    TVector3 B_nplushalf{calc_b_field(iPart)};
+    TVector3 B_nplushalf{calc_b_field(x_nplushalf)};
     double theta{p.GetCharge() * dt / (p.GetMass() * gamma_minus) *
                  B_nplushalf.Mag()};
     TVector3 u_minus_par{u_minus.Dot(B_nplushalf.Unit()) * B_nplushalf.Unit()};

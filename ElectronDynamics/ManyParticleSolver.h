@@ -46,9 +46,9 @@ class ManyParticleSolver {
   TVector3 radiation_acceleration(TVector3 pos, TVector3 vel);
 
   /// @brief Returns the B field at the position
-  /// @param pID Particle
+  /// @param pos Particle position vector in metres
   /// @return Magnetic field vector in Tesla
-  TVector3 calc_b_field(size_t pID);
+  TVector3 calc_b_field(TVector3 pos);
 
   /// @brief Returns the E field at the particle position
   /// @param parts Vector of all the particles
