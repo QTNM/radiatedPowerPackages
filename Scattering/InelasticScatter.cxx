@@ -80,6 +80,12 @@ double rad::InelasticScatter::G1(double omega, double t) {
   return numerator / denom;
 }
 
+double rad::InelasticScatter::GetSingleDiffXSec_W(double W) {
+  const double omega{W / RYDBERG_EV};
+  const double t{GetIncidentKE() / RYDBERG_EV};
+  return G1(omega, t) * (g_BE(omega, t) + G4(omega, t) * G_B());
+}
+
 double rad::InelasticScatter::GetDoubleDiffXSec(double W, double theta) {
   double omega{W / RYDBERG_EV};
   double t{GetIncidentKE() / RYDBERG_EV};

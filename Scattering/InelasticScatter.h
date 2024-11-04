@@ -98,6 +98,10 @@ class InelasticScatter : public BaseScatter {
   /// @return Cross section in m^2
   double GetTotalXSec() override;
 
+  /// @brief Calculate singly-differential cross section (in W)
+  /// @param W Kinetic energy of ejected electron in eV
+  double GetSingleDiffXSec_W(double W);
+
   /// @brief Calculate the double differential cross section
   /// @param W Kinetic energy of ejected electron in eV
   /// @param theta Scattering angle of secondary electron in radians
