@@ -9,6 +9,24 @@
 
 #include "BasicFunctions/Constants.h"
 
+inline double rad::InelasticScatter::BETA() { return 0.60; }
+
+inline double rad::InelasticScatter::GAMMA() { return 10.0; }
+
+inline double rad::InelasticScatter::G_B() { return 2.9; }
+
+inline double rad::InelasticScatter::n() { return 2.5; }
+
+inline double rad::InelasticScatter::A1() { return 0.74; }
+
+inline double rad::InelasticScatter::A2() { return 0.87; }
+
+inline double rad::InelasticScatter::A3() { return -0.6; }
+
+inline double rad::InelasticScatter::S() {
+  return 4 * TMath::Pi() * pow(A0, 2);
+}
+
 double rad::InelasticScatter::GetTotalXSec() {
   double U{GetIncidentKE() / RYDBERG_EV};
   return 1.3 * TMath::Pi() * A0 * A0 * (log(U) + 4) / U;

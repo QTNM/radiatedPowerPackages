@@ -18,21 +18,21 @@ class InelasticScatter : public BaseScatter {
   // Double differenial cross-sections calculated using formulae from
   // M. E. Rudd 1991
 
-  double BETA() { return 0.60; }
+  double BETA();
 
-  double GAMMA() { return 10.0; }
+  double GAMMA();
 
-  double G_B() { return 2.9; }
+  double G_B();
 
-  double n() { return 2.5; }
+  double n();
 
-  double A1() { return 0.74; }
+  double A1();
 
-  double A2() { return 0.87; }
+  double A2();
 
-  double A3() { return -0.60; }
+  double A3();
 
-  double S() { return 4 * TMath::Pi() * pow(A0, 2); }
+  double S();
 
   /// @brief
   /// @param omega
@@ -52,7 +52,7 @@ class InelasticScatter : public BaseScatter {
   /// @return
   double G4(double omega, double t);
 
-  double G5() { return 0.33; }
+  inline double G5() { return 0.33; }
 
   /// @brief
   /// @param omega
