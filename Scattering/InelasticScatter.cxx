@@ -45,6 +45,8 @@ double rad::InelasticScatter::G4(double omega, double t) {
   return GAMMA() * pow(1 - omega / t, 3) / (t * (omega + 1));
 }
 
+inline double rad::InelasticScatter::G5() { return 0.33; }
+
 double rad::InelasticScatter::f_BE(double omega, double t, double theta) {
   double g2{G2(omega, t)};
   double g3{G3(omega, t)};

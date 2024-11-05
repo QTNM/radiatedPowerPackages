@@ -52,7 +52,7 @@ class InelasticScatter : public BaseScatter {
   /// @return
   double G4(double omega, double t);
 
-  inline double G5() { return 0.33; }
+  double G5();
 
   /// @brief
   /// @param omega
