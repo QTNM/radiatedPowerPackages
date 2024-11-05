@@ -37,8 +37,7 @@ double rad::InelasticScatter::G2(double omega, double t) {
 }
 
 double rad::InelasticScatter::G3(double omega, double t) {
-  double g2{G2(omega, t)};
-  return BETA() * sqrt((1 - g2 * g2) / omega);
+  return BETA() * sqrt((1 - pow(G2(omega, t), 2)) / omega);
 }
 
 double rad::InelasticScatter::G4(double omega, double t) {
@@ -48,9 +47,7 @@ double rad::InelasticScatter::G4(double omega, double t) {
 inline double rad::InelasticScatter::G5() { return 0.33; }
 
 double rad::InelasticScatter::f_BE(double omega, double t, double theta) {
-  double g2{G2(omega, t)};
-  double g3{G3(omega, t)};
-  return 1.0 / (1 + pow((cos(theta) - g2) / g3, 2));
+  return 1.0 / (1 + pow((cos(theta) - G2(omega, t)) / G3(omega, t), 2));
 }
 
 double rad::InelasticScatter::f_b(double theta) {
