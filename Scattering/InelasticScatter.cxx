@@ -85,36 +85,50 @@ double rad::InelasticScatter::GetSingleDiffXSec_W(double W) {
   return G1(omega, t) * (g_BE(omega, t) + G4(omega, t) * G_B());
 }
 
+double rad::InelasticScatter::CDF_SingleDiffXSec_W(double omega, double t) {
+  const double term1{(1 - pow(omega + 1, 1 - n()) + pow(t - omega, 1 - n()) -
+                      pow(t, 1 - n())) /
+                     (n() - 1)};
+  const double term2{(2 / (n() - 2)) * pow(2 / (t + 1), n() / 2) *
+                     (1 - pow(omega + 1, 1 - n() / 2))};
+  const double g_1{(1 - pow(t, 1 - n())) / (n() - 1) -
+                   pow(2 / (t + 1), n() / 2) * (1 - pow(t, 1 - n() / 2)) /
+                       (n() - 2)};
+  return 0.5 * (term1 - term2) / g_1;
+}
+
+double rad::InelasticScatter::CDF_DoubleDiffXSec_theta(double omega, double t,
+                                                       double theta) {
+  const double term1{-2 * M_PI * G3(omega, t) *
+                     (atan((cos(theta) - G2(omega, t)) / G3(omega, t)) +
+                      atan((G2(omega, t) - 1) / G3(omega, t)))};
+  const double term2{2 * M_PI * G5() *
+                     (atan(2 / G5()) - atan((1 + cos(theta)) / G5()))};
+  return (term1 + G4(omega, t) * term2) /
+         GetSingleDiffXSec_W(omega * RYDBERG_EV);
+}
+
 double rad::InelasticScatter::GetDoubleDiffXSec(double W, double theta) {
   double omega{W / RYDBERG_EV};
   double t{GetIncidentKE() / RYDBERG_EV};
-  double g1{G1(omega, t)};
-  double g4{G4(omega, t)};
-  return g1 * (f_BE(omega, t, theta) + g4 * f_b(theta));
+  return G1(omega, t) * (f_BE(omega, t, theta) + G4(omega, t) * f_b(theta));
 }
 
 double rad::InelasticScatter::GetRandomW() {
-  const unsigned int nBins{200};
+  const unsigned int nBins{5000};
   const double omegaMin{0};
   const double omegaMax{8};
-  const double wMin{omegaMin * RYDBERG_EV};
-  const double wMax{omegaMax * RYDBERG_EV};
+  const double wMax{GetIncidentKE() - RYDBERG_EV};
+  const double wMin{(GetIncidentKE() - RYDBERG_EV) / 2};
   const double wBinWidth{(wMax - wMin) / double(nBins)};
-  const double thetaMin{0};
-  const double thetaMax{TMath::PiOver2()};
-  const double thetaBinWidth{(thetaMax - thetaMin) / double(nBins)};
 
   // Build the distribution of differential cross-section
   std::vector<double> wVec{};
   std::vector<double> xsecVec{};
   for (unsigned int iW{0}; iW < nBins; iW++) {
-    double diffXSec{0};
     double w{wMin + wBinWidth / 2 + double(iW) * wBinWidth};
+    double diffXSec{GetSingleDiffXSec_W(w)};
     wVec.push_back(w);
-    for (unsigned int iT{0}; iT < nBins; iT++) {
-      double theta{thetaMin + thetaBinWidth / 2 + double(iT) * thetaBinWidth};
-      diffXSec += GetDoubleDiffXSec(w, theta) * wBinWidth;
-    }
     xsecVec.push_back(diffXSec);
   }
 
@@ -127,7 +141,7 @@ double rad::InelasticScatter::GetRandomW() {
 }
 
 double rad::InelasticScatter::GetRandomTheta(double W) {
-  const unsigned int nBins{200};
+  const unsigned int nBins{400};
   const double thetaMin{0};
   const double thetaMax{TMath::PiOver2()};
   const double thetaBinWidth{(thetaMax - thetaMin) / double(nBins)};
