@@ -79,3 +79,6 @@ target_link_libraries(SyntheticSignals PRIVATE Antennas BasicFunctions ElectronD
 
 add_executable(TwoElectronSim TwoElectronSim.cxx)
 target_link_libraries(TwoElectronSim PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(SecondaryElectronProduction SecondaryElectronProduction.cxx)
+target_link_libraries(SecondaryElectronProduction PRIVATE BasicFunctions ElectronDynamics Scattering ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
