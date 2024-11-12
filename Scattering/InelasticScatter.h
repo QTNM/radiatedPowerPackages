@@ -12,12 +12,14 @@
 #include "TMath.h"
 
 namespace rad {
+enum class CalcType { Rudd1991, Kim1994 };
+enum class Species { H, He, H2 };
+
 class InelasticScatter : public BaseScatter {
  private:
   // Private member functions
-  // Double differenial cross-sections calculated using formulae from
-  // M. E. Rudd 1991
-
+  // Double differential cross-sections calculated using formulae from either
+  // M. E. Rudd 1991 or Kim & Rudd 1994
   double BETA();
 
   double GAMMA();
@@ -104,10 +106,37 @@ class InelasticScatter : public BaseScatter {
   /// @return CDF for a given value of theta and omega
   double CDF_DoubleDiffXSec_theta(double omega, double t, double theta);
 
+  /// @brief Return binding energy for the given atom/molecule
+  /// @return Binding energy in eV
+  double B();
+
+  /// @brief Get the average KE of the electron in a subshell
+  /// @return Average KE in eV
+  double U();
+
+  double N();
+
+  double Ni();
+
+  /// @brief Integral of generalised oscillator strength
+  /// @return Integral of GOS
+  double D();
+
+  /// @brief Calculate the differential oscillator strength
+  /// @param omega Normalised outgoing electron energy
+  /// @return Differential oscillator strength (wrt omega)
+  double DiffOscillatorStrength(double omega);
+
+  CalcType calcType;
+
+  Species species;
+
  public:
   /// @brief Override constructor
   /// @param T Incident kinetic energy in eV
-  InelasticScatter(double T) : BaseScatter(T) {}
+  /// @param calc Calculation type tp use
+  InelasticScatter(double T, CalcType calc = CalcType::Rudd1991,
+                   Species spec = Species::H);
 
   /// @brief Calculate total inelastic cross section on atomic hydrogen
   /// @return Cross section in m^2

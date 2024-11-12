@@ -6,8 +6,12 @@
 
 #include <cmath>
 #include <random>
+#include <stdexcept>
 
 #include "BasicFunctions/Constants.h"
+
+rad::InelasticScatter::InelasticScatter(double T, CalcType calc, Species spec)
+    : BaseScatter(T), calcType(calc), species(spec) {}
 
 inline double rad::InelasticScatter::BETA() { return 0.60; }
 
@@ -23,13 +27,30 @@ inline double rad::InelasticScatter::A2() { return 0.87; }
 
 inline double rad::InelasticScatter::A3() { return -0.6; }
 
-inline double rad::InelasticScatter::S() {
-  return 4 * TMath::Pi() * pow(A0, 2);
+double rad::InelasticScatter::S() {
+  if (calcType == CalcType::Rudd1991) {
+    return 4 * TMath::Pi() * pow(A0, 2);
+  } else if (calcType == CalcType::Kim1994) {
+    const double bohrXSec{4 * M_PI * pow(A0, 2)};
+    return bohrXSec * N() * pow(RYDBERG_EV / B(), 2);
+  } else {
+    throw std::invalid_argument("Calculation type not recognised");
+  }
 }
 
 double rad::InelasticScatter::GetTotalXSec() {
-  double U{GetIncidentKE() / RYDBERG_EV};
-  return 1.3 * TMath::Pi() * A0 * A0 * (log(U) + 4) / U;
+  if (calcType == CalcType::Rudd1991) {
+    double U{GetIncidentKE() / RYDBERG_EV};
+    return 1.3 * TMath::Pi() * A0 * A0 * (log(U) + 4) / U;
+  } else if (calcType == CalcType::Kim1994) {
+    const double t{GetIncidentKE() / B()};
+    const double u{U() / B()};
+    const double prefac{S() / (t + u + 1)};
+    return prefac *
+           (D() * log(t) + (2 - Ni() / N()) * ((t - 1) / t - log(t) / (t + 1)));
+  } else {
+    throw std::invalid_argument("Calculation type not recognised");
+  }
 }
 
 double rad::InelasticScatter::G2(double omega, double t) {
@@ -80,9 +101,25 @@ double rad::InelasticScatter::G1(double omega, double t) {
 }
 
 double rad::InelasticScatter::GetSingleDiffXSec_W(double W) {
-  const double omega{W / RYDBERG_EV};
-  const double t{GetIncidentKE() / RYDBERG_EV};
-  return G1(omega, t) * (g_BE(omega, t) + G4(omega, t) * G_B());
+  if (calcType == CalcType::Rudd1991) {
+    const double omega{W / RYDBERG_EV};
+    const double t{GetIncidentKE() / RYDBERG_EV};
+    return G1(omega, t) * (g_BE(omega, t) + G4(omega, t) * G_B());
+  } else if (calcType == CalcType::Kim1994) {
+    const double t{GetIncidentKE() / B()};
+    const double u{U() / B()};
+    const double omega{W / B()};
+    const double prefac{S() / (B() * (t + u + 1))};
+    const double term1{(Ni() / N() - 2) / (t + 1) *
+                       (1 / (omega + 1) + 1 / (t - omega))};
+    const double term2{(2 - Ni() / N()) *
+                       (1 / pow(omega + 1, 2) + 1 / pow(t - omega, 2))};
+    const double term3{log(t) / (N() * (omega + 1)) *
+                       DiffOscillatorStrength(omega)};
+    return prefac * (term1 + term2 + term3);
+  } else {
+    throw std::invalid_argument("Calculation type not recognised");
+  }
 }
 
 double rad::InelasticScatter::CDF_SingleDiffXSec_W(double omega, double t) {
@@ -174,4 +211,111 @@ double rad::InelasticScatter::GetPrimaryScatteredAngle(double W, double theta) {
   double E2Prime{W};
   double cTheta1{(E1 + E1Prime - E2Prime) / (2 * sqrt(E1 * E1Prime))};
   return acos(cTheta1);
+}
+
+double rad::InelasticScatter::B() {
+  if (species == Species::H) {
+    return 1.36057e1;
+  } else if (species == Species::He) {
+    return 2.459e1;
+  } else if (species == Species::H2) {
+    return 1.543e1;
+  } else {
+    throw std::invalid_argument("Species not recognised");
+  }
+}
+
+double rad::InelasticScatter::U() {
+  if (species == Species::H) {
+    return 1.36057e1;
+  } else if (species == Species::He) {
+    return 3.951e1;
+  } else if (species == Species::H2) {
+    return 2.568e1;
+  } else {
+    throw std::invalid_argument("Species not recognised");
+  }
+}
+
+double rad::InelasticScatter::N() {
+  if (species == Species::H) {
+    return 1.0;
+  } else if (species == Species::He) {
+    return 2.0;
+  } else if (species == Species::H2) {
+    return 2.0;
+  } else {
+    throw std::invalid_argument("Species not recognised");
+  }
+}
+
+double rad::InelasticScatter::Ni() {
+  if (species == Species::H) {
+    return 0.4343;
+  } else if (species == Species::He) {
+    return 1.605;
+  } else if (species == Species::H2) {
+    return 1.173;
+  } else {
+    throw std::invalid_argument("Species not recognised");
+  }
+}
+
+double rad::InelasticScatter::D() {
+  double b{0}, c{0}, d{0}, e{0}, f{0};
+  if (species == Species::H) {
+    b = -2.2473e-2;
+    c = 1.1775;
+    d = -4.6264e-1;
+    e = 8.9064e-2;
+    f = 0.0;
+  } else if (species == Species::He) {
+    b = 0.0;
+    c = 1.2178e1;
+    d = -2.9585e1;
+    e = 3.1251e1;
+    f = -1.2175e1;
+  } else if (species == Species::H2) {
+    b = 0.0;
+    c = 1.1262;
+    d = 6.3982;
+    e = -7.8055;
+    f = 2.1440;
+  } else {
+    throw std::invalid_argument("Species not recognised");
+  }
+  const double tTerm{(GetIncidentKE() / B() + 1) / 2};
+  const double bTerm{(b / 2) * (1 - pow(tTerm, -2))};
+  const double cTerm{(c / 3) * (1 - pow(tTerm, -3))};
+  const double dTerm{(d / 4) * (1 - pow(tTerm, -4))};
+  const double eTerm{(e / 5) * (1 - pow(tTerm, -5))};
+  const double fTerm{(f / 6) * (1 - pow(tTerm, -6))};
+  return (bTerm + cTerm + dTerm + eTerm + fTerm) / N();
+}
+
+double rad::InelasticScatter::DiffOscillatorStrength(double omega) {
+  double b{0}, c{0}, d{0}, e{0}, f{0};
+  if (species == Species::H) {
+    b = -2.2473e-2;
+    c = 1.1775;
+    d = -4.6264e-1;
+    e = 8.9064e-2;
+    f = 0.0;
+  } else if (species == Species::He) {
+    b = 0.0;
+    c = 1.2178e1;
+    d = -2.9585e1;
+    e = 3.1251e1;
+    f = -1.2175e1;
+  } else if (species == Species::H2) {
+    b = 0.0;
+    c = 1.1262;
+    d = 6.3982;
+    e = -7.8055;
+    f = 2.1440;
+  } else {
+    throw std::invalid_argument("Species not recognised");
+  }
+  return b / pow(omega + 1, 2) + c / pow(omega + 1, 3) + d / pow(omega + 1, 4) +
+         e / pow(omega + 1, 5) + f / pow(omega + 1, 6);
 }
