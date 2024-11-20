@@ -58,8 +58,15 @@ class RectangularWaveguide : public IWaveguide {
   TVector3 GetModeEField(TVector3 pos, WaveguideMode mode, double A,
                          double omega, bool state) override;
 
-  ComplexVector3 GetNormalisedEField(WaveguideMode modeType, TVector3 pos,
-                                     double omega);
+  /// @brief Get mode electric field normalised such that the dot product of the
+  /// transverse field integrated across the waveguide cross-section is equal to
+  /// unity
+  /// @param modeType
+  /// @param pos
+  /// @param omega
+  /// @return Electric field vector
+  TVector3 GetNormalisedEField(WaveguideMode modeType, TVector3 pos,
+                               double omega);
 
   /// @brief Gets the complex magnetic field strength vector for a given mode at
   /// a point

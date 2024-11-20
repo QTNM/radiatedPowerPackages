@@ -142,10 +142,11 @@ TVector3 rad::RectangularWaveguide::GetModeEField(TVector3 pos,
   }
 }
 
-rad::ComplexVector3 rad::RectangularWaveguide::GetNormalisedEField(
-    WaveguideMode mode, TVector3 pos, double omega) {
+TVector3 rad::RectangularWaveguide::GetNormalisedEField(WaveguideMode mode,
+                                                        TVector3 pos,
+                                                        double omega) {
   if (pos.X() > a / 2 || pos.Y() > b / 2 || pos.Z() > d / 2)
-    return ComplexVector3(0, 0, 0);
+    return TVector3(0, 0, 0);
 
   double x{pos.X() + a / 2.0};
   double y{pos.Y() + b / 2.0};
@@ -159,44 +160,30 @@ rad::ComplexVector3 rad::RectangularWaveguide::GetNormalisedEField(
   unsigned int n{mode.GetModeIndex2()};
 
   if (modeType == ModeType::kTE) {
-    std::complex<double> Ex{(-2.0 * TMath::Pi() * double(n)) /
-                                (k_c * b * sqrt(a * b)) *
-                                cos(double(m) * TMath::Pi() * x / a) *
-                                sin(double(n) * TMath::Pi() * y / b),
-                            0.0};
-    std::complex<double> Ey{(-2.0 * TMath::Pi() * double(m)) /
-                                (k_c * a * sqrt(a * b)) *
-                                sin(double(m) * TMath::Pi() * x / a) *
-                                cos(double(n) * TMath::Pi() * y / b),
-                            0.0};
-    std::complex<double> Ez{0, 0};
-    ComplexVector3 eField{Ex, Ey, Ez};
+    double Ex{(double(n) / b) * cos(double(m) * TMath::Pi() * x / a) *
+              sin(double(n) * TMath::Pi() * y / b)};
+    double Ey{-(double(m) / a) * sin(double(m) * TMath::Pi() * x / a) *
+              cos(double(n) * TMath::Pi() * y / b)};
+    double Ez{0};
+    TVector3 eField{Ex, Ey, Ez};
+    eField *= sqrt(4 * a * b / (pow(a * double(n), 2) + pow(b * double(m), 2)));
     if (m == 0 || n == 0) eField *= (1.0 / sqrt(2.0));
     return eField;
   } else if (modeType == ModeType::kTM) {
-    std::complex<double> i{0, 1};
-    std::complex<double> Ex{(2.0 * TMath::Pi() * double(m)) /
-                                (k_c * a * sqrt(a * b)) *
-                                cos(double(m) * TMath::Pi() * x / a) *
-                                sin(double(n) * TMath::Pi() * y / b),
-                            0};
-    std::complex<double> Ey{(2.0 * TMath::Pi() * double(n)) /
-                                (k_c * b * sqrt(a * b)) *
-                                sin(double(m) * TMath::Pi() * x / a) *
-                                cos(double(n) * TMath::Pi() * y / b),
-                            0};
-    std::complex<double> Ez{(-2.0 * i * k_c) / (beta * sqrt(a * b)) *
-                            sin(double(m) * TMath::Pi() * x / a) *
-                            sin(double(n) * TMath::Pi() * y / b)};
-    ComplexVector3 eField{Ex, Ey, Ez};
+    double Ex{-(double(m) / a) * cos(double(m) * TMath::Pi() * x / a) *
+              sin(double(n) * TMath::Pi() * y / b)};
+    double Ey{-(double(n) / b) * sin(double(m) * TMath::Pi() * x / a) *
+              cos(double(n) * TMath::Pi() * y / b)};
+    double Ez{k_c * k_c / M_PI * sin(double(m) * TMath::Pi() * x / a) *
+              sin(double(n) * TMath::Pi() * y / b)};
+    TVector3 eField{Ex, Ey, Ez};
+    eField *= sqrt(4 * a * b / (pow(a * double(m), 2) + pow(b * double(n), 2)));
     return eField;
   } else {
     // We have a TEM mode
     std::cout << "TEM modes are not supported by rectangular waveguides."
               << std::endl;
-    ComplexVector3 eField{std::complex<double>{0, 0},
-                          std::complex<double>{0, 0},
-                          std::complex<double>{0, 0}};
+    TVector3 eField(0, 0, 0);
     return eField;
   }
 }
