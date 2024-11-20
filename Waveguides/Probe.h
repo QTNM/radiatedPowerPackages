@@ -24,17 +24,20 @@ class Probe {
   /// @param state Polarisation state of the probe (where applicable
   Probe(TVector3 pos, WaveguideMode m, bool state = true);
 
+  /// @brief Default constructor
+  Probe();
+
   /// @brief Getter for probe position
   /// @return The position of the probe
-  inline TVector3 GetPosition();
+  TVector3 GetPosition();
 
   /// @brief Getter for probe mode
   /// @return The mode of the probe
-  inline WaveguideMode GetMode();
+  WaveguideMode GetMode();
 
   /// @brief Getter for probe polarisation state
   /// @return The polarisation state of the probe
-  inline bool GetPolarisationState();
+  bool GetPolarisationState();
 };
 }  // namespace rad
 

@@ -3,8 +3,13 @@
 rad::Probe::Probe(TVector3 pos, WaveguideMode m, bool state)
     : position(pos), mode(m), polarisationState(state) {}
 
-TVector3 rad::Probe::GetPosition() { return position; }
+rad::Probe::Probe()
+    : position(TVector3(0, 0, 0)),
+      mode(WaveguideMode()),
+      polarisationState(true) {}
 
-rad::WaveguideMode rad::Probe::GetMode() { return mode; }
+inline TVector3 rad::Probe::GetPosition() { return position; }
 
-bool rad::Probe::GetPolarisationState() { return polarisationState; }
+inline rad::WaveguideMode rad::Probe::GetMode() { return mode; }
+
+inline bool rad::Probe::GetPolarisationState() { return polarisationState; }
