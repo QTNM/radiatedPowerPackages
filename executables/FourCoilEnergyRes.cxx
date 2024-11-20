@@ -30,6 +30,8 @@
 #include "TSystem.h"
 #include "TTree.h"
 #include "Waveguides/CircularWaveguide.h"
+#include "Waveguides/Probe.h"
+#include "Waveguides/WaveguideMode.h"
 
 using namespace rad;
 
@@ -369,7 +371,7 @@ int main(int argc, char *argv[]) {
       const double wgRadius{7.14e-3};         // metres
       const double wgLength{0.08};            // metres
       TVector3 probePos(0, 0, wgLength / 2);  // At the end of the guide
-      auto wg = new CircularWaveguide(wgRadius, wgLength, probePos);
+      auto wg = new CircularWaveguide(wgRadius, wgLength);
 
       const double sampleRate{1.5e9};  // Hertz
       // Set up the local oscillator
@@ -381,7 +383,8 @@ int main(int argc, char *argv[]) {
       loFreq = avgCycFreq - sampleRate / 4;
       LocalOscillator lo(2 * M_PI * loFreq);
       // Actually generate the signal
-      Signal sig(trackFile, wg, lo, sampleRate);
+      Signal sig(trackFile, wg, lo, sampleRate,
+                 Probe(probePos, WaveguideMode(1, 1, kTE)));
       auto grV{sig.GetVIPowerPeriodogram(1)};
       fout.cd();
       grV->Write(Form("grV_%d", iEv));

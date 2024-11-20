@@ -34,6 +34,8 @@
 #include "TTree.h"
 #include "TVector3.h"
 #include "Waveguides/CircularWaveguide.h"
+#include "Waveguides/Probe.h"
+#include "Waveguides/WaveguideMode.h"
 
 using namespace rad;
 using std::cout;
@@ -243,7 +245,8 @@ int main(int argc, char *argv[]) {
   const double wgLength{10e-2};           // metres
   const double wgRadius{7.14e-3};         // metres
   TVector3 probePos{0, 0, wgLength / 2};  // Place probe at end of guide
-  auto wg = new CircularWaveguide(wgRadius, wgLength, probePos);
+  Probe pr(probePos, WaveguideMode(1, 1, kTE));
+  auto wg{new CircularWaveguide(wgRadius, wgLength)};
 
   // Generate a distribution to draw the electron energy from
   const double mBeta{200};  // Effective neutrino mass in eV
@@ -315,7 +318,7 @@ int main(int argc, char *argv[]) {
     // Only do signal processing if our electron is trapped
     if (isTrapped) {
       // Do noiseless for now since it's not normalised properly
-      Signal sig(trackFile, wg, lo, sampleRate);
+      Signal sig(trackFile, wg, lo, sampleRate, pr);
       auto grV{sig.GetVITimeDomain()};
 
       // We want to have the true carrier frequency as an attribute

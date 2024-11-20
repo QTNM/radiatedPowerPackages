@@ -99,7 +99,7 @@ add_executable(FourCoilEnergyRes FourCoilEnergyRes.cxx)
 target_link_libraries(FourCoilEnergyRes PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES})
 
 add_executable(SignalFromWaveguide SignalFromWaveguide.cxx)
-target_link_libraries(SignalFromWaveguide PRIVATE BasicFunctions ElectronDynamics SignalProcessing ${ROOT_LIBRARIES})
+target_link_libraries(SignalFromWaveguide PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES})
 
 add_executable(P8HarmonicTrap P8HarmonicTrap.cxx)
 target_link_libraries(P8HarmonicTrap PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES})
@@ -138,3 +138,7 @@ target_include_directories(EventGenWithScatteringBathtub PRIVATE ${HDF5_INCLUDE_
 add_executable(GenerateAtPitchAngle GenerateAtPitchAngle.cxx)
 target_link_libraries(GenerateAtPitchAngle PRIVATE BasicFunctions ElectronDynamics Scattering SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
 target_include_directories(GenerateAtPitchAngle PRIVATE ${HDF5_INCLUDE_DIRS})
+
+add_executable(TestWgTheory TestWgTheory.cxx)
+target_link_libraries(TestWgTheory PRIVATE BasicFunctions ElectronDynamics SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
+target_include_directories(TestWgTheory PRIVATE ${HDF5_INCLUDE_DIRS})

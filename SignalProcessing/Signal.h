@@ -20,6 +20,7 @@
 #include "TTree.h"
 #include "Waveguides/ICavity.h"
 #include "Waveguides/IWaveguide.h"
+#include "Waveguides/Probe.h"
 #include "Waveguides/WaveguideMode.h"
 
 namespace rad {
@@ -62,11 +63,12 @@ class Signal {
   /// @param wg Pointer to waveguide
   /// @param lo Local oscillator
   /// @param sRate Sample rate in Hertz
+  /// @param probe Probe for signal readout
   /// @param noiseTerms Vector of noise to add
   /// @param tAcq Max acqusition time in seconds
   Signal(TString filePath, IWaveguide* wg, LocalOscillator lo, double sRate,
-         std::vector<GaussianNoise> noiseTerms = {}, double tAcq = -1,
-         bool polarisation = true);
+         Probe probe, std::vector<GaussianNoise> noiseTerms = {},
+         double tAcq = -1);
 
   /// Destructor
   ~Signal();
@@ -135,6 +137,9 @@ class Signal {
   // Pointer to waveguide if necessary
   IWaveguide* waveguide;
 
+  // Probe for waveguide
+  Probe pr;
+
   /// @brief Function to add new times to vectors
   /// @param time New time from file in seconds
   /// @param ePos Electron position vector in metres
@@ -194,8 +199,7 @@ class Signal {
   /// @param norm Field normalisation
   /// @param omega Angular frequency of cyclotron motion
   /// @return Waveguide mode amplitude
-  double CalcWgAmp(double tr, WaveguideMode mode, double norm, double omega,
-                   bool state);
+  double CalcWgAmp(double tr, WaveguideMode mode, double norm, double omega);
 
   /// @brief Function for downmixing voltages
   /// @param vi In phase voltage component

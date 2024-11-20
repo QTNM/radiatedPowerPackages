@@ -14,6 +14,7 @@
 #include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
+#include "Waveguides/Probe.h"
 #include "Waveguides/RectangularWaveguide.h"
 #include "Waveguides/WaveguideMode.h"
 
@@ -40,7 +41,7 @@ double GetEModeNormFactor(RectangularWaveguide *wv, int m, int n, double freq,
       eTransReal.SetZ(0.0);
       sum += (eTransReal.Dot(eTransReal)).real() * area;
     }  // Loop over y points
-  }    // Loop over x points
+  }  // Loop over x points
 
   return sum;
 }
@@ -66,7 +67,7 @@ double GetHModeNormFactor(RectangularWaveguide *wv, int m, int n, double freq,
       hTransReal.SetZ(0.0);
       sum += (hTransReal.Dot(hTransReal)).real() * area;
     }  // Loop over y points
-  }    // Loop over x points
+  }  // Loop over x points
 
   return sum;
 }
@@ -180,8 +181,8 @@ int main(int argc, char *argv[]) {
   const double WR42Side2{4.318e-3};
   const double waveguideLength{0.05};  // Don't think this is very important
   TVector3 probePosition(0, WR42Side2 * 0.2, 0);
-  RectangularWaveguide *WR42 = new RectangularWaveguide(
-      WR42Side1, WR42Side2, waveguideLength, probePosition);
+  Probe probe(probePosition, WaveguideMode(1, 0, kTE));
+  auto WR42{new RectangularWaveguide(WR42Side1, WR42Side2, waveguideLength)};
 
   // Check fields are normalised
   const int nSurfPnts{30};

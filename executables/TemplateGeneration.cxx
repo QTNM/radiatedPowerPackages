@@ -36,6 +36,8 @@
 #include "TTree.h"
 #include "TVector3.h"
 #include "Waveguides/CircularWaveguide.h"
+#include "Waveguides/Probe.h"
+#include "Waveguides/WaveguideMode.h"
 
 using namespace rad;
 using std::cout;
@@ -204,7 +206,7 @@ int main(int argc, char* argv[]) {
   const double wgLength{20e-2};           // metres
   const double wgRadius{7.14e-3};         // metres
   TVector3 probePos{0, 0, wgLength / 2};  // Place probe at end of guide
-  auto wg = new CircularWaveguide(wgRadius, wgLength, probePos);
+  auto wg = new CircularWaveguide(wgRadius, wgLength);
 
   // Signal processing stuff
   const double sampleRate{1e9};                                  // Hz
@@ -280,7 +282,8 @@ int main(int argc, char* argv[]) {
       }
 
       // Generate the signal
-      Signal signal(trackFile, wg, lo, sampleRate);
+      Probe pr(probePos, WaveguideMode(1, 1, kTE), true);
+      Signal signal(trackFile, wg, lo, sampleRate, pr);
       auto grV{signal.GetVITimeDomain()};
 
       // Delete the track file

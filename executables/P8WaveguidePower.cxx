@@ -47,11 +47,10 @@ int main() {
   // WR42 dimensions
   const double wr42LongSide{10.668e-3};  // m
   const double wr42ShortSide{4.318e-3};  // m
-  auto wgWR42 =
-      new RectangularWaveguide(wr42LongSide, wr42ShortSide, wgLength, probePos);
+  auto wgWR42 = new RectangularWaveguide(wr42LongSide, wr42ShortSide, wgLength);
   // Circular waveguide radius in metres
   const double circWgRadius{5e-3};
-  auto wgCirc = new CircularWaveguide(circWgRadius, wgLength, probePos);
+  auto wgCirc = new CircularWaveguide(circWgRadius, wgLength);
 
   // Define magnetic field
   auto field = new UniformField(bMag);
@@ -82,7 +81,8 @@ int main() {
     const double sampleRate{1e9};                       // Hertz
     const double loFreq{centralFreq - sampleRate / 4};  // Hertz
     LocalOscillator lo(2 * M_PI * loFreq);
-    Signal sig(trackFile, wgWR42, lo, sampleRate);
+    Signal sig(trackFile, wgWR42, lo, sampleRate,
+               Probe(probePos, WaveguideMode(1, 0, kTE)));
     auto grP{sig.GetVIPowerPeriodogram(1)};
     grP->SetTitle(Form("X = %.2f mm", x * 1e3));
     fout.cd();
@@ -120,7 +120,8 @@ int main() {
     const double sampleRate{1e9};                       // Hertz
     const double loFreq{centralFreq - sampleRate / 4};  // Hertz
     LocalOscillator lo(2 * M_PI * loFreq);
-    Signal sig(trackFile, wgCirc, lo, sampleRate);
+    Signal sig(trackFile, wgCirc, lo, sampleRate,
+               Probe(probePos, WaveguideMode(1, 1, kTE)));
     auto grP{sig.GetVIPowerPeriodogram(1)};
     grP->SetTitle(Form("#rho = %.2f mm", rho * 1e3));
     fout.cd();

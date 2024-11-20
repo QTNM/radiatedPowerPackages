@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
   const double wgRadius{5e-3};            // metres
   const double wgLength{8e-2};            // metres
   TVector3 probePos(0, 0, wgLength / 2);  // Probe at the end of the guide
-  auto wg = new CircularWaveguide(wgRadius, wgLength, probePos);
+  auto wg = new CircularWaveguide(wgRadius, wgLength);
   const double cutoffTE11{wg->GetCutoffFrequency(WaveguideMode(1, 1, kTE))};
   const double cutoffTM01{wg->GetCutoffFrequency(WaveguideMode(0, 1, kTM))};
   std::cout << "Cutoff TE11 = " << cutoffTE11 / 1e9 << " GHz\n";
@@ -151,7 +151,8 @@ int main(int argc, char* argv[]) {
     // Set up the local oscillator
     const double loFreq{avgCycFreq - sampleRate / 4};
     LocalOscillator lo(2 * M_PI * loFreq);
-    Signal sig(trackFile, wg, lo, sampleRate);
+    Signal sig(trackFile, wg, lo, sampleRate,
+               Probe(probePos, WaveguideMode(1, 1, kTE)));
     auto grV{sig.GetVIPowerPeriodogram(1)};
     grV->SetTitle(Form("z_{max} = %.1f cm", zMax * 100));
 

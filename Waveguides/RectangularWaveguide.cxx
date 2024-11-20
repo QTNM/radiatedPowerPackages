@@ -11,8 +11,8 @@
 #include "TVector3.h"
 
 rad::RectangularWaveguide::RectangularWaveguide(double longSide,
-                                                double shortSide, double length,
-                                                TVector3 probePos) {
+                                                double shortSide,
+                                                double length) {
   d = length;
   if (longSide >= shortSide) {
     a = longSide;
@@ -21,7 +21,6 @@ rad::RectangularWaveguide::RectangularWaveguide(double longSide,
     a = shortSide;
     b = longSide;
   }
-  SetProbePosition(probePos);
 }
 
 double rad::RectangularWaveguide::GetCutoffWavenumber(WaveguideMode mode) {

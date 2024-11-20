@@ -37,6 +37,8 @@
 #include "TTree.h"
 #include "TVector3.h"
 #include "Waveguides/CircularWaveguide.h"
+#include "Waveguides/Probe.h"
+#include "Waveguides/WaveguideMode.h"
 
 using namespace rad;
 using std::cout;
@@ -187,7 +189,8 @@ int main(int argc, char *argv[]) {
   const double wgLength{20e-2};           // metres
   const double wgRadius{7.14e-3};         // metres
   TVector3 probePos{0, 0, wgLength / 2};  // Place probe at end of guide
-  auto wg = new CircularWaveguide(wgRadius, wgLength, probePos);
+
+  auto wg = new CircularWaveguide(wgRadius, wgLength);
 
   // Signal processing things
   const double sampleRate{1e9};  // Hz
@@ -242,9 +245,11 @@ int main(int argc, char *argv[]) {
     double trueCycFreq{GetTrueCycFreq(trackFile, field)};
 
     // Now generate the signals. One for each polarisation
-    Signal sigPlus(trackFile, wg, lo, sampleRate, {}, -1.0, true);
+    Probe probePlus(probePos, WaveguideMode(1, 1, kTE), true);
+    Probe probeMinus(probePos, WaveguideMode(1, 1, kTE), false);
+    Signal sigPlus(trackFile, wg, lo, sampleRate, probePlus);
     auto grVPlus{sigPlus.GetVITimeDomain()};
-    Signal sigMinus(trackFile, wg, lo, sampleRate, {}, -1.0, false);
+    Signal sigMinus(trackFile, wg, lo, sampleRate, probeMinus);
     auto grVMinus{sigMinus.GetVITimeDomain()};
 
     // Delete the track file

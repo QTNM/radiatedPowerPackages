@@ -115,10 +115,6 @@ class IWaveguide {
   virtual double GetEFieldIntegral(WaveguideMode mode, double omega, double A,
                                    int nSurfPnts, bool state) = 0;
 
-  /// @brief Getter for probe position
-  /// @return Probe position 3-vector
-  TVector3 GetProbePosition() { return probe; }
-
   /// @brief Function for determining if we need to calculate multiple
   /// polarisations
   /// @return True is there are multiple polarisations
@@ -128,17 +124,10 @@ class IWaveguide {
   // Normalisation constant
   double Pn;
 
-  // Hypothetical probe position
-  TVector3 probe;
-
  protected:
   /// @brief Setter function for normalisation constant
   /// @param val
   void SetPn(double val) { Pn = val; }
-
-  /// @brief Setter for probe position
-  /// @param probePos New probe position
-  void SetProbePosition(TVector3 probePos) { probe = probePos; }
 };
 }  // namespace rad
 

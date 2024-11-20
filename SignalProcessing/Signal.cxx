@@ -307,9 +307,13 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
 }
 
 rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
-                    double sRate, std::vector<GaussianNoise> noiseTerms,
-                    double tAcq, bool polarisation)
-    : localOsc(lo), sampleRate(sRate), noiseVec(noiseTerms), waveguide(wg) {
+                    double sRate, Probe probe,
+                    std::vector<GaussianNoise> noiseTerms, double tAcq)
+    : localOsc(lo),
+      sampleRate(sRate),
+      noiseVec(noiseTerms),
+      waveguide(wg),
+      pr(probe) {
   CreateVoltageGraphs();
   // Check if input file opens properly
   SetUpTree(filePath);
@@ -322,58 +326,27 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
   std::cout << "Calculated frequency = " << omega * 1e-9 / TMath::TwoPi()
             << " GHz\n";
 
-  // Now need to figure out which modes propagate in our waveguide at this
-  // particular frequency
-  const unsigned int ind1Min{0};
-  const unsigned int ind1Max{5};
-  const unsigned int ind2Min{0};
-  const unsigned int ind2Max{5};
-  std::vector<WaveguideMode> propagatingModes{};
-  for (unsigned int i1{ind1Min}; i1 <= ind1Max; i1++) {
-    for (unsigned int i2{ind2Min}; i2 <= ind2Max; i2++) {
-      if (i1 == 0 && i2 == 0) continue;
-
-      WaveguideMode modeTE(i1, i2, kTE);
-      WaveguideMode modeTM(i1, i2, kTM);
-
-      if (wg->ModePropagates(modeTE, omega / TMath::TwoPi()))
-        propagatingModes.push_back(modeTE);
-
-      if (wg->ModePropagates(modeTM, omega / TMath::TwoPi()))
-        propagatingModes.push_back(modeTM);
-    }
+  // Now need to check if the mode our probe is reading out propagates
+  WaveguideMode wm{pr.GetMode()};
+  if (!wg->ModePropagates(wm, omega / (2 * M_PI))) {
+    std::cerr << "Waveguide mode " << wm
+              << "does not propagate. These results cannot be trusted\n ";
+    return;
   }
-  // Check which modes are propagating
-  std::cout << "Propagating modes are: ";
-  for (auto const& m : propagatingModes) std::cout << m << " ";
-  std::cout << "\n";
 
-  // Calculate mode integrals and resulting normalisation
+  // Calculate mode integral and resulting normalisation
   const unsigned int nSurfPnts{100};
-  std::vector<double> modeNormsP{};
-  std::vector<double> modeNormsM{};
-  for (size_t iMode{0}; iMode < propagatingModes.size(); iMode++) {
-    WaveguideMode wm{propagatingModes.at(iMode)};
-    double integralPlus{0};
-    double integralMinus{0};
-    if (waveguide->MultiplePolarisations()) {
-      integralPlus =
-          waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, true);
-      integralMinus =
-          waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, false);
-    } else {
-      integralPlus =
-          waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, true) * 2;
-    }
-    double normPlus{0};
-    if (integralPlus != 0) normPlus = 1.0 / sqrt(integralPlus);
-    double normMinus{0};
-    if (integralMinus != 0) normMinus = 1.0 / sqrt(integralMinus);
-    std::cout << "Normalisation constant " << wm << " +, - = " << normPlus
-              << ", " << normMinus << std::endl;
-    modeNormsP.push_back(normPlus);
-    modeNormsM.push_back(normMinus);
+  double modeNorm{0};
+  double integral{0};
+  if (waveguide->MultiplePolarisations()) {
+    integral = waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts,
+                                            pr.GetPolarisationState());
+  } else {
+    integral = waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, true);
   }
+  if (integral != 0) modeNorm = 1.0 / sqrt(integral);
+  std::cout << "Normalisation constant " << wm << " = " << modeNorm
+            << std::endl;
 
   // Figure out where we're going to generate the signal up to
   // By default, just do the whole electron trajectory file
@@ -417,8 +390,7 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       printTime += printInterval;
     }
 
-    AddNewCavWgTimes(entryTime, TVector3(xPos, yPos, zPos),
-                     waveguide->GetProbePosition());
+    AddNewCavWgTimes(entryTime, TVector3(xPos, yPos, zPos), pr.GetPosition());
 
     // Do we need to sample now?
     if (entryTime >= sample10Time) {
@@ -427,19 +399,9 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       long double tr{GetRetardedTime(sample10Time, 0)};
 
       double vi{0};
-      for (size_t iMode{0}; iMode < propagatingModes.size(); iMode++) {
-        WaveguideMode wm{propagatingModes.at(iMode)};
-        if (wm.GetModeType() != kTE) continue;
+      double modeImp{waveguide->GetModeImpedance(wm, omega)};
+      vi += CalcWgAmp(tr, wm, modeNorm, omega);
 
-        double normPlus{modeNormsP.at(iMode)};
-        double normMinus{modeNormsM.at(iMode)};
-        double modeImp{waveguide->GetModeImpedance(wm, omega)};
-        if (polarisation) {
-          vi += CalcWgAmp(tr, wm, normPlus, omega, polarisation);
-        } else {
-          vi += CalcWgAmp(tr, wm, normMinus, omega, polarisation);
-        }
-      }
       double vq{vi};
       DownmixVoltages(vi, vq, sample10Time);
 
@@ -859,7 +821,7 @@ TVector3 rad::Signal::CalcWaveguideEField(double tr, WaveguideMode mode,
 }
 
 double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
-                              double omega, bool state) {
+                              double omega) {
   if (tr == -1) {
     // The voltage is from before the signal has reached the probe
     // Therefore there is no electric field there at this time
@@ -878,8 +840,8 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       // Calculate the field amplitudes
-      double amp{
-          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, state, true)};
+      double amp{waveguide->GetFieldAmp(mode, omega, pos, vel, norm,
+                                        pr.GetPolarisationState(), true)};
       return amp;
     } else if (firstGuessTime < tr) {
       // We are searching upwards
@@ -919,8 +881,8 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       // Calculate the field amplitudes
-      double amp{
-          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, state, true)};
+      double amp{waveguide->GetFieldAmp(mode, omega, pos, vel, norm,
+                                        pr.GetPolarisationState(), true)};
       ampVals.at(0) = amp;
     }
 
@@ -931,8 +893,8 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       // Calculate the field amplitudes
-      double amp{
-          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, state, true)};
+      double amp{waveguide->GetFieldAmp(mode, omega, pos, vel, norm,
+                                        pr.GetPolarisationState(), true)};
       ampVals.at(iEl) = amp;
     }
 

@@ -18,6 +18,8 @@
 #include "TTreeReaderValue.h"
 #include "TVector3.h"
 #include "Waveguides/CircularWaveguide.h"
+#include "Waveguides/Probe.h"
+#include "Waveguides/WaveguideMode.h"
 
 using namespace rad;
 
@@ -57,18 +59,20 @@ int main() {
   const double wgRadius{7.14e-3};  // metres
   const double wgLength{0.08};     // metres
   TVector3 probePos1(wgRadius * 0.5, 0, 0);
-  auto wg1 = new CircularWaveguide(wgRadius, wgLength, probePos1);
+  Probe probe1(probePos1, WaveguideMode(1, 1, kTE), true);
+  auto wg1 = new CircularWaveguide(wgRadius, wgLength);
   TVector3 probePos2(0, wgRadius * 0.5, 0);
-  auto wg2 = new CircularWaveguide(wgRadius, wgLength, probePos2);
+  Probe probe2(probePos2, WaveguideMode(1, 1, kTE), false);
+  auto wg2 = new CircularWaveguide(wgRadius, wgLength);
 
   // Set up signals for these two things
   const double sampleRate{1e9};
   const double loFreq{cycFreq - 220e6};
   std::cout << "Local oscillator frequency = " << loFreq / 1e9 << " GHz\n";
   LocalOscillator lo(loFreq * TMath::TwoPi());
-  Signal sig1(trackFile, wg1, lo, sampleRate);
+  Signal sig1(trackFile, wg1, lo, sampleRate, probe1);
   std::cout << "Finished generating first signal\n";
-  Signal sig2(trackFile, wg2, lo, sampleRate);
+  Signal sig2(trackFile, wg2, lo, sampleRate, probe2);
   std::cout << "Finished generating second signal\n";
 
   auto grV1T{sig1.GetVITimeDomain()};
