@@ -396,9 +396,9 @@ double rad::RectangularWaveguide::GetFieldAmp(WaveguideMode mode, double omega,
   TVector3 j{-TMath::Qe() * eVel};
   TVector3 jComplex{j};
 
-  TVector3 eTrans{GetModeEField(ePos, mode, normA, omega, state)};
+  TVector3 eTrans{GetNormalisedEField(mode, ePos, omega)};
   eTrans.SetZ(0);
-  TVector3 eAxial{GetModeEField(ePos, mode, normA, omega, state)};
+  TVector3 eAxial{GetNormalisedEField(mode, ePos, omega)};
   eAxial.SetX(0);
   eAxial.SetY(0);
 
