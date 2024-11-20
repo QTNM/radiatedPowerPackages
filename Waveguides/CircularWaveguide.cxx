@@ -108,7 +108,7 @@ TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, WaveguideMode mode,
     ERho = (-A * double(n) / rho) *
            boost::math::cyl_bessel_j(n, XnmPrime * rho / a);
     EPhi = (A * XnmPrime / a) *
-           boost::math::cyl_bessel_j_prime(m, XnmPrime * rho / a);
+           boost::math::cyl_bessel_j_prime(n, XnmPrime * rho / a);
     if (state) {
       ERho *= -sin(double(n) * phi);
       EPhi *= cos(double(n) * phi);
