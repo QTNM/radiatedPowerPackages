@@ -25,8 +25,6 @@
 #include "ElectronDynamics/QTNMFields.h"
 #include "ElectronDynamics/TrajectoryGen.h"
 #include "H5Cpp.h"
-#include "Scattering/ElasticScatter.h"
-#include "Scattering/InelasticScatter.h"
 #include "SignalProcessing/LocalOscillator.h"
 #include "SignalProcessing/Signal.h"
 #include "TFile.h"
@@ -91,8 +89,7 @@ int main(int argc, char *argv[]) {
   int opt{};
   std::string outputStemStr{" "};  // Directory in which to store files
   unsigned int nEvents{50};        // Number of events to generate
-  double tritiumGasDensity{1e18};  // m^-3
-  double maxSimTime{10e-3};        // seconds
+  double maxSimTime{10e-6};        // seconds
   double pitchAngle{89.0};         // degrees
   double energy{18.575e3};         // eV
   bool bathtubTrap{false};         // Use a bathtub trap
@@ -186,9 +183,9 @@ int main(int argc, char *argv[]) {
   const double simStepSize{1 / (10 * centralCycFreq)};
 
   // Now define the waveguide that we want to collect our signal with
-  const double wgLength{20e-2};           // metres
-  const double wgRadius{7.14e-3};         // metres
-  TVector3 probePos{0, 0, wgLength / 2};  // Place probe at end of guide
+  const double wgLength{20e-2};            // metres
+  const double wgRadius{6.0e-3};           // metres
+  TVector3 probePos1{0, 0, wgLength / 2};  // Place probe at end of guide
 
   auto wg = new CircularWaveguide(wgRadius, wgLength);
 
@@ -245,8 +242,8 @@ int main(int argc, char *argv[]) {
     double trueCycFreq{GetTrueCycFreq(trackFile, field)};
 
     // Now generate the signals. One for each polarisation
-    Probe probePlus(probePos, WaveguideMode(1, 1, kTE), true);
-    Probe probeMinus(probePos, WaveguideMode(1, 1, kTE), false);
+    Probe probePlus(probePos1, WaveguideMode(1, 1, kTE), true);
+    Probe probeMinus(probePos1, WaveguideMode(1, 1, kTE), false);
     Signal sigPlus(trackFile, wg, lo, sampleRate, probePlus);
     auto grVPlus{sigPlus.GetVITimeDomain()};
     Signal sigMinus(trackFile, wg, lo, sampleRate, probeMinus);

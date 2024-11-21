@@ -243,8 +243,6 @@ int main(int argc, char* argv[]) {
   //////////////////////////////////////////////////////////////////////////////
   const double wgRadius{5e-3};   // meters
   const double wgLength{10e-2};  // meters
-  Probe probeTE11Plus(TVector3(0, 0, 5e-2), WaveguideMode(1, 1, kTE), true);
-  Probe probeTE11Minus(TVector3(0, 0, 5e-2), WaveguideMode(1, 1, kTE), false);
 
   auto wgCirc{new CircularWaveguide(wgRadius, wgLength)};
   WaveguideMode modeTE11(1, 1, kTE);
@@ -254,13 +252,16 @@ int main(int argc, char* argv[]) {
 
   auto grPowerSigCirc_P{new TGraph()};
   grPowerSigCirc_P->SetTitle("TE11+; X [mm]; Fraction of free space power");
+  setGraphAttr(grPowerSigCirc_P);
   auto grPowerSigCirc_M{new TGraph()};
   grPowerSigCirc_M->SetTitle("TE11-; X [mm]; Fraction of free space power");
+  setGraphAttr(grPowerSigCirc_M);
   auto grPowerSigCirc_TM01{new TGraph()};
   grPowerSigCirc_TM01->SetTitle("TM01; X [mm]; Fraction of free space power");
+  setGraphAttr(grPowerSigCirc_TM01);
   // Generate a series of electrons
-  for (size_t iStep{0}; iStep < nRadialSteps; iStep++) {
-    const double x{0 + double(iStep) / double(nRadialSteps - 1) * 4.5e-3};
+  for (size_t iStep{0}; iStep < 15; iStep++) {
+    const double x{0 + double(iStep) / double(15 - 1) * 4.5e-3};
     TVector3 initPos{x + gyroradius, 0, 0};
     TVector3 initVel{0, eSpeed, 0};
     cout << "Generating electron at x = " << x * 1e3 << " mm\n";
@@ -269,57 +270,86 @@ int main(int argc, char* argv[]) {
     TString trackFile{trackDir + Form("/track_%s.root", trackFileExt.data())};
     const double simStepSize{1e-12};  // seconds
     ElectronTrajectoryGen traj(trackFile, field, initPos, initVel, simStepSize,
-                               1e-6);
+                               5e-7);
 
     const double sampleRate{1e9};                     // Hz
     const double loFreq{frequency - sampleRate / 4};  // Hz
     // Define local oscillator
     LocalOscillator lo(2 * M_PI * loFreq);
-    Signal sigPlus(trackFile, wgCirc, lo, sampleRate, probeTE11Plus);
-    auto grVPlus{sigPlus.GetVITimeDomain()};
-    Signal sigMinus(trackFile, wgCirc, lo, sampleRate, probeTE11Minus);
-    auto grVMinus{sigMinus.GetVITimeDomain()};
-    Signal sigTM01(trackFile, wgCirc, lo, sampleRate,
-                   Probe(TVector3(0, 0, 5e-2), WaveguideMode(0, 1, kTM)));
-    auto grVTM01{sigTM01.GetVITimeDomain()};
 
-    double avgPowerSignal_P{0};
-    for (int i{0}; i < grVPlus->GetN(); i++) {
-      avgPowerSignal_P += grVPlus->GetPointY(i) * grVPlus->GetPointY(i);
-    }
-    avgPowerSignal_P /= grVPlus->GetN();
-    avgPowerSignal_P /= circModeImp;
-    avgPowerSignal_P *= 2;
-    grPowerSigCirc_P->SetPoint(iStep, x * 1e3,
-                               avgPowerSignal_P / freeSpacePower);
+    // Get the signals
+    // TE11 mode readouts
+    // First polarisation
+    Signal sigTE11_P_Z1(
+        trackFile, wgCirc, lo, sampleRate,
+        Probe(TVector3(0, 0, 5e-2), WaveguideMode(1, 1, kTE), true));
+    auto grTE11_P_Z1{sigTE11_P_Z1.GetVITimeDomain()};
+    Signal sigTE11_P_Z2(
+        trackFile, wgCirc, lo, sampleRate,
+        Probe(TVector3(0, 0, -5e-2), WaveguideMode(1, 1, kTE), true));
+    auto grTE11_P_Z2{sigTE11_P_Z2.GetVITimeDomain()};
+    plots.cd();
+    grTE11_P_Z1->Write(Form("TE11_P_Z1_%d", int(iStep)));
+    grTE11_P_Z2->Write(Form("TE11_P_Z2_%d", int(iStep)));
+    // Second polarisation
+    Signal sigTE11_M_Z1(
+        trackFile, wgCirc, lo, sampleRate,
+        Probe(TVector3(0, 0, 5e-2), WaveguideMode(1, 1, kTE), false));
+    auto grTE11_M_Z1{sigTE11_M_Z1.GetVITimeDomain()};
+    Signal sigTE11_M_Z2(
+        trackFile, wgCirc, lo, sampleRate,
+        Probe(TVector3(0, 0, -5e-2), WaveguideMode(1, 1, kTE), false));
+    auto grTE11_M_Z2{sigTE11_M_Z2.GetVITimeDomain()};
+    plots.cd();
+    grTE11_M_Z1->Write(Form("TE11_M_Z1_%d", int(iStep)));
+    grTE11_M_Z2->Write(Form("TE11_M_Z2_%d", int(iStep)));
 
-    double avgPowerSignal_M{0};
-    for (int i{0}; i < grVMinus->GetN(); i++) {
-      avgPowerSignal_M += grVMinus->GetPointY(i) * grVMinus->GetPointY(i);
-    }
-    avgPowerSignal_M /= grVMinus->GetN();
-    avgPowerSignal_M /= circModeImp;
-    avgPowerSignal_M *= 2;
-    grPowerSigCirc_M->SetPoint(iStep, x * 1e3,
-                               avgPowerSignal_M / freeSpacePower);
+    // TM01 readouts
+    Signal sigTM01_Z1(trackFile, wgCirc, lo, sampleRate,
+                      Probe(TVector3(0, 0, 5e-2), WaveguideMode(0, 1, kTM)));
+    auto grVTM01_Z1{sigTM01_Z1.GetVITimeDomain()};
+    Signal sigTM01_Z2(trackFile, wgCirc, lo, sampleRate,
+                      Probe(TVector3(0, 0, -5e-2), WaveguideMode(0, 1, kTM)));
+    auto grVTM01_Z2{sigTM01_Z2.GetVITimeDomain()};
+    plots.cd();
+    grVTM01_Z1->Write(Form("TM01_Z1_%d", int(iStep)));
+    grVTM01_Z2->Write(Form("TM01_Z2_%d", int(iStep)));
 
-    double avgPowerSignal_TM01{0};
-    for (int i{0}; i < grVTM01->GetN(); i++) {
-      avgPowerSignal_TM01 += grVTM01->GetPointY(i) * grVTM01->GetPointY(i);
+    double modeImpTM01{wgCirc->GetModeImpedance(WaveguideMode(0, 1, kTM),
+                                                2 * M_PI * frequency)};
+
+    double avgPowerTM01{0};
+    for (int i{0}; i < grVTM01_Z1->GetN(); i++) {
+      avgPowerTM01 += grVTM01_Z1->GetPointY(i) * grVTM01_Z1->GetPointY(i);
+      avgPowerTM01 += grVTM01_Z2->GetPointY(i) * grVTM01_Z2->GetPointY(i);
     }
-    avgPowerSignal_TM01 /= grVTM01->GetN();
-    avgPowerSignal_TM01 /= circModeImp;
-    avgPowerSignal_TM01 *= 2;
+    avgPowerTM01 /= (grVTM01_Z1->GetN() * modeImpTM01);
     grPowerSigCirc_TM01->SetPoint(iStep, x * 1e3,
-                                  avgPowerSignal_TM01 / freeSpacePower);
+                                  avgPowerTM01 / freeSpacePower);
+
+    double avgPowerTE11_P{0};
+    for (int i{0}; i < grTE11_P_Z1->GetN(); i++) {
+      avgPowerTE11_P += pow(grTE11_P_Z1->GetPointY(i), 2);
+      avgPowerTE11_P += pow(grTE11_P_Z2->GetPointY(i), 2);
+    }
+    avgPowerTE11_P /= (grTE11_P_Z1->GetN() * circModeImp);
+    grPowerSigCirc_P->SetPoint(iStep, x * 1e3, avgPowerTE11_P / freeSpacePower);
+
+    double avgPowerTE11_M{0};
+    for (int i{0}; i < grTE11_M_Z1->GetN(); i++) {
+      avgPowerTE11_M += pow(grTE11_M_Z1->GetPointY(i), 2);
+      avgPowerTE11_M += pow(grTE11_M_Z2->GetPointY(i), 2);
+    }
+    avgPowerTE11_M /= (grTE11_M_Z1->GetN() * circModeImp);
+    grPowerSigCirc_M->SetPoint(iStep, x * 1e3, avgPowerTE11_M / freeSpacePower);
 
     // Delete the track file
     std::filesystem::remove(trackFile.Data());
   }
   plots.cd();
-  grPowerSigCirc_P->Write("powerSignalCirc_P");
-  grPowerSigCirc_M->Write("powerSignalCirc_M");
-  grPowerSigCirc_TM01->Write("powerSignalCirc_TM01");
+  grPowerSigCirc_P->Write("powerCirc_TE11_P");
+  grPowerSigCirc_M->Write("powerCirc_TE11_M");
+  grPowerSigCirc_TM01->Write("powerCirc_TM01");
 
   plots.Close();
 
