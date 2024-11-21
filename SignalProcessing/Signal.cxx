@@ -339,8 +339,18 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
   double modeNorm{0};
   double integral{0};
   if (waveguide->MultiplePolarisations()) {
+    // Check if there are actually multiple polarisations (i.e. they have
+    // equal non-zero integrals
     integral = waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts,
                                             pr.GetPolarisationState());
+    double integralTest2{waveguide->GetEFieldIntegral(
+        wm, omega, 1, nSurfPnts, !pr.GetPolarisationState())};
+    if ((integral - integralTest2) / integral < 0.01) {
+      // We have two polarisations so require an additional factor of two
+      integral /= 2;
+    } else {
+      std::cout << "Only one polarisation found\n";
+    }
   } else {
     integral = waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, true);
   }
@@ -839,10 +849,15 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
     if (firstGuessTime == tr) {
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
-      // Calculate the field amplitudes
-      double amp{waveguide->GetFieldAmp(mode, omega, pos, vel, norm,
-                                        pr.GetPolarisationState(), true)};
-      return amp;
+      // Calculate the field amplitudes after checking where our probe is in
+      // relation to the electron
+      if (pr.GetPosition().Z() > pos.Z()) {
+        return waveguide->GetFieldAmp(mode, omega, pos, vel, norm,
+                                      pr.GetPolarisationState(), true);
+      } else {
+        return waveguide->GetFieldAmp(mode, omega, pos, vel, norm,
+                                      pr.GetPolarisationState(), false);
+      }
     } else if (firstGuessTime < tr) {
       // We are searching upwards
       for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
@@ -880,10 +895,15 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       timeVals.at(0) = time;
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
-      // Calculate the field amplitudes
-      double amp{waveguide->GetFieldAmp(mode, omega, pos, vel, norm,
-                                        pr.GetPolarisationState(), true)};
-      ampVals.at(0) = amp;
+      // Calculate the field amplitudes after checking where our probe is in
+      // relation to the electron
+      if (pr.GetPosition().Z() > pos.Z()) {
+        ampVals.at(0) = waveguide->GetFieldAmp(mode, omega, pos, vel, norm,
+                                               pr.GetPolarisationState(), true);
+      } else {
+        ampVals.at(0) = waveguide->GetFieldAmp(
+            mode, omega, pos, vel, norm, pr.GetPolarisationState(), false);
+      }
     }
 
     // Now add the other elements for the interpolation
@@ -893,9 +913,13 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
       // Calculate the field amplitudes
-      double amp{waveguide->GetFieldAmp(mode, omega, pos, vel, norm,
-                                        pr.GetPolarisationState(), true)};
-      ampVals.at(iEl) = amp;
+      if (pr.GetPosition().Z() > pos.Z()) {
+        ampVals.at(iEl) = waveguide->GetFieldAmp(
+            mode, omega, pos, vel, norm, pr.GetPolarisationState(), true);
+      } else {
+        ampVals.at(iEl) = waveguide->GetFieldAmp(
+            mode, omega, pos, vel, norm, pr.GetPolarisationState(), false);
+      }
     }
 
     double ampInterp{CubicInterpolation(timeVals, ampVals, tr)};
