@@ -43,7 +43,7 @@ std::string make_uuid() {
 int main(int argc, char* argv[]) {
   int opt{};
   std::string outputDirName{" "};
-  unsigned int nSims{2000};
+  unsigned int nSims{100};
   double tritiumDensity{1e18};  // atoms/m^3
 
   while ((opt = getopt(argc, argv, "o:n:d:")) != -1) {
@@ -190,7 +190,7 @@ int main(int argc, char* argv[]) {
          << genVel.Z() << ") m/s" << endl;
 
     double tSim{0};
-    const double maxTSim{10e-3};    // seconds
+    const double maxTSim{1e-3};    // seconds
     const double printTime{10e-6};  // seconds
     // Set up the Boris solver
     BorisSolver solver(field, -TMath::Qe(), ME, tau);
