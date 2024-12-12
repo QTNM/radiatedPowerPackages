@@ -93,8 +93,9 @@ int main(int argc, char *argv[]) {
   double pitchAngle{89.0};         // degrees
   double energy{18.575e3};         // eV
   bool bathtubTrap{false};         // Use a bathtub trap
+  double bkgField{1.0};            // Tesla
 
-  while ((opt = getopt(argc, argv, ":o:n:e:p:t:b")) != -1) {
+  while ((opt = getopt(argc, argv, ":o:n:e:p:t:f:b")) != -1) {
     switch (opt) {
       case 'o':
         outputStemStr = optarg;
@@ -110,6 +111,9 @@ int main(int argc, char *argv[]) {
         break;
       case 't':
         maxSimTime = boost::lexical_cast<double>(optarg);
+        break;
+      case 'f':
+        bkgField = boost::lexical_cast<double>(optarg);
         break;
       case 'b':
         bathtubTrap = true;
@@ -128,6 +132,7 @@ int main(int argc, char *argv[]) {
   cout << "Attempting to generate " << nEvents << " events.\n";
   cout << "Kinetic energy of electrons = " << energy << " eV\n";
   cout << "Pitch angle of electrons = " << pitchAngle << " degrees\n";
+  cout << "Background field = " << bkgField << " Tesla\n";
   cout << "Simulation time = " << maxSimTime * 1e6 << " us\n";
   if (bathtubTrap) {
     cout << "Using bathtub trap\n";
@@ -161,10 +166,12 @@ int main(int argc, char *argv[]) {
 
   // Define the field depending on the trap type selected
   const double rCoil{2e-2};                         // m
-  const double trapDepth{3.4e-3};                   // Tesla
+  const double deltaTheta{3.9866802 * M_PI / 180};  // radians
+  const double trapDepth{bkgField *
+                         (1 / pow(cos(deltaTheta), 2) - 1)};  // Tesla
+  cout << "Trap depth = " << trapDepth << " Tesla" << endl;
   const double iCoil{2 * trapDepth * rCoil / MU0};  // Amps
   const double trapLength{0.1};                     // metres, bathtub only
-  double bkgField{0.7};                             // Tesla
   BaseField *field{nullptr};
   if (bathtubTrap) {
     // Create the field for the bathtub trap
@@ -184,7 +191,7 @@ int main(int argc, char *argv[]) {
 
   // Now define the waveguide that we want to collect our signal with
   const double wgLength{20e-2};            // metres
-  const double wgRadius{6.0e-3};           // metres
+  const double wgRadius{5.0e-3};           // metres
   TVector3 probePos1{0, 0, wgLength / 2};  // Place probe at end of guide
 
   auto wg = new CircularWaveguide(wgRadius, wgLength);
