@@ -94,8 +94,9 @@ int main(int argc, char *argv[]) {
   double energy{18.575e3};         // eV
   bool bathtubTrap{false};         // Use a bathtub trap
   double bkgField{1.0};            // Tesla
+  double wgRadius{5.0e-3};         // metres
 
-  while ((opt = getopt(argc, argv, ":o:n:e:p:t:f:b")) != -1) {
+  while ((opt = getopt(argc, argv, ":o:n:e:p:t:f:r:b")) != -1) {
     switch (opt) {
       case 'o':
         outputStemStr = optarg;
@@ -115,6 +116,9 @@ int main(int argc, char *argv[]) {
       case 'f':
         bkgField = boost::lexical_cast<double>(optarg);
         break;
+      case 'r':
+        wgRadius = boost::lexical_cast<double>(optarg);
+        break;
       case 'b':
         bathtubTrap = true;
         break;
@@ -125,6 +129,14 @@ int main(int argc, char *argv[]) {
       case '?':
         cout << "Unknown option: " << static_cast<char>(optopt) << endl;
         return 1;
+      case 'h':
+        cout << "Usage: " << argv[0]
+             << " [-o output directory] [-n number of events] [-e energy] [-p "
+                "pitch angle] [-t simulation time] [-f background field] [-r "
+                "waveguide radius] [-b "
+                "bathtub trap]"
+             << endl;
+        return 1;
     }
   }
 
@@ -134,6 +146,7 @@ int main(int argc, char *argv[]) {
   cout << "Pitch angle of electrons = " << pitchAngle << " degrees\n";
   cout << "Background field = " << bkgField << " Tesla\n";
   cout << "Simulation time = " << maxSimTime * 1e6 << " us\n";
+  cout << "Waveguide radius = " << wgRadius * 1e3 << " mm\n";
   if (bathtubTrap) {
     cout << "Using bathtub trap\n";
   } else {
@@ -191,7 +204,6 @@ int main(int argc, char *argv[]) {
 
   // Now define the waveguide that we want to collect our signal with
   const double wgLength{20e-2};            // metres
-  const double wgRadius{5.0e-3};           // metres
   TVector3 probePos1{0, 0, wgLength / 2};  // Place probe at end of guide
 
   auto wg = new CircularWaveguide(wgRadius, wgLength);
