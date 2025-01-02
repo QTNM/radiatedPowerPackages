@@ -120,6 +120,12 @@ class IWaveguide {
   /// @return True is there are multiple polarisations
   virtual bool MultiplePolarisations() = 0;
 
+  /// @brief Function for calculating the phase velocity of a mode
+  /// @param mode The waveguide mode to calculate for
+  /// @param f The frequency for which to calculate the phase velocity in Hertz
+  /// @return The phase velocity in m/s
+  double GetPhaseVelocity(WaveguideMode mode, double f);
+
  private:
   // Normalisation constant
   double Pn;

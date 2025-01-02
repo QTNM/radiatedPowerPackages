@@ -148,7 +148,10 @@ class Signal {
   /// @brief Function to add new times for vector
   /// @param time New time from file in seconds
   /// @param ePos Electron position vector in metres
-  void AddNewCavWgTimes(long double time, TVector3 ePos, TVector3 probePos);
+  /// @param probe Probe to use for signal readout
+  /// @param freq Frequency of signal in Hertz
+  void AddNewCavWgTimes(long double time, TVector3 ePos, Probe& probe,
+                        double freq);
 
   /// @brief Calculate the retarded time
   /// @param ts Sample time in seconds

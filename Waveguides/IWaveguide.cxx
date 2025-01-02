@@ -32,3 +32,8 @@ bool rad::IWaveguide::ModePropagates(WaveguideMode mode, double f) {
     return f > fc;
   }
 }
+
+double rad::IWaveguide::GetPhaseVelocity(WaveguideMode mode, double f) {
+  const double f_c{GetCutoffFrequency(mode)};
+  return TMath::C() / sqrt(1 - pow(f_c / f, 2));
+}

@@ -211,6 +211,8 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
 
   // TO DO: figure out what the relevant modes are
 
+  const double omega{CalcInitialFreq() * TMath::TwoPi()};
+
   // Calculate mode normalisation
   // This should be for all the relevant modes but for now just do it for the
   // TE111 mode
@@ -262,8 +264,8 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
       printTime += printInterval;
     }
 
-    AddNewCavWgTimes(entryTime, TVector3(xPos, yPos, zPos),
-                     cavity->GetProbePosition());
+    AddNewCavWgTimes(entryTime, TVector3(xPos, yPos, zPos), pr,
+                     omega / (2 * M_PI));
 
     // Do we need to sample now?
     if (entryTime >= sample10Time) {
@@ -400,7 +402,8 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       printTime += printInterval;
     }
 
-    AddNewCavWgTimes(entryTime, TVector3(xPos, yPos, zPos), pr.GetPosition());
+    AddNewCavWgTimes(entryTime, TVector3(xPos, yPos, zPos), pr,
+                     omega / (2 * M_PI));
 
     // Do we need to sample now?
     if (entryTime >= sample10Time) {
@@ -947,11 +950,12 @@ void rad::Signal::AddNewTimes(long double time, TVector3 ePos) {
 }
 
 void rad::Signal::AddNewCavWgTimes(long double time, TVector3 ePos,
-                                   TVector3 probePos) {
+                                   Probe& probe, double freq) {
   timeVec.push_back(time);
 
   // Calculate the advanced time for cavity probe position
-  long double ta{time + (ePos - probePos).Mag() / TMath::C()};
+  const double v_phase{waveguide->GetPhaseVelocity(probe.GetMode(), freq)};
+  long double ta{time + (ePos - probe.GetPosition()).Mag() / TMath::C()};
   advancedTimeVec.at(0).push_back(ta);
 
   // If the deques are getting too long, get rid of the first element
