@@ -554,11 +554,12 @@ int main(int argc, char *argv[]) {
       auto dspace = new H5::DataSpace(DSPACE_RANK, dim);
 
       // Create dataset and write it into the file
-      const std::string DATASET_NAME(GROUP_NAME + "/signal1");
+      const std::string DATASET1_NAME(GROUP_NAME + "/signal1");
       auto dataset1 = new H5::DataSet(file->createDataSet(
-          DATASET_NAME, H5::PredType::NATIVE_DOUBLE, *dspace, plist));
+          DATASET1_NAME, H5::PredType::NATIVE_DOUBLE, *dspace, plist));
+      const std::string DATASET2_NAME(GROUP_NAME + "/signal2");
       auto dataset2 = new H5::DataSet(file->createDataSet(
-          DATASET_NAME, H5::PredType::NATIVE_DOUBLE, *dspace, plist));
+          DATASET2_NAME, H5::PredType::NATIVE_DOUBLE, *dspace, plist));
       // Define attributes
       // First create the attribute for the time step
       H5::DataSpace timeStepSpace(H5S_SCALAR);
