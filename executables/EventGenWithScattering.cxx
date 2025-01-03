@@ -477,7 +477,7 @@ int main(int argc, char *argv[]) {
 
     // Generate the initial direction
     const double phiVelGen{uni1(gen) * 2 * M_PI};
-    const double thetaVelGen{uni1(gen) * M_PI};
+    const double thetaVelGen{acos(2 * uni1(gen) - 1)};
 
     // Generate the initial energy
     const double initialKE{(endpointKE - energyWindow) +
