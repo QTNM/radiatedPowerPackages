@@ -445,6 +445,10 @@ int main(int argc, char *argv[]) {
   Probe probe2_zminus(probePos2, WaveguideMode(1, 1, kTE), false);
   auto wg = new CircularWaveguide(wgRadius, wgLength);
 
+  Probe probeArr[2] = {probe1_zplus, probe2_zplus};
+  const char *probeNames[2] = {"1", "2"};
+  const unsigned int nProbes{2};
+
   // Signal processing stuff
   const double sampleRate{1e9};  // Hz
   double extraOffset = (useBathtub) ? 50e6 : 0;
@@ -525,13 +529,6 @@ int main(int argc, char *argv[]) {
       cout << "Event " << nGenerated << " took " << propTime
            << " seconds to propagate electron.\n";
 
-      // Now generate the signal
-      Signal signal1_zplus(trackFile, wg, lo, sampleRate, probe1_zplus);
-      Signal signal2_zplus(trackFile, wg, lo, sampleRate, probe2_zplus);
-      // Get the output voltage
-      auto grV1_zplus{signal1_zplus.GetVITimeDomain()};
-      auto grV2_zplus{signal2_zplus.GetVITimeDomain()};
-
       // Set up one output file per event. This prevents us losing all the data
       // if one event fails.
       std::string outfileExt{make_uuid()};
@@ -546,207 +543,154 @@ int main(int argc, char *argv[]) {
       H5::DSetCreatPropList plist;
       plist.setFillValue(H5::PredType::NATIVE_DOUBLE, &fillValue);
 
-      // Create dataspace for dataset
-      const unsigned int DSPACE_DIM = grV1_zplus->GetN();
-      cout << "Time series is " << DSPACE_DIM << " entries long\n";
-      const unsigned int DSPACE_RANK{1};
-      hsize_t dim[] = {DSPACE_DIM};
-      auto dspace = new H5::DataSpace(DSPACE_RANK, dim);
+      // Now generate the signals for the probes one at a time
+      for (unsigned int iProbe{0}; iProbe < nProbes; iProbe++) {
+        Signal signal(trackFile, wg, lo, sampleRate, probeArr[iProbe]);
+        // Get the output voltage
+        auto grV{signal.GetVITimeDomain()};
 
-      // Create dataset and write it into the file
-      const std::string DATASET1_NAME(GROUP_NAME + "/signal1");
-      auto dataset1 = new H5::DataSet(file->createDataSet(
-          DATASET1_NAME, H5::PredType::NATIVE_DOUBLE, *dspace, plist));
-      const std::string DATASET2_NAME(GROUP_NAME + "/signal2");
-      auto dataset2 = new H5::DataSet(file->createDataSet(
-          DATASET2_NAME, H5::PredType::NATIVE_DOUBLE, *dspace, plist));
-      // Define attributes
-      // First create the attribute for the time step
-      H5::DataSpace timeStepSpace(H5S_SCALAR);
-      H5::Attribute timeStepAttr1{dataset1->createAttribute(
-          "Time step [seconds]", H5::PredType::NATIVE_DOUBLE, timeStepSpace)};
-      double timeStep{1.0 / sampleRate};
-      timeStepAttr1.write(H5::PredType::NATIVE_DOUBLE, &timeStep);
-      H5::Attribute timeStepAttr2{dataset2->createAttribute(
-          "Time step [seconds]", H5::PredType::NATIVE_DOUBLE, timeStepSpace)};
-      timeStepAttr2.write(H5::PredType::NATIVE_DOUBLE, &timeStep);
-      // Local oscillator frequency
-      H5::DataSpace loFreqSpc(H5S_SCALAR);
-      H5::Attribute loFreqAttr1{dataset1->createAttribute(
-          "LO frequency [Hertz]", H5::PredType::NATIVE_DOUBLE, loFreqSpc)};
-      loFreqAttr1.write(H5::PredType::NATIVE_DOUBLE, &loFreq);
-      H5::Attribute loFreqAttr2{dataset2->createAttribute(
-          "LO frequency [Hertz]", H5::PredType::NATIVE_DOUBLE, loFreqSpc)};
-      loFreqAttr2.write(H5::PredType::NATIVE_DOUBLE, &loFreq);
-      // Write the metadata for the trap config
-      H5::DataSpace rCoilSpc(H5S_SCALAR);
-      H5::Attribute rCoilAttr1{dataset1->createAttribute(
-          "r_coil [metres]", H5::PredType::NATIVE_DOUBLE, rCoilSpc)};
-      rCoilAttr1.write(H5::PredType::NATIVE_DOUBLE, &rCoil);
-      H5::Attribute rCoilAttr2{dataset2->createAttribute(
-          "r_coil [metres]", H5::PredType::NATIVE_DOUBLE, rCoilSpc)};
-      rCoilAttr2.write(H5::PredType::NATIVE_DOUBLE, &rCoil);
+        // Create dataspace for dataset
+        const unsigned int DSPACE_DIM = grV->GetN();
+        cout << "Time series is " << DSPACE_DIM << " entries long\n";
+        const unsigned int DSPACE_RANK{1};
+        hsize_t dim[] = {DSPACE_DIM};
+        auto dspace = new H5::DataSpace(DSPACE_RANK, dim);
 
-      H5::DataSpace iCoilSpc(H5S_SCALAR);
-      H5::Attribute iCoilAttr1{dataset1->createAttribute(
-          "i_coil [Amps]", H5::PredType::NATIVE_DOUBLE, iCoilSpc)};
-      iCoilAttr1.write(H5::PredType::NATIVE_DOUBLE, &iCoil);
-      H5::Attribute iCoilAttr2{dataset2->createAttribute(
-          "i_coil [Amps]", H5::PredType::NATIVE_DOUBLE, iCoilSpc)};
-      iCoilAttr2.write(H5::PredType::NATIVE_DOUBLE, &iCoil);
+        // Create dataset and write it into the file
+        const std::string DATASET1_NAME(GROUP_NAME + "/signal" +
+                                        probeNames[iProbe]);
+        auto dataset1 = new H5::DataSet(file->createDataSet(
+            DATASET1_NAME, H5::PredType::NATIVE_DOUBLE, *dspace, plist));
 
-      H5::DataSpace bkgFieldSpc(H5S_SCALAR);
-      H5::Attribute bkgFieldAttr1{dataset1->createAttribute(
-          "B_bkg [Tesla]", H5::PredType::NATIVE_DOUBLE, bkgFieldSpc)};
-      bkgFieldAttr1.write(H5::PredType::NATIVE_DOUBLE, &bkgField);
-      H5::Attribute bkgFieldAttr2{dataset2->createAttribute(
-          "B_bkg [Tesla]", H5::PredType::NATIVE_DOUBLE, bkgFieldSpc)};
-      bkgFieldAttr2.write(H5::PredType::NATIVE_DOUBLE, &bkgField);
+        // Define attributes
+        // First create the attribute for the time step
+        H5::DataSpace timeStepSpace(H5S_SCALAR);
+        H5::Attribute timeStepAttr1{dataset1->createAttribute(
+            "Time step [seconds]", H5::PredType::NATIVE_DOUBLE, timeStepSpace)};
+        double timeStep{1.0 / sampleRate};
+        timeStepAttr1.write(H5::PredType::NATIVE_DOUBLE, &timeStep);
+        // Local oscillator frequency
+        H5::DataSpace loFreqSpc(H5S_SCALAR);
+        H5::Attribute loFreqAttr1{dataset1->createAttribute(
+            "LO frequency [Hertz]", H5::PredType::NATIVE_DOUBLE, loFreqSpc)};
+        loFreqAttr1.write(H5::PredType::NATIVE_DOUBLE, &loFreq);
+        // Write the metadata for the trap config
+        H5::DataSpace rCoilSpc(H5S_SCALAR);
+        H5::Attribute rCoilAttr1{dataset1->createAttribute(
+            "r_coil [metres]", H5::PredType::NATIVE_DOUBLE, rCoilSpc)};
+        rCoilAttr1.write(H5::PredType::NATIVE_DOUBLE, &rCoil);
 
-      // Write the metadata for the waveguide dimenstions as well
-      H5::DataSpace rWgSpc(H5S_SCALAR);
-      H5::Attribute rWgAttr1{dataset1->createAttribute(
-          "r_wg [metres]", H5::PredType::NATIVE_DOUBLE, rWgSpc)};
-      rWgAttr1.write(H5::PredType::NATIVE_DOUBLE, &wgRadius);
-      H5::Attribute rWgAttr2{dataset2->createAttribute(
-          "r_wg [metres]", H5::PredType::NATIVE_DOUBLE, rWgSpc)};
-      rWgAttr2.write(H5::PredType::NATIVE_DOUBLE, &wgRadius);
+        H5::DataSpace iCoilSpc(H5S_SCALAR);
+        H5::Attribute iCoilAttr1{dataset1->createAttribute(
+            "i_coil [Amps]", H5::PredType::NATIVE_DOUBLE, iCoilSpc)};
+        iCoilAttr1.write(H5::PredType::NATIVE_DOUBLE, &iCoil);
 
-      // Metadata for gas density
-      H5::DataSpace gasDensitySpc(H5S_SCALAR);
-      H5::Attribute gasDensityAttr1{dataset1->createAttribute(
-          "Gas density [m^-3]", H5::PredType::NATIVE_DOUBLE, gasDensitySpc)};
-      gasDensityAttr1.write(H5::PredType::NATIVE_DOUBLE, &tritiumGasDensity);
-      H5::Attribute gasDensityAttr2{dataset2->createAttribute(
-          "Gas density [m^-3]", H5::PredType::NATIVE_DOUBLE, gasDensitySpc)};
-      gasDensityAttr2.write(H5::PredType::NATIVE_DOUBLE, &tritiumGasDensity);
+        H5::DataSpace bkgFieldSpc(H5S_SCALAR);
+        H5::Attribute bkgFieldAttr1{dataset1->createAttribute(
+            "B_bkg [Tesla]", H5::PredType::NATIVE_DOUBLE, bkgFieldSpc)};
+        bkgFieldAttr1.write(H5::PredType::NATIVE_DOUBLE, &bkgField);
 
-      // Now create the attributes for each scattering event
-      const unsigned int SCATTERSPACE_DIM = eiVec.size();
-      hsize_t dimScatter[] = {SCATTERSPACE_DIM};
-      H5::DataSpace scatterSpace(1, dimScatter);
-      H5::Attribute timeAttr1{dataset1->createAttribute(
-          "Time [seconds]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      H5::Attribute timeAttr2{dataset2->createAttribute(
-          "Time [seconds]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      double timeBuffer[SCATTERSPACE_DIM];
+        // Write the metadata for the waveguide dimenstions as well
+        H5::DataSpace rWgSpc(H5S_SCALAR);
+        H5::Attribute rWgAttr1{dataset1->createAttribute(
+            "r_wg [metres]", H5::PredType::NATIVE_DOUBLE, rWgSpc)};
+        rWgAttr1.write(H5::PredType::NATIVE_DOUBLE, &wgRadius);
 
-      H5::Attribute startEAttr1{dataset1->createAttribute(
-          "Start E [eV]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      H5::Attribute startEAttr2{dataset2->createAttribute(
-          "Start E [eV]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      double startEBuffer[SCATTERSPACE_DIM];
+        // Metadata for gas density
+        H5::DataSpace gasDensitySpc(H5S_SCALAR);
+        H5::Attribute gasDensityAttr1{dataset1->createAttribute(
+            "Gas density [m^-3]", H5::PredType::NATIVE_DOUBLE, gasDensitySpc)};
+        gasDensityAttr1.write(H5::PredType::NATIVE_DOUBLE, &tritiumGasDensity);
 
-      H5::Attribute startFAttr1{dataset1->createAttribute(
-          "Start F [Hertz]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      H5::Attribute startFAttr2{dataset2->createAttribute(
-          "Start F [Hertz]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      double startFBuffer[SCATTERSPACE_DIM];
+        // Now create the attributes for each scattering event
+        const unsigned int SCATTERSPACE_DIM = eiVec.size();
+        hsize_t dimScatter[] = {SCATTERSPACE_DIM};
+        H5::DataSpace scatterSpace(1, dimScatter);
+        H5::Attribute timeAttr1{dataset1->createAttribute(
+            "Time [seconds]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
+        double timeBuffer[SCATTERSPACE_DIM];
 
-      H5::Attribute startFDMAttr1{
-          dataset1->createAttribute("Start F, downmixed [Hertz]",
-                                    H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      H5::Attribute startFDMAttr2{
-          dataset2->createAttribute("Start F, downmixed [Hertz]",
-                                    H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      double startFDMBuffer[SCATTERSPACE_DIM];
+        H5::Attribute startEAttr1{dataset1->createAttribute(
+            "Start E [eV]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
+        double startEBuffer[SCATTERSPACE_DIM];
 
-      H5::Attribute axialFAttr1{dataset1->createAttribute(
-          "Axial F [Hertz]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      H5::Attribute axialFAttr2{dataset2->createAttribute(
-          "Axial F [Hertz]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      double axialFBuffer[SCATTERSPACE_DIM];
+        H5::Attribute startFAttr1{dataset1->createAttribute(
+            "Start F [Hertz]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
+        double startFBuffer[SCATTERSPACE_DIM];
 
-      H5::Attribute zMaxAttr1{dataset1->createAttribute(
-          "z_max [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      H5::Attribute zMaxAttr2{dataset2->createAttribute(
-          "z_max [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      double zMaxBuffer[SCATTERSPACE_DIM];
+        H5::Attribute startFDMAttr1{dataset1->createAttribute(
+            "Start F, downmixed [Hertz]", H5::PredType::NATIVE_DOUBLE,
+            scatterSpace)};
+        double startFDMBuffer[SCATTERSPACE_DIM];
 
-      H5::Attribute pitchAngleAttr1{dataset1->createAttribute(
-          "Pitch angle [degrees]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      H5::Attribute pitchAngleAttr2{dataset2->createAttribute(
-          "Pitch angle [degrees]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      double pitchAngleBuffer[SCATTERSPACE_DIM];
+        H5::Attribute axialFAttr1{dataset1->createAttribute(
+            "Axial F [Hertz]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
+        double axialFBuffer[SCATTERSPACE_DIM];
 
-      H5::Attribute xpStartAttr1{dataset1->createAttribute(
-          "x_start [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      H5::Attribute xpStartAttr2{dataset2->createAttribute(
-          "x_start [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      double xpStartBuffer[SCATTERSPACE_DIM];
+        H5::Attribute zMaxAttr1{dataset1->createAttribute(
+            "z_max [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
+        double zMaxBuffer[SCATTERSPACE_DIM];
 
-      H5::Attribute ypStartAttr1{dataset1->createAttribute(
-          "y_start [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      H5::Attribute ypStartAttr2{dataset2->createAttribute(
-          "y_start [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      double ypStartBuffer[SCATTERSPACE_DIM];
+        H5::Attribute pitchAngleAttr1{dataset1->createAttribute(
+            "Pitch angle [degrees]", H5::PredType::NATIVE_DOUBLE,
+            scatterSpace)};
+        double pitchAngleBuffer[SCATTERSPACE_DIM];
 
-      H5::Attribute zpStartAttr1{dataset1->createAttribute(
-          "z_start [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      H5::Attribute zpStartAttr2{dataset2->createAttribute(
-          "z_start [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
-      double zpStartBuffer[SCATTERSPACE_DIM];
+        H5::Attribute xpStartAttr1{dataset1->createAttribute(
+            "x_start [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
+        double xpStartBuffer[SCATTERSPACE_DIM];
 
-      // Calculate the impedance of the waveguide and write it as an attribute
-      const double zWg{wg->GetModeImpedance(WaveguideMode(1, 1, kTE),
-                                            2 * M_PI * eiVec[0].startF)};
-      H5::DataSpace zWgSpc(H5S_SCALAR);
-      H5::Attribute zWgAttr1{dataset1->createAttribute(
-          "Waveguide impedance [Ohms]", H5::PredType::NATIVE_DOUBLE, zWgSpc)};
-      zWgAttr1.write(H5::PredType::NATIVE_DOUBLE, &zWg);
-      H5::Attribute zWgAttr2{dataset2->createAttribute(
-          "Waveguide impedance [Ohms]", H5::PredType::NATIVE_DOUBLE, zWgSpc)};
-      zWgAttr2.write(H5::PredType::NATIVE_DOUBLE, &zWg);
+        H5::Attribute ypStartAttr1{dataset1->createAttribute(
+            "y_start [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
+        double ypStartBuffer[SCATTERSPACE_DIM];
 
-      for (uint i{0}; i < eiVec.size(); i++) {
-        timeBuffer[i] = eiVec[i].startTime;
-        startFBuffer[i] = eiVec[i].startF;
-        startFDMBuffer[i] = eiVec[i].startF - loFreq;
-        axialFBuffer[i] = eiVec[i].axialF;
-        startEBuffer[i] = eiVec[i].startKE;
-        zMaxBuffer[i] = eiVec[i].zMax;
-        pitchAngleBuffer[i] = eiVec[i].pitchAngle;
-        xpStartBuffer[i] = eiVec[i].startPos.X();
-        ypStartBuffer[i] = eiVec[i].startPos.Y();
-        zpStartBuffer[i] = eiVec[i].startPos.Z();
+        H5::Attribute zpStartAttr1{dataset1->createAttribute(
+            "z_start [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
+        double zpStartBuffer[SCATTERSPACE_DIM];
+
+        // Calculate the impedance of the waveguide and write it as an attribute
+        const double zWg{wg->GetModeImpedance(WaveguideMode(1, 1, kTE),
+                                              2 * M_PI * eiVec[0].startF)};
+        H5::DataSpace zWgSpc(H5S_SCALAR);
+        H5::Attribute zWgAttr1{dataset1->createAttribute(
+            "Waveguide impedance [Ohms]", H5::PredType::NATIVE_DOUBLE, zWgSpc)};
+        zWgAttr1.write(H5::PredType::NATIVE_DOUBLE, &zWg);
+
+        for (uint i{0}; i < eiVec.size(); i++) {
+          timeBuffer[i] = eiVec[i].startTime;
+          startFBuffer[i] = eiVec[i].startF;
+          startFDMBuffer[i] = eiVec[i].startF - loFreq;
+          axialFBuffer[i] = eiVec[i].axialF;
+          startEBuffer[i] = eiVec[i].startKE;
+          zMaxBuffer[i] = eiVec[i].zMax;
+          pitchAngleBuffer[i] = eiVec[i].pitchAngle;
+          xpStartBuffer[i] = eiVec[i].startPos.X();
+          ypStartBuffer[i] = eiVec[i].startPos.Y();
+          zpStartBuffer[i] = eiVec[i].startPos.Z();
+        }
+        timeAttr1.write(H5::PredType::NATIVE_DOUBLE, &timeBuffer);
+        startEAttr1.write(H5::PredType::NATIVE_DOUBLE, &startEBuffer);
+        startFAttr1.write(H5::PredType::NATIVE_DOUBLE, &startFBuffer);
+        startFDMAttr1.write(H5::PredType::NATIVE_DOUBLE, &startFDMBuffer);
+        axialFAttr1.write(H5::PredType::NATIVE_DOUBLE, &axialFBuffer);
+        zMaxAttr1.write(H5::PredType::NATIVE_DOUBLE, &zMaxBuffer);
+        pitchAngleAttr1.write(H5::PredType::NATIVE_DOUBLE, &pitchAngleBuffer);
+        xpStartAttr1.write(H5::PredType::NATIVE_DOUBLE, &xpStartBuffer);
+        ypStartAttr1.write(H5::PredType::NATIVE_DOUBLE, &ypStartBuffer);
+        zpStartAttr1.write(H5::PredType::NATIVE_DOUBLE, &zpStartBuffer);
+
+        // Create the buffer for writing in the voltage data
+        double bufferIn[DSPACE_DIM];
+        for (uint i{0}; i < grV->GetN(); i++) {
+          bufferIn[i] = grV->GetPointY(i);
+        }
+        dataset1->write(bufferIn, H5::PredType::NATIVE_DOUBLE, *dspace);
+
+        // Close the dataset and dataspace
+        delete dataset1;
+        delete dspace;
       }
-      timeAttr1.write(H5::PredType::NATIVE_DOUBLE, &timeBuffer);
-      startEAttr1.write(H5::PredType::NATIVE_DOUBLE, &startEBuffer);
-      startFAttr1.write(H5::PredType::NATIVE_DOUBLE, &startFBuffer);
-      startFDMAttr1.write(H5::PredType::NATIVE_DOUBLE, &startFDMBuffer);
-      axialFAttr1.write(H5::PredType::NATIVE_DOUBLE, &axialFBuffer);
-      zMaxAttr1.write(H5::PredType::NATIVE_DOUBLE, &zMaxBuffer);
-      pitchAngleAttr1.write(H5::PredType::NATIVE_DOUBLE, &pitchAngleBuffer);
-      xpStartAttr1.write(H5::PredType::NATIVE_DOUBLE, &xpStartBuffer);
-      ypStartAttr1.write(H5::PredType::NATIVE_DOUBLE, &ypStartBuffer);
-      zpStartAttr1.write(H5::PredType::NATIVE_DOUBLE, &zpStartBuffer);
 
-      timeAttr2.write(H5::PredType::NATIVE_DOUBLE, &timeBuffer);
-      startEAttr2.write(H5::PredType::NATIVE_DOUBLE, &startEBuffer);
-      startFAttr2.write(H5::PredType::NATIVE_DOUBLE, &startFBuffer);
-      startFDMAttr2.write(H5::PredType::NATIVE_DOUBLE, &startFDMBuffer);
-      axialFAttr2.write(H5::PredType::NATIVE_DOUBLE, &axialFBuffer);
-      zMaxAttr2.write(H5::PredType::NATIVE_DOUBLE, &zMaxBuffer);
-      pitchAngleAttr2.write(H5::PredType::NATIVE_DOUBLE, &pitchAngleBuffer);
-      xpStartAttr2.write(H5::PredType::NATIVE_DOUBLE, &xpStartBuffer);
-      ypStartAttr2.write(H5::PredType::NATIVE_DOUBLE, &ypStartBuffer);
-      zpStartAttr2.write(H5::PredType::NATIVE_DOUBLE, &zpStartBuffer);
-
-      // Create the buffer for writing in the voltage data
-      double bufferIn[DSPACE_DIM];
-      for (uint i{0}; i < grV1_zplus->GetN(); i++) {
-        bufferIn[i] = grV1_zplus->GetPointY(i);
-      }
-      dataset1->write(bufferIn, H5::PredType::NATIVE_DOUBLE, *dspace);
-      for (uint i{0}; i < grV2_zplus->GetN(); i++) {
-        bufferIn[i] = grV2_zplus->GetPointY(i);
-      }
-      dataset2->write(bufferIn, H5::PredType::NATIVE_DOUBLE, *dspace);
-
-      // Close the dataset and dataspace
-      delete dataset1;
-      delete dataset2;
-      delete dspace;
       // Close the group
       delete group;
       // Close the HDF5 file
