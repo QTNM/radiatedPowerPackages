@@ -408,10 +408,10 @@ int main(int argc, char *argv[]) {
   TString outputDir{outputStemStr};
 
   // Magnitude of background field
-  double bkgField{0.7};  // Tesla
+  double bkgField{1.0};  // Tesla
   // Define the field depending on the trap type selected
   const double rCoil{20e-3};                        // metres
-  const double deltaTheta{3.9866802 * M_PI / 180};  // radians
+  const double deltaTheta{0.5 * M_PI / 180};  // radians
   const double trapDepth{bkgField *
                          (1 / pow(cos(deltaTheta), 2) - 1)};  // Tesla
   const double iCoil{2 * trapDepth * rCoil / MU0};            // Amps
