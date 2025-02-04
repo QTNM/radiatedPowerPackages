@@ -9,32 +9,33 @@
 
 #include "BasicFunctions/Constants.h"
 #include "Scattering/BaseScatter.h"
-#include "TMath.h"
 
 namespace rad {
 class InelasticScatter : public BaseScatter {
  private:
   // Private member functions
-  // Double differenial cross-sections calculated using formulae from
+  // Double differential cross-sections calculated using formulae from
   // M. E. Rudd 1991
 
-  double BETA() { return 0.60; }
+  /// Gives the binding energy for the species in question
+  /// @return Binding energy in eV
+  double I();
 
-  double GAMMA() { return 10.0; }
+  double BETA();
 
-  double G_B() { return 2.9; }
+  double GAMMA();
 
-  double n() { return 2.4; }
+  double G_B();
 
-  double A1() { return 0.74; }
+  double n();
 
-  double A2() { return 0.87; }
+  double A1();
 
-  double A3() { return -0.60; }
+  double A2();
 
-  double S() {
-    return 4 * TMath::Pi() * pow(A0, 2) * pow(RYDBERG_EV / TRITIUM_I, 2);
-  }
+  double A3();
+
+  double S();
 
   /// @brief
   /// @param W
@@ -54,7 +55,7 @@ class InelasticScatter : public BaseScatter {
   /// @return
   double G4(double W, double T);
 
-  double G5() { return 0.33; }
+  double G5();
 
   /// @brief
   /// @param W
@@ -103,10 +104,15 @@ class InelasticScatter : public BaseScatter {
   /// @return
   double g1(double T);
 
+  enum Species { H2, He };
+
+  Species theSpecies;
+
  public:
   /// @brief Override constructor
   /// @param T Incident kinetic energy in eV
-  InelasticScatter(double T) : BaseScatter(T) {}
+  /// @param species Species of the incident particle
+  InelasticScatter(double T, Species species = H2);
 
   /// @brief Calculate total inelastic cross section on atomic hydrogen
   /// @return Cross section in m^2

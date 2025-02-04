@@ -9,32 +9,81 @@
 
 #include "BasicFunctions/Constants.h"
 
+rad::InelasticScatter::InelasticScatter(double T, Species species)
+    : BaseScatter(T), theSpecies{species} {}
+
+double rad::InelasticScatter::I() {
+  if (theSpecies == H2) {
+    return 15.43;
+  } else {
+    return 24.59;
+  }
+}
+
+double rad::InelasticScatter::S() {
+  return 4 * M_PI * pow(A0, 2) * pow(RYDBERG_EV / I(), 2);
+}
+
 double rad::InelasticScatter::GetTotalXSec() {
   double T{GetIncidentKE()};
   return S() * F(T) * g1(T);
 }
 
+inline double rad::InelasticScatter::BETA() { return 0.60; }
+
+inline double rad::InelasticScatter::GAMMA() { return 10.0; }
+
+inline double rad::InelasticScatter::G_B() { return 2.9; }
+
+inline double rad::InelasticScatter::n() { return 2.4; }
+
+double rad::InelasticScatter::A1() {
+  if (theSpecies == H2) {
+    return 0.74;
+  } else {
+    return 0.85;
+  }
+}
+
+double rad::InelasticScatter::A2() {
+  if (theSpecies == H2) {
+    return 0.87;
+  } else {
+    return 0.36;
+  }
+}
+
+double rad::InelasticScatter::A3() {
+  if (theSpecies == H2) {
+    return -0.60;
+  } else {
+    return -0.10;
+  }
+}
+
 double rad::InelasticScatter::G2(double W, double T) {
-  double w{W / TRITIUM_I};
-  double t{T / TRITIUM_I};
+  double w{W / I()};
+  double t{T / I()};
   return sqrt((w + 1) / t);
 }
 
 double rad::InelasticScatter::G3(double W, double T) {
-  double w{W / TRITIUM_I};
-  double t{T / TRITIUM_I};
+  double w{W / I()};
+  double t{T / I()};
   return BETA() * sqrt((1 - G2(W, T) * G2(W, T)) / w);
 }
 
 double rad::InelasticScatter::G4(double W, double T) {
-  double w{W / TRITIUM_I};
-  double t{T / TRITIUM_I};
+  double w{W / I()};
+  double t{T / I()};
   return GAMMA() * pow(1 - w / t, 3) / (t * (w + 1));
 }
 
+inline double rad::InelasticScatter::G5() { return 0.33; }
+
 double rad::InelasticScatter::f_BE(double W, double T, double theta) {
-  double w{W / TRITIUM_I};
-  double t{T / TRITIUM_I};
+  double w{W / I()};
+  double t{T / I()};
   return 1 / (1 + pow((cos(theta) - G2(W, T)) / G3(W, T), 2));
 }
 
@@ -49,13 +98,13 @@ double rad::InelasticScatter::g_BE(double W, double T) {
 }
 
 double rad::InelasticScatter::F(double T) {
-  double t{T / TRITIUM_I};
+  double t{T / I()};
   return (A1() * log(t) + A2() + A3() / t) / t;
 }
 
 double rad::InelasticScatter::f_1(double W, double T) {
-  double w{W / TRITIUM_I};
-  double t{T / TRITIUM_I};
+  double w{W / I()};
+  double t{T / I()};
   double term1{1 / pow(w + 1, n())};
   double term2{1 / pow(t - w, n())};
   double term3{-1 / pow((w + 1) * (t - w), n() / 2)};
@@ -63,7 +112,7 @@ double rad::InelasticScatter::f_1(double W, double T) {
 }
 
 double rad::InelasticScatter::G1(double W, double T) {
-  return (S() * F(T) * f_1(W, T) / TRITIUM_I) / (g_BE(W, T) + G4(W, T) * G_B());
+  return (S() * F(T) * f_1(W, T) / I()) / (g_BE(W, T) + G4(W, T) * G_B());
 }
 
 double rad::InelasticScatter::G4fb(double W, double T, double theta) {
@@ -71,7 +120,7 @@ double rad::InelasticScatter::G4fb(double W, double T, double theta) {
 }
 
 double rad::InelasticScatter::g1(double T) {
-  double t{T / TRITIUM_I};
+  double t{T / I()};
   return (1 - pow(t, 1 - n())) / (n() - 1) -
          pow(2 / (t + 1), n() / 2) * (1 - pow(t, 1 - n() / 2)) / (n() - 2);
 }
@@ -97,8 +146,7 @@ double rad::InelasticScatter::GetRandomW() {
   std::vector<double> WVec{};
   std::vector<double> xsecVec{};
   for (int iW{nBins - 1}; iW >= 0; iW--) {
-    double W{GetIncidentKE() - TRITIUM_I -
-             diffMin * pow(10, double(iW) * WDiff)};
+    double W{GetIncidentKE() - I() - diffMin * pow(10, double(iW) * WDiff)};
     WVec.push_back(W);
     xsecVec.push_back(GetSDCS_W(W));
   }
