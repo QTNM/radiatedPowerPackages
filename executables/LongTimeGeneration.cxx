@@ -38,8 +38,11 @@ int main(int argc, char *argv[]) {
   int opt{};
   std::string outputStemStr{" "};
   unsigned int nElectrons{2000};
+  double bkgField{1.0};         // Tesla
+  double dThetaDeg{0.5};        // degrees
+  double tritiumDensity{1e18};  // atoms m^-3
 
-  while ((opt = getopt(argc, argv, ":o:n:")) != -1) {
+  while ((opt = getopt(argc, argv, ":o:a:d:b:n:h")) != -1) {
     switch (opt) {
       case 'o':
         outputStemStr = optarg;
@@ -50,26 +53,53 @@ int main(int argc, char *argv[]) {
         nElectrons = std::stoi(optarg);
         break;
 
+      case 'b':
+        bkgField = std::stod(optarg);
+        break;
+
+      case 'a':
+        dThetaDeg = std::stod(optarg);
+        break;
+
+      case 'd':
+        tritiumDensity = std::stod(optarg);
+        break;
+
+      case 'h':
+        std::cout << "Usage: " << argv[0]
+                  << " [-o output directory] [-a trapping angle] [-n number of "
+                     "electrons] [-b "
+                     "background field] [-d gas number density]"
+                  << std::endl;
+        return 1;
+
       case ':':
         std::cout << "Option needs a value\n";
-        break;
+        return 1;
 
       case '?':
         std::cout << "Unknown option: " << optopt << std::endl;
-        break;
+        return 1;
     }
   }
 
   std::cout << "Attempting to generate " << nElectrons << " electrons\n";
+  std::cout << "Background field is " << bkgField << " Tesla\n";
+  std::cout << "Trapping the last " << dThetaDeg << " degrees\n";
 
   // Define a magnetic trap. Start with a harmonic one
-  const double coilRadius{0.03};                               // m
-  const double trapDepth{4e-3};                                // T
-  const double coilCurrent{2 * trapDepth * coilRadius / MU0};  // T
-  const double bkg{0.7};                                       // Tesla
-  auto field = new HarmonicField(coilRadius, coilCurrent, bkg);
-  const double tritiumDensity{1e18};  // atoms m^-3
+  const double dThetaRad{dThetaDeg * M_PI / 180};
+  const double coilRadius{0.03};                                        // m
+  const double trapDepth{bkgField * (1 / pow(cos(dThetaRad), 2) - 1)};  // Tesla
+  const double coilCurrent{2 * trapDepth * coilRadius / MU0};           // T
+
+  auto field = new HarmonicField(coilRadius, coilCurrent, bkgField);
+
   const double zLimit{0.1};
+
+  // Calculate a rough cyclotron frequency
+  const double centralField{field->evaluate_field_magnitude(TVector3(0, 0, 0))};
+  const double centralCycFreq{CalcCyclotronFreq(18.6e3, centralField)};
 
   // Set up random number stuff
   std::random_device rd;
@@ -77,7 +107,7 @@ int main(int argc, char *argv[]) {
 
   TString outputStem{outputStemStr};
 
-  double simStepTime{5e-12};  // seconds
+  double simStepTime{1 / (10 * centralCycFreq)};  // seconds
   const double tau{2 * R_E / (3 * TMath::C())};
 
   for (unsigned int i{0}; i < nElectrons; i++) {
@@ -254,8 +284,9 @@ int main(int argc, char *argv[]) {
     fout.Close();
 
     // We actually only want those electrons which have travelled for more than
-    // 1ms
-    if (time < 1e-3) {
+    // our minimum time
+    const double minTime{1e-3};
+    if (time < minTime) {
       cout << "Too short, deleting file\n\n";
       gSystem->Exec("rm -f " + outputFile);
     }
