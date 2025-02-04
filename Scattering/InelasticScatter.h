@@ -11,6 +11,8 @@
 #include "Scattering/BaseScatter.h"
 
 namespace rad {
+enum Species { H2, He };
+
 class InelasticScatter : public BaseScatter {
  private:
   // Private member functions
@@ -20,6 +22,8 @@ class InelasticScatter : public BaseScatter {
   /// Gives the binding energy for the species in question
   /// @return Binding energy in eV
   double I();
+
+  double N();
 
   double BETA();
 
@@ -103,8 +107,6 @@ class InelasticScatter : public BaseScatter {
   /// @param T
   /// @return
   double g1(double T);
-
-  enum Species { H2, He };
 
   Species theSpecies;
 

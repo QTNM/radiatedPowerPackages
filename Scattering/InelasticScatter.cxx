@@ -21,7 +21,15 @@ double rad::InelasticScatter::I() {
 }
 
 double rad::InelasticScatter::S() {
-  return 4 * M_PI * pow(A0, 2) * pow(RYDBERG_EV / I(), 2);
+  return 4 * M_PI * pow(A0, 2) * N() * pow(RYDBERG_EV / I(), 2);
+}
+
+double rad::InelasticScatter::N() {
+  if (theSpecies == H2) {
+    return 2;
+  } else {
+    return 2;
+  }
 }
 
 double rad::InelasticScatter::GetTotalXSec() {
