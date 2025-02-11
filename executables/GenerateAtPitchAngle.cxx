@@ -95,8 +95,9 @@ int main(int argc, char *argv[]) {
   bool bathtubTrap{false};         // Use a bathtub trap
   double bkgField{1.0};            // Tesla
   double wgRadius{5.0e-3};         // metres
+  double x{0};                     // Start radius in metres
 
-  while ((opt = getopt(argc, argv, ":o:n:e:p:t:f:r:b")) != -1) {
+  while ((opt = getopt(argc, argv, ":o:n:e:p:t:f:r:x:b")) != -1) {
     switch (opt) {
       case 'o':
         outputStemStr = optarg;
@@ -119,6 +120,9 @@ int main(int argc, char *argv[]) {
       case 'r':
         wgRadius = boost::lexical_cast<double>(optarg);
         break;
+      case 'x':
+        x = boost::lexical_cast<double>(optarg);
+        break;
       case 'b':
         bathtubTrap = true;
         break;
@@ -133,7 +137,7 @@ int main(int argc, char *argv[]) {
         cout << "Usage: " << argv[0]
              << " [-o output directory] [-n number of events] [-e energy] [-p "
                 "pitch angle] [-t simulation time] [-f background field] [-r "
-                "waveguide radius] [-b "
+                "waveguide radius] [-x electron start radius] [-b "
                 "bathtub trap]"
              << endl;
         return 1;
@@ -151,6 +155,16 @@ int main(int argc, char *argv[]) {
     cout << "Using bathtub trap\n";
   } else {
     cout << "Using harmonic trap\n";
+  }
+
+  if (x != 0) {
+    cout << "Using an electron starting radius of " << x * 1e3 << " mm\n";
+  }
+  // Check if waveguide radius is less than the start radius
+  if (wgRadius < x) {
+    cout
+        << "Waveguide radius must be greater than the start radius. Exiting.\n";
+    exit(1);
   }
 
   // Check if the chosen output directory exists
@@ -232,9 +246,14 @@ int main(int argc, char *argv[]) {
     std::uniform_real_distribution<double> uni1(0, 1);
 
     // Generate a random position on a disk
-    const double rhoGen{rhoGenMax * sqrt(uni1(gen))};
-    const double phiPosGen{uni1(gen) * 2 * M_PI};
-    TVector3 initPos(rhoGen * cos(phiPosGen), rhoGen * sin(phiPosGen), 0);
+    TVector3 initPos;
+    if (x != 0) {
+      initPos = TVector3(x, 0, 0);
+    } else {
+      const double rhoGen{rhoGenMax * sqrt(uni1(gen))};
+      const double phiPosGen{uni1(gen) * 2 * M_PI};
+      initPos = TVector3(rhoGen * cos(phiPosGen), rhoGen * sin(phiPosGen), 0);
+    }
     double xStart{initPos.X()};
     double yStart{initPos.Y()};
     double zStart{initPos.Z()};
