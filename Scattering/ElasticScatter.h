@@ -104,10 +104,6 @@ class ElasticScatter : public BaseScatter {
   /// @return Screening factor
   double ScreeningFactor(double theta);
 
-  /// @brief Calculates the rutherford cross section on atomic hydrogen
-  /// @return Cross section in m^2
-  double TotalRutherfordXSec();
-
   /// @brief Calculate differential cross section using parametrization from
   /// Riley, MacCallum, Biggs (1975)
   /// @param A Vector of appropriate A params
@@ -130,18 +126,29 @@ class ElasticScatter : public BaseScatter {
   ElasticScatter(double T, unsigned int aNum = 1, unsigned int aMass = 3);
 
   /// @brief Total Mott cross section
+  /// Method from Gauvin & Drouin, Scanning 15, 3 (1993)
   /// @return Cross section in m^2
   double GetTotalXSec() override;
 
+  /// @brief Calculates the total Rutherford cross section
+  /// Method from Gauvin & Drouin, Scanning 15, 3 (1993)
+  /// @return Cross section in m^2
+  double TotalRutherfordXSec();
+
   /// @brief Calculate the elastic differential cross section on hydrogen
-  /// @param cosTheta Cosine of scattering angle of the electron
+  /// @param theta Scattering angle of the electron in radians
   /// @return Differential cross section in units of m^2 / sr
-  double GetDiffXSec(double cosTheta);
+  double GetDiffXSec(double theta);
 
   /// @brief Generates a random scattering angle according to the differential
   /// cross-section
   /// @return The scattering angle in radians
   double GetRandomScatteringAngle();
+
+  /// @brief Gives the energy of the outgoing electron
+  /// @param theta Scattering angle in radians
+  /// @return Post-scatter kinetic energy in eV
+  double GetEnergyAfterScatter(double theta);
 };
 }  // namespace rad
 

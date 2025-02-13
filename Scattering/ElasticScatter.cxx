@@ -24,9 +24,10 @@ rad::ElasticScatter::ElasticScatter(double incidentKE, unsigned int aNum,
 
 double rad::ElasticScatter::TotalRutherfordXSec() {
   double ke_keV{GetIncidentKE() / 1e3};
-  double alpha{3.4e-3 / ke_keV};
-  return 5.21e-25 * pow(1 / ke_keV, 2) * 4 * TMath::Pi() *
-         pow((ke_keV + 511) / (ke_keV + 1022), 2) / (alpha * (1 + alpha));
+  double alpha{3.4e-3 * pow(Z, 2 / 3) / ke_keV};
+  return 5.21e-25 * pow(Z / ke_keV, 2) * 4 * TMath::Pi() *
+         pow((ke_keV + ME_EV / 1e3) / (ke_keV + 2 * ME_EV / 1e3), 2) /
+         (alpha * (1 + alpha));
 }
 
 double rad::ElasticScatter::RutherfordDCS(double theta) {
@@ -81,7 +82,25 @@ double rad::ElasticScatter::NuclearFormFactor(double q) {
 
 double rad::ElasticScatter::GetTotalXSec() {
   double rutherfordxsec{TotalRutherfordXSec()};
-  double gamma{0.734357 * (1 - exp(-2.45719 * sqrt(GetIncidentKE() / 1e3)))};
+  double lambda{0};
+  double beta{0};
+  if (Z == 1) {
+    lambda = 0.734357;
+    beta = 2.45719;
+  } else if (Z == 2) {
+    lambda = 1.25;
+    beta = 12;
+  } else if (Z == 3) {
+    lambda = 1.262598;
+    beta = 10.17333;
+  } else if (Z == 4) {
+    lambda = 1.492947;
+    beta = 4.38619;
+  } else if (Z == 5) {
+    lambda = 1.434886;
+    beta = 4.016957;
+  }
+  double gamma{lambda * (1 - exp(-beta * sqrt(GetIncidentKE() / 1e3)))};
   return rutherfordxsec * gamma;
 }
 
@@ -101,83 +120,49 @@ double rad::ElasticScatter::GetDiffXSec(std::vector<double> A, double B,
   return sum1 + sum2;
 }
 
-double rad::ElasticScatter::GetDiffXSec(double cosTheta) {
-  double angstrom{1e-10};  // metres
-  double T{GetIncidentKE()};
-
-  // Figure out which elements to use for the interpolation
-  unsigned int iLo{0};
-  if (T >= 8e3 && T < 16e3) {
-    iLo = 1;
-  } else if (T >= 16e3) {
-    iLo = 2;
+double rad::ElasticScatter::GetDiffXSec(double theta) {
+  if (Z > 5) {
+    return 0;
+  } else {
+    const double q{Calcq(theta)};
+    return RutherfordDCS(theta) * ScreeningFactor(theta) * NuclearFormFactor(q);
   }
-
-  std::vector<double> eTmp{eVec.at(iLo), eVec.at(iLo + 1), eVec.at(iLo + 2),
-                           eVec.at(iLo + 3)};
-  std::vector<double> bTmp{BVec.at(iLo), BVec.at(iLo + 1), BVec.at(iLo + 2),
-                           BVec.at(iLo + 3)};
-  std::vector<double> a1Tmp{A1Vec.at(iLo), A1Vec.at(iLo + 1), A1Vec.at(iLo + 2),
-                            A1Vec.at(iLo + 3)};
-  std::vector<double> a2Tmp{A2Vec.at(iLo), A2Vec.at(iLo + 1), A2Vec.at(iLo + 2),
-                            A2Vec.at(iLo + 3)};
-  std::vector<double> a3Tmp{A3Vec.at(iLo), A3Vec.at(iLo + 1), A3Vec.at(iLo + 2),
-                            A3Vec.at(iLo + 3)};
-  std::vector<double> a4Tmp{A4Vec.at(iLo), A4Vec.at(iLo + 1), A4Vec.at(iLo + 2),
-                            A4Vec.at(iLo + 3)};
-  std::vector<double> c0Tmp{C0Vec.at(iLo), C0Vec.at(iLo + 1), C0Vec.at(iLo + 2),
-                            C0Vec.at(iLo + 3)};
-  std::vector<double> c1Tmp{C1Vec.at(iLo), C1Vec.at(iLo + 1), C1Vec.at(iLo + 2),
-                            C1Vec.at(iLo + 3)};
-  std::vector<double> c2Tmp{C2Vec.at(iLo), C2Vec.at(iLo + 1), C2Vec.at(iLo + 2),
-                            C2Vec.at(iLo + 3)};
-  std::vector<double> c3Tmp{C3Vec.at(iLo), C3Vec.at(iLo + 1), C3Vec.at(iLo + 2),
-                            C3Vec.at(iLo + 3)};
-  std::vector<double> c4Tmp{C4Vec.at(iLo), C4Vec.at(iLo + 1), C4Vec.at(iLo + 2),
-                            C4Vec.at(iLo + 3)};
-  std::vector<double> c5Tmp{C5Vec.at(iLo), C5Vec.at(iLo + 1), C5Vec.at(iLo + 2),
-                            C5Vec.at(iLo + 3)};
-  std::vector<double> c6Tmp{C6Vec.at(iLo), C6Vec.at(iLo + 1), C6Vec.at(iLo + 2),
-                            C6Vec.at(iLo + 3)};
-
-  std::vector<double> aVec{};
-  aVec.push_back(CubicInterpolation(eTmp, a1Tmp, T));
-  aVec.push_back(CubicInterpolation(eTmp, a2Tmp, T));
-  aVec.push_back(CubicInterpolation(eTmp, a3Tmp, T));
-  aVec.push_back(CubicInterpolation(eTmp, a4Tmp, T));
-  double b{CubicInterpolation(eTmp, bTmp, T)};
-  std::vector<double> cVec{};
-  cVec.push_back(CubicInterpolation(eTmp, c0Tmp, T));
-  cVec.push_back(CubicInterpolation(eTmp, c1Tmp, T));
-  cVec.push_back(CubicInterpolation(eTmp, c2Tmp, T));
-  cVec.push_back(CubicInterpolation(eTmp, c3Tmp, T));
-  cVec.push_back(CubicInterpolation(eTmp, c4Tmp, T));
-  cVec.push_back(CubicInterpolation(eTmp, c5Tmp, T));
-  cVec.push_back(CubicInterpolation(eTmp, c6Tmp, T));
-
-  return GetDiffXSec(aVec, b, cVec, cosTheta) * angstrom * angstrom;
 }
 
 double rad::ElasticScatter::GetRandomScatteringAngle() {
   const unsigned int nPnts{1000};
-  const double cThetaMin{-1};
-  const double cThetaMax{0.9995};  // Strange behaviour close to 1
+  const double thetaMin{1e-5};
+  const double thetaMax{179 * M_PI /
+                        180};  // Strange behaviour close to 180 degrees
+  // Calculate the step size in log space
+  const double stepSize{log10(thetaMax / thetaMin) / (nPnts - 1)};
 
-  std::vector<double> cThetaVec{};
-  std::vector<double> xsecVec{};
+  std::vector<double> thetaVec{};
+  std::vector<double> dcsVec{};
   for (unsigned int i{0}; i < nPnts; i++) {
-    double cTheta{cThetaMin +
-                  (cThetaMax - cThetaMin) * double(i) / double(nPnts - 1)};
-    cThetaVec.push_back(cTheta);
-    double xsec{GetDiffXSec(cTheta)};
-    xsecVec.push_back(xsec);
+    double theta{thetaMin * pow(10, i * stepSize)};
+    thetaVec.push_back(theta);
+    double dcs{GetDiffXSec(theta)};
+    dcsVec.push_back(dcs);
   }
 
   // Now construct the distribution and sample from it
-  std::piecewise_linear_distribution<double> xsecDist(
-      cThetaVec.begin(), cThetaVec.end(), xsecVec.begin());
+  std::piecewise_linear_distribution<double> dcsDist(
+      thetaVec.begin(), thetaVec.end(), dcsVec.begin());
   std::random_device rd;
   std::mt19937 mt(rd());
-  double cThetaSampled{xsecDist(mt)};
-  return acos(cThetaSampled);
+  return dcsDist(mt);
+}
+
+double rad::ElasticScatter::GetEnergyAfterScatter(double theta) {
+  // Calculate incident momentum
+  const double Ei_Joules{GetIncidentKE() * TMath::Qe() +
+                         ME * pow(TMath::C(), 2)};
+  const double pi{sqrt(pow(Ei_Joules, 2) - pow(ME * pow(TMath::C(), 2), 2)) /
+                  TMath::C()};
+  // Now calculate the final momentum
+  const double pf{pi - Calcq(theta)};
+  const double Ef{
+      sqrt(pow(pf * TMath::C(), 2) + pow(ME * pow(TMath::C(), 2), 2))};
+  return (Ef - ME * pow(TMath::C(), 2)) / TMath::Qe();
 }
