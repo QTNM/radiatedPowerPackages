@@ -5,17 +5,78 @@
 #include "Scattering/ElasticScatter.h"
 
 #include <boost/math/special_functions/legendre.hpp>
+#include <boost/units/systems/si/codata/universal_constants.hpp>
 #include <cmath>
+#include <iostream>
 #include <random>
 
 #include "BasicFunctions/BasicFunctions.h"
 #include "TMath.h"
+
+rad::ElasticScatter::ElasticScatter(double incidentKE, unsigned int aNum,
+                                    unsigned int aMass)
+    : BaseScatter(incidentKE), Z(aNum), A(aMass) {
+  // Check if we have data for this atomic number
+  if (Z > 5) {
+    std::cout << "No data for this atomic number, returning zero!" << std::endl;
+  }
+}
 
 double rad::ElasticScatter::TotalRutherfordXSec() {
   double ke_keV{GetIncidentKE() / 1e3};
   double alpha{3.4e-3 / ke_keV};
   return 5.21e-25 * pow(1 / ke_keV, 2) * 4 * TMath::Pi() *
          pow((ke_keV + 511) / (ke_keV + 1022), 2) / (alpha * (1 + alpha));
+}
+
+double rad::ElasticScatter::RutherfordDCS(double theta) {
+  const double chargeFac{
+      Z * pow(TMath::Qe(), 2) /
+      pow(16 * M_PI * EPSILON0 * GetIncidentKE() * TMath::Qe(), 2)};
+  if (theta == 0) {
+    return 0;
+  } else {
+    return chargeFac / pow(sin(theta / 2), 4);
+  }
+}
+
+double rad::ElasticScatter::Calcq(double theta) {
+  const double gamma{1 + GetIncidentKE() / ME_EV};
+  const double beta{sqrt(1 - 1 / pow(gamma, 2))};
+  const double p{gamma * beta * ME * TMath::C()};
+  return 2 * p * sin(theta / 2);
+}
+
+double rad::ElasticScatter::Calct() {
+  const double gamma{1 + GetIncidentKE() / ME_EV};
+  const double beta{sqrt(1 - 1 / pow(gamma, 2))};
+  return 1 + 1.053 * pow(ALPHA * Z, 1.971) +
+         (0.00569 + 0.995 * pow(ALPHA * Z, 1.778) * pow(1 / beta - 1, 0.750));
+}
+
+double rad::ElasticScatter::CalcFe(double q) {
+  double Fe{0};
+  for (size_t i{0}; i < 4; i++) {
+    Fe += Ai[Z - 1][i] * pow(alphai[Z - 1][i], 2) /
+          (pow(alphai[Z - 1][i], 2) + pow(q / 1.992851915e-24, 2));
+  }
+  return Fe;
+}
+
+double rad::ElasticScatter::ScreeningFactor(double theta) {
+  return pow(1 - CalcFe(Calcq(theta) / Calct()), 2);
+}
+
+double rad::ElasticScatter::CalcF(double R, double q) {
+  return 3 / pow(q * R / TMath::Hbar(), 3) *
+         (sin(q * R / TMath::Hbar()) -
+          q * R / TMath::Hbar() * cos(q * R / TMath::Hbar()));
+}
+
+inline double rad::ElasticScatter::R0() { return 1.2e-15 * pow(A, 1 / 3); }
+
+double rad::ElasticScatter::NuclearFormFactor(double q) {
+  return CalcF(R0(), 2) * CalcF(2e-15, q);
 }
 
 double rad::ElasticScatter::GetTotalXSec() {
