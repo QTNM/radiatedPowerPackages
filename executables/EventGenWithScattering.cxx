@@ -51,6 +51,7 @@ class ElectronInfo {
   double axialF;      // Hertz
   double pitchAngle;  // degrees
   double zMax;        // metres
+  double deltaE;      // Energy loss from scatter, eV
   TVector3 startPos;  // metres
   TVector3 startVel;  // m/s
 
@@ -60,6 +61,7 @@ class ElectronInfo {
     startKE = -1;
     startF = -1;
     axialF = -1;
+    deltaE = -1;
     pitchAngle = DBL_MAX;
     zMax = -DBL_MAX;
     startPos = TVector3(0, 0, 0);
@@ -73,6 +75,7 @@ class ElectronInfo {
     axialF = -1;
     pitchAngle = DBL_MAX;
     zMax = -DBL_MAX;
+    deltaE = -1;
     startPos = TVector3(0, 0, 0);
     startVel = TVector3(0, 0, 0);
   }
@@ -81,7 +84,8 @@ class ElectronInfo {
 double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
                         BaseField *field, double gasDensity,
                         long double stepSize, double maxSimTime,
-                        std::vector<ElectronInfo> &ei, BaseField *bField) {
+                        std::vector<ElectronInfo> &ei, BaseField *bField,
+                        double heFraction) {
   bool isTrapped{true};
   TFile fT(file, "recreate");
   TTree tree("tree", "tree");
@@ -121,23 +125,9 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
   std::random_device rd;
   std::mt19937 gen(rd());
 
-  // Now calculate when the first scatter will happen
-  double gamma{1 / sqrt(1 - pow(vel.Mag() / TMath::C(), 2))};
-  double ke{(gamma - 1) * ME_EV};
-  ElasticScatter scatterElastic(ke);
-  InelasticScatter scatterInelastic(ke);
-  double elasticXSec{scatterElastic.GetTotalXSec()};
-  double inelasticXSec{scatterInelastic.GetTotalXSec()};
-  double totalXSec{elasticXSec + inelasticXSec};
-  // Calculate the mean free path
-  double lambdaStep{1 / (gasDensity * totalXSec)};
-  std::exponential_distribution<double> pathDist(1 / lambdaStep);
-  double pathLength{pathDist(gen)};
-  double pathTimeStep{pathLength / vel.Mag()};
-  double nextScatterTime{pathTimeStep};
-  cout << "Scattering after " << pathTimeStep * 1e6 << " us\n";
-
   // Set some information about the electron creation
+  double gamma{1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2))};
+  double ke{(gamma - 1) * ME_EV};
   ElectronInfo eiTemp;
   eiTemp.startTime = time;
   eiTemp.startKE = ke;
@@ -158,49 +148,158 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
   bool haveSavedInfo{false};
 
   unsigned long nSteps{1};
+
   while (time <= maxSimTime && isTrapped) {
-    time = (long double)nSteps * stepSize;
-    currentInfoWriteTime += stepSize;
     if (std::fmod(time, 5e-6) < stepSize) {
       std::cout << "Simulated " << time * 1e6 << " us\n";
     }
 
-    // Advance the electron
-    auto outputStep = solver.advance_step(stepSize, p, v);
-    p = std::get<0>(outputStep);
-    v = std::get<1>(outputStep);
-    if (abs(p.Z()) > 7.5e-2) {
-      std::cout << "Electron escaped after " << time * 1e6 << " us\n";
-      isTrapped = false;
+    // Calculate the total cross-section
+    // We want to see if the scatter is happening in the next time step
+    double gamma{1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2))};
+    double ke{(gamma - 1) * ME_EV};
+    ElasticScatter scatterElasticHe(ke, 2, 4);
+    ElasticScatter scatterElasticT(ke, 1, 3);
+    InelasticScatter scatterInelasticHe(ke, He);
+    InelasticScatter scatterInelasticT(ke, H2);
+    double elasticXSecHe{scatterElasticHe.GetTotalXSec()};
+    double inelasticXSecHe{scatterInelasticHe.GetTotalXSec()};
+    double totalXSecHe{(elasticXSecHe + inelasticXSecHe) * heFraction};
+    double elasticXSecT{scatterElasticT.GetTotalXSec()};
+    double inelasticXSecT{scatterInelasticT.GetTotalXSec()};
+    double totalXSecT{(elasticXSecT + inelasticXSecT) * (1 - heFraction)};
 
-      // If we haven't saved the information yet for the previous scattering
-      // then do so now
-      if (!haveSavedInfo) {
-        // Calculate start frequency
-        gamma = 1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2));
-        ke = (gamma - 1) * ME_EV;
-        bMean /= double(nFieldPoints);
-        double startF{CalcCyclotronFreq(ke, bMean)};
-        eiTemp.startF = startF;
-        // We may or may not be able to do our axial frequency calculation
-        cout << "Electron escaped after only " << zCrossings
-             << " z crossings.\n";
-        if (zCrossings == 2) {
-          double axFreq{1 / (2 * (zCrossTimes[1] - zCrossTimes[0]))};
-          eiTemp.axialF = axFreq;
+    // Using the gas fraction, calculate the total cross-section
+    double totalXSec{totalXSecHe + totalXSecT};
+    double meanFreeTime{1 / (gasDensity * totalXSec * v.Mag())};
+    // Draw from an exponential distribution to see if we scatter
+    std::exponential_distribution<double> scatterDistro(1 / meanFreeTime);
+    double scatterTime{scatterDistro(gen)};
+    if (scatterTime < stepSize) {
+      time += scatterTime;
+      cout << "Scattering after " << time * 1e6 << " us\n";
+      currentInfoWriteTime += scatterTime;
+
+      // Move the particle up to the scattering time
+      // Advance the electron
+      auto outputStep = solver.advance_step(scatterTime, p, v);
+      p = std::get<0>(outputStep);
+      v = std::get<1>(outputStep);
+
+      // Reset some variables used for calculating truth info
+      currentInfoWriteTime = 0;
+      zCrossings = 0;
+      oldZ = zPos;
+      bMean = 0;
+      nFieldPoints = 0;
+      eiTemp.Reset();
+      haveSavedInfo = false;
+
+      eiTemp.startTime = time;
+      eiTemp.startKE = ke;
+      eiTemp.startPos = p;
+
+      // We now need to determine what we are scattering on and if the scatter
+      // is elastic or inelastic
+      double scatterAngle{0};
+      std::uniform_real_distribution<double> uni(0, 1);
+      if (uni(gen) < totalXSecHe / totalXSec) {
+        // Scattering from Helium
+        // Now check if this is an elastic or inelastic scatter
+        if (uni(gen) < elasticXSecHe / (elasticXSecHe + inelasticXSecHe)) {
+          // Scattering from Helium
+          cout << "Elastic scattering from Helium\n";
+          scatterAngle = scatterElasticHe.GetRandomScatteringAngle();
+          double newKE{scatterElasticHe.GetEnergyAfterScatter(scatterAngle)};
+          eiTemp.deltaE = ke - newKE;
+          ke = newKE;
+          v = scatterElasticHe.GetScatteredVector(v, ke, scatterAngle);
+        } else {
+          cout << "Inelastic scattering from Helium\n";
+          double W{scatterInelasticHe.GetRandomW()};
+          eiTemp.deltaE = ke - W;
+          scatterAngle = scatterInelasticHe.GetRandomTheta(W);
+          ke = W;
+          v = scatterInelasticHe.GetScatteredVector(v, ke, scatterAngle);
         }
-
-        ei.push_back(eiTemp);
-        haveSavedInfo = true;
+      } else {
+        // Scattering from Tritium
+        // Check if this an elastic or inelastic scatter
+        if (uni(gen) < elasticXSecT / (elasticXSecT + inelasticXSecT)) {
+          cout << "Elastic scattering from Tritium\n";
+          scatterAngle = scatterElasticT.GetRandomScatteringAngle();
+          double newKE{scatterElasticT.GetEnergyAfterScatter(scatterAngle)};
+          eiTemp.deltaE = ke - newKE;
+          ke = newKE;
+          v = scatterElasticT.GetScatteredVector(v, ke, scatterAngle);
+        } else {
+          cout << "Inelastic scattering from Tritium\n";
+          double W{scatterInelasticT.GetRandomW()};
+          eiTemp.deltaE = ke - W;
+          scatterAngle = scatterInelasticT.GetRandomTheta(W);
+          ke = W;
+          v = scatterInelasticT.GetScatteredVector(v, ke, scatterAngle);
+        }
       }
 
-      break;
-    }
-
-    if (time < nextScatterTime) {
       acc = solver.acc(p, v);
+      xPos = p.X();
+      yPos = p.Y();
+      zPos = p.Z();
+      xVel = v.X();
+      yVel = v.Y();
+      zVel = v.Z();
+      xAcc = acc.X();
+      yAcc = acc.Y();
+      zAcc = acc.Z();
+      tree.Fill();
+
+      double pitchAngleDeg{abs(atan(v.Perp() / v.Z())) * 180 / M_PI};
+      cout << "Scattering angle = " << scatterAngle * 180 / M_PI
+           << " degrees\tNew KE = " << ke / 1e3
+           << " keV\tNew pitch angle = " << pitchAngleDeg << " degrees\n";
+      eiTemp.startVel = v;
+
+    } else {
+      time = (long double)nSteps * stepSize;
+      currentInfoWriteTime += stepSize;
+
+      // Advance the electron
+      auto outputStep = solver.advance_step(stepSize, p, v);
+      p = std::get<0>(outputStep);
+      v = std::get<1>(outputStep);
+
+      // Check if the electron has escaped
+      if (abs(p.Z()) > 7.5e-2) {
+        std::cout << "Electron escaped after " << time * 1e6 << " us\n";
+        isTrapped = false;
+
+        // If we haven't saved the information yet for the previous scattering
+        // then do so now
+        if (!haveSavedInfo) {
+          // Calculate start frequency
+          gamma = 1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2));
+          ke = (gamma - 1) * ME_EV;
+          bMean /= double(nFieldPoints);
+          double startF{CalcCyclotronFreq(ke, bMean)};
+          eiTemp.startF = startF;
+          // We may or may not be able to do our axial frequency calculation
+          cout << "Electron escaped after only " << zCrossings
+               << " z crossings.\n";
+          if (zCrossings == 2) {
+            double axFreq{1 / (2 * (zCrossTimes[1] - zCrossTimes[0]))};
+            eiTemp.axialF = axFreq;
+          }
+
+          ei.push_back(eiTemp);
+          haveSavedInfo = true;
+        }
+
+        break;
+      }
 
       // Write to tree
+      acc = solver.acc(p, v);
       xPos = p.X();
       yPos = p.Y();
       zPos = p.Z();
@@ -235,8 +334,6 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
       } else if (!haveSavedInfo && time >= fieldMeasurementTime) {
         // Now calculate the axial frequency
         bMean /= double(nFieldPoints);
-        gamma = 1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2));
-        ke = (gamma - 1) * ME_EV;
         double startF{CalcCyclotronFreq(ke, bMean)};
         double axFreq{1 / (zCrossTimes[2] - zCrossTimes[0])};
         cout << "f_c = " << startF / 1e9 << " GHz\tf_a = " << axFreq / 1e6
@@ -247,85 +344,10 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
         ei.push_back(eiTemp);
         haveSavedInfo = true;
       }
-
       oldZ = zPos;
-    } else {
-      // Rest some variables used for calculating truth info
-      currentInfoWriteTime = 0;
-      zCrossings = 0;
-      oldZ = zPos;
-      bMean = 0;
-      nFieldPoints = 0;
-      eiTemp.Reset();
-      haveSavedInfo = false;
 
-      // Time to do a scattering calculation
-      gamma = 1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2));
-      ke = (gamma - 1) * ME_EV;
-
-      eiTemp.startTime = time;
-      eiTemp.startKE = ke;
-      eiTemp.startPos = p;
-
-      // Recalculate cross-sections based on the energies
-      scatterElastic.SetIncidentKE(ke);
-      scatterInelastic.SetIncidentKE(ke);
-      elasticXSec = scatterElastic.GetTotalXSec();
-      inelasticXSec = scatterInelastic.GetTotalXSec();
-      totalXSec = elasticXSec + inelasticXSec;
-      // Figure out if this is an elastic or inelastic scatter
-      double scatterAngle{0};
-      std::uniform_real_distribution<double> uni(0, 1);
-      if (uni(gen) < elasticXSec / totalXSec) {
-        // Elastic scatter
-        cout << "Elastic scatter\n";
-        scatterAngle = scatterElastic.GetRandomScatteringAngle();
-        v = scatterElastic.GetScatteredVector(v, ke, scatterAngle);
-      } else {
-        // Inelastic scatter
-        cout << "Inelastic scatter\n";
-        // Get the energy of the electron after the scatter
-        double W{scatterInelastic.GetRandomW()};
-        scatterAngle = scatterInelastic.GetRandomTheta(W);
-        // Now calculate the scattered vector
-        ke = W;
-        v = scatterInelastic.GetScatteredVector(v, ke, scatterAngle);
-      }
-      double pitchAngleRad{abs(atan(v.Perp() / v.Z()))};
-      double pitchAngleDeg{pitchAngleRad * 180 / M_PI};
-      cout << "Scattering angle = " << scatterAngle * 180 / M_PI
-           << " degrees\tNew KE = " << ke
-           << " keV\tNew pitch angle = " << pitchAngleDeg << " degrees\n";
-      eiTemp.startVel = v;
-
-      // Calculate the new acceleration
-      acc = solver.acc(p, v);
-      // Fill the tree
-      xPos = p.X();
-      yPos = p.Y();
-      zPos = p.Z();
-      xVel = v.X();
-      yVel = v.Y();
-      zVel = v.Z();
-      xAcc = acc.X();
-      yAcc = acc.Y();
-      zAcc = acc.Z();
-      tree.Fill();
-
-      // Get the next scatter time
-      scatterElastic.SetIncidentKE(ke);
-      scatterInelastic.SetIncidentKE(ke);
-      elasticXSec = scatterElastic.GetTotalXSec();
-      inelasticXSec = scatterInelastic.GetTotalXSec();
-      totalXSec = elasticXSec + inelasticXSec;
-      lambdaStep = 1 / (gasDensity * totalXSec);
-      std::exponential_distribution<double> pathDistNext(1 / lambdaStep);
-      pathLength = pathDistNext(gen);
-      pathTimeStep = pathLength / v.Mag();
-      nextScatterTime += pathTimeStep;
-      cout << "Next scatter at " << nextScatterTime * 1e6 << " us\n";
+      nSteps++;
     }
-    nSteps++;
   }
 
   fT.cd();
@@ -347,12 +369,13 @@ int main(int argc, char *argv[]) {
   int opt{};
   std::string outputStemStr{" "};  // Directory in which to store files
   unsigned int nEvents{50};        // Number of events to generate
-  double tritiumGasDensity{1e18};  // m^-3
+  double gasDensity{1e18};         // m^-3
   double maxSimTime{10e-3};        // seconds
   bool useBathtub{false};          // Use a bathtub field
   double wgRadius{6.0e-3};         // metres
+  double heFraction{0};            // Fraction of helium in the gas
 
-  while ((opt = getopt(argc, argv, ":o:n:d:t:r:bh")) != -1) {
+  while ((opt = getopt(argc, argv, ":o:n:d:t:r:f:bh")) != -1) {
     switch (opt) {
       case 'o':
         outputStemStr = optarg;
@@ -361,7 +384,7 @@ int main(int argc, char *argv[]) {
         nEvents = boost::lexical_cast<unsigned int>(optarg);
         break;
       case 'd':
-        tritiumGasDensity = boost::lexical_cast<double>(optarg);
+        gasDensity = boost::lexical_cast<double>(optarg);
         break;
       case 't':
         maxSimTime = boost::lexical_cast<double>(optarg);
@@ -369,12 +392,16 @@ int main(int argc, char *argv[]) {
       case 'r':
         wgRadius = boost::lexical_cast<double>(optarg);
         break;
+      case 'f':
+        heFraction = boost::lexical_cast<double>(optarg);
+        break;
       case 'b':
         useBathtub = true;
         break;
       case 'h':
         cout << "Usage: " << argv[0]
-             << " [-o output directory] [-n number of events] [-d gas density] "
+             << " [-o output directory] [-n number of events] [-d gas "
+                "density] "
                 "[-t simulation time] [-r waveguide radius] [-b bathtub trap "
                 "boolean]"
              << endl;
@@ -392,7 +419,8 @@ int main(int argc, char *argv[]) {
   cout << "Writing output files to " << outputStemStr << "\n";
   cout << "Attempting to generate " << nEvents << " events.\n";
   cout << "Maximum simulation time = " << maxSimTime * 1e6 << " us\n";
-  cout << "Tritium gas density = " << tritiumGasDensity << " m^-3\n";
+  cout << "Gas density = " << gasDensity << " m^-3\n";
+  cout << "Helium fraction = " << heFraction << "\n";
 
   // Check if the chosen output directory exists
   bool dirExists{std::filesystem::is_directory(outputStemStr)};
@@ -410,8 +438,8 @@ int main(int argc, char *argv[]) {
   // Magnitude of background field
   double bkgField{1.0};  // Tesla
   // Define the field depending on the trap type selected
-  const double rCoil{20e-3};                        // metres
-  const double deltaTheta{0.5 * M_PI / 180};  // radians
+  const double rCoil{20e-3};                  // metres
+  const double deltaTheta{4.0 * M_PI / 180};  // radians
   const double trapDepth{bkgField *
                          (1 / pow(cos(deltaTheta), 2) - 1)};  // Tesla
   const double iCoil{2 * trapDepth * rCoil / MU0};            // Amps
@@ -506,8 +534,8 @@ int main(int argc, char *argv[]) {
 
     std::vector<ElectronInfo> eiVec{};
     double simTime{GenerateElectron(trackFile, initPos, initVel, field,
-                                    tritiumGasDensity, simStepSize, maxSimTime,
-                                    eiVec, field)};
+                                    gasDensity, simStepSize, maxSimTime, eiVec,
+                                    field, heFraction)};
     // Print out the information for the different scattering events
     for (auto &iInfo : eiVec) {
       cout << "Start time = " << iInfo.startTime * 1e6
@@ -529,8 +557,8 @@ int main(int argc, char *argv[]) {
       cout << "Event " << nGenerated << " took " << propTime
            << " seconds to propagate electron.\n";
 
-      // Set up one output file per event. This prevents us losing all the data
-      // if one event fails.
+      // Set up one output file per event. This prevents us losing all the
+      // data if one event fails.
       std::string outfileExt{make_uuid()};
       std::string FILE_NAME{outputStemStr + "/out_" + outfileExt + ".h5"};
       // Open the file
@@ -600,7 +628,13 @@ int main(int argc, char *argv[]) {
         H5::DataSpace gasDensitySpc(H5S_SCALAR);
         H5::Attribute gasDensityAttr1{dataset1->createAttribute(
             "Gas density [m^-3]", H5::PredType::NATIVE_DOUBLE, gasDensitySpc)};
-        gasDensityAttr1.write(H5::PredType::NATIVE_DOUBLE, &tritiumGasDensity);
+        gasDensityAttr1.write(H5::PredType::NATIVE_DOUBLE, &gasDensity);
+
+        // Metadata for the helium fraction
+        H5::DataSpace heFractionSpc(H5S_SCALAR);
+        H5::Attribute heFractionAttr1{dataset1->createAttribute(
+            "Helium fraction", H5::PredType::NATIVE_DOUBLE, heFractionSpc)};
+        heFractionAttr1.write(H5::PredType::NATIVE_DOUBLE, &heFraction);
 
         // Now create the attributes for each scattering event
         const unsigned int SCATTERSPACE_DIM = eiVec.size();
@@ -648,7 +682,12 @@ int main(int argc, char *argv[]) {
             "z_start [metres]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
         double zpStartBuffer[SCATTERSPACE_DIM];
 
-        // Calculate the impedance of the waveguide and write it as an attribute
+        H5::Attribute deltaEAttr1{dataset1->createAttribute(
+            "Delta E [eV]", H5::PredType::NATIVE_DOUBLE, scatterSpace)};
+        double deltaEBuffer[SCATTERSPACE_DIM];
+
+        // Calculate the impedance of the waveguide and write it as an
+        // attribute
         const double zWg{wg->GetModeImpedance(WaveguideMode(1, 1, kTE),
                                               2 * M_PI * eiVec[0].startF)};
         H5::DataSpace zWgSpc(H5S_SCALAR);
@@ -667,6 +706,7 @@ int main(int argc, char *argv[]) {
           xpStartBuffer[i] = eiVec[i].startPos.X();
           ypStartBuffer[i] = eiVec[i].startPos.Y();
           zpStartBuffer[i] = eiVec[i].startPos.Z();
+          deltaEBuffer[i] = eiVec[i].deltaE;
         }
         timeAttr1.write(H5::PredType::NATIVE_DOUBLE, &timeBuffer);
         startEAttr1.write(H5::PredType::NATIVE_DOUBLE, &startEBuffer);
@@ -678,6 +718,7 @@ int main(int argc, char *argv[]) {
         xpStartAttr1.write(H5::PredType::NATIVE_DOUBLE, &xpStartBuffer);
         ypStartAttr1.write(H5::PredType::NATIVE_DOUBLE, &ypStartBuffer);
         zpStartAttr1.write(H5::PredType::NATIVE_DOUBLE, &zpStartBuffer);
+        deltaEAttr1.write(H5::PredType::NATIVE_DOUBLE, &deltaEBuffer);
 
         // Create the buffer for writing in the voltage data
         double bufferIn[DSPACE_DIM];
