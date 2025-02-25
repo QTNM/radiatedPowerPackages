@@ -161,7 +161,7 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
     ElasticScatter scatterElasticHe(ke, 2, 4);
     ElasticScatter scatterElasticT(ke, 1, 3);
     InelasticScatter scatterInelasticHe(ke, He);
-    InelasticScatter scatterInelasticT(ke, H2);
+    InelasticScatter scatterInelasticT(ke, H);
     double elasticXSecHe{scatterElasticHe.GetTotalXSec()};
     double inelasticXSecHe{scatterInelasticHe.GetTotalXSec()};
     double totalXSecHe{(elasticXSecHe + inelasticXSecHe) * heFraction};
