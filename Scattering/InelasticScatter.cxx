@@ -15,26 +15,80 @@ rad::InelasticScatter::InelasticScatter(double T, Species species)
 double rad::InelasticScatter::I() {
   if (theSpecies == H2) {
     return 15.43;
+  } else if (theSpecies == H) {
+    return RYDBERG_EV;
   } else {
     return 24.59;
   }
 }
 
+double rad::InelasticScatter::U() {
+  if (theSpecies == H2) {
+    return 25.68;
+  } else if (theSpecies == H) {
+    return RYDBERG_EV;
+  } else {
+    return 39.51;
+  }
+}
+
 double rad::InelasticScatter::S() {
-  return 4 * M_PI * pow(A0, 2) * N() * pow(RYDBERG_EV / I(), 2);
+  return 4 * M_PI * N() * pow(A0 * RYDBERG_EV / I(), 2);
 }
 
 double rad::InelasticScatter::N() {
   if (theSpecies == H2) {
     return 2;
+  } else if (theSpecies == H) {
+    return 1;
   } else {
     return 2;
   }
 }
 
+double rad::InelasticScatter::Ni() {
+  if (theSpecies == H2) {
+    return 1.173;
+  } else if (theSpecies == H) {
+    return 0.4343;
+  } else {
+    return 1.605;
+  }
+}
+
+double rad::InelasticScatter::D() {
+  const double t{GetIncidentKE() / I()};
+  double b{0}, c{0}, d{0}, e{0}, f{0};
+  if (theSpecies == H2) {
+    c = 1.1262;
+    d = 6.3982;
+    e = -7.8055;
+    f = 2.144;
+  } else if (theSpecies = H) {
+    b = -2.2473e-2;
+    c = 1.1775;
+    d = -4.6264e-1;
+    e = 8.9064e-2;
+  } else {
+    c = 1.2178e1;
+    d = -2.9585e1;
+    e = 3.1251e1;
+    f = -1.2175e1;
+  }
+  double tTerm{(t + 1) / 2};
+  double bTerm{(b / 2) * (1 - pow(tTerm, -2))};
+  double cTerm{(c / 3) * (1 - pow(tTerm, -3))};
+  double dTerm{(d / 4) * (1 - pow(tTerm, -4))};
+  double eTerm{(e / 5) * (1 - pow(tTerm, -5))};
+  double fTerm{(f / 6) * (1 - pow(tTerm, -6))};
+  return (bTerm + cTerm + dTerm + eTerm + fTerm) / N();
+}
+
 double rad::InelasticScatter::GetTotalXSec() {
-  double T{GetIncidentKE()};
-  return S() * F(T) * g1(T);
+  const double t{GetIncidentKE() / I()};
+  const double u{U() / I()};
+  return S() / (t + u + 1) *
+         (D() * log(t) + (2 - Ni() / N()) * ((t - 1) / t - log(t) / (t + 1)));
 }
 
 inline double rad::InelasticScatter::BETA() { return 0.60; }
@@ -46,26 +100,26 @@ inline double rad::InelasticScatter::G_B() { return 2.9; }
 inline double rad::InelasticScatter::n() { return 2.4; }
 
 double rad::InelasticScatter::A1() {
-  if (theSpecies == H2) {
-    return 0.74;
-  } else {
+  if (theSpecies == He) {
     return 0.85;
+  } else {
+    return 0.74;
   }
 }
 
 double rad::InelasticScatter::A2() {
-  if (theSpecies == H2) {
-    return 0.87;
-  } else {
+  if (theSpecies == He) {
     return 0.36;
+  } else {
+    return 0.87;
   }
 }
 
 double rad::InelasticScatter::A3() {
-  if (theSpecies == H2) {
-    return -0.60;
-  } else {
+  if (theSpecies == He) {
     return -0.10;
+  } else {
+    return -0.60;
   }
 }
 
@@ -139,8 +193,34 @@ double rad::InelasticScatter::GetDoubleDiffXSec(double W, double theta) {
 }
 
 double rad::InelasticScatter::GetSDCS_W(double W) {
-  double T{GetIncidentKE()};
-  return G1(W, T) * (g_BE(W, T) + G4(W, T) * G_B());
+  const double t{GetIncidentKE() / I()};
+  const double u{U() / I()};
+  const double w{W / I()};
+  double b{0}, c{0}, d{0}, e{0}, f{0};
+  if (theSpecies == H2) {
+    c = 1.1262;
+    d = 6.3982;
+    e = -7.8055;
+    f = 2.144;
+  } else if (theSpecies = H) {
+    b = -2.2473e-2;
+    c = 1.1775;
+    d = -4.6264e-1;
+    e = 8.9064e-2;
+  } else {
+    c = 1.2178e1;
+    d = -2.9585e1;
+    e = 3.1251e1;
+    f = -1.2175e1;
+  }
+  const double diffOsc{b * pow(w + 1, -2) + c * pow(w + 1, -3) +
+                       d * pow(w + 1, -4) + e * pow(w + 1, -5) +
+                       f * pow(w + 1, -6)};
+  const double preFactor{S() / (I() * (t + u + 1))};
+  const double term1{(Ni() / N() - 2) * (1 / (w + 1) + 1 / (t - w)) / (t + 1)};
+  const double term2{(2 - Ni() / N()) * (pow(w + 1, -2) + pow(t - w, -2))};
+  const double term3{log(t) * diffOsc / (N() * (w + 1))};
+  return preFactor * (term1 + term2 + term3);
 }
 
 double rad::InelasticScatter::GetRandomW() {

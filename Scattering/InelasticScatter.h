@@ -11,7 +11,7 @@
 #include "Scattering/BaseScatter.h"
 
 namespace rad {
-enum Species { H2, He };
+enum Species { H, H2, He };
 
 class InelasticScatter : public BaseScatter {
  private:
@@ -23,7 +23,16 @@ class InelasticScatter : public BaseScatter {
   /// @return Binding energy in eV
   double I();
 
+  /// @brief Average kinetic energy of electron in orbital
+  /// @return Average kinetic energy in eV
+  double U();
+
   double N();
+
+  double Ni();
+
+  /// @brief Integral of oscillator strength
+  double D();
 
   double BETA();
 
