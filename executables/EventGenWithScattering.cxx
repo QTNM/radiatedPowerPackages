@@ -256,8 +256,9 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
 
       double pitchAngleDeg{abs(atan(v.Perp() / v.Z())) * 180 / M_PI};
       cout << "Scattering angle = " << scatterAngle * 180 / M_PI
-           << " degrees\tNew KE = " << ke / 1e3
-           << " keV\tNew pitch angle = " << pitchAngleDeg << " degrees\n";
+           << " degrees\tNew KE (delta E) = " << ke / 1e3 << " keV ("
+           << eiTemp.deltaE << " eV)\tNew pitch angle = " << pitchAngleDeg
+           << " degrees\n";
       eiTemp.startVel = v;
 
     } else {
@@ -527,10 +528,6 @@ int main(int argc, char *argv[]) {
     // Now generate the trajectory
     std::string trackFileExt{make_uuid()};
     TString trackFile{outputDir + Form("/track_%s.root", trackFileExt.data())};
-
-    InelasticScatter scatterInel(initialKE);
-    cout << "Inelastic cross-section = " << scatterInel.GetTotalXSec()
-         << " m^2\n";
 
     std::vector<ElectronInfo> eiVec{};
     double simTime{GenerateElectron(trackFile, initPos, initVel, field,
