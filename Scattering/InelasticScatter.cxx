@@ -5,20 +5,24 @@
 #include "Scattering/InelasticScatter.h"
 
 #include <cmath>
+#include <iostream>
 #include <random>
 
 #include "BasicFunctions/Constants.h"
 
 rad::InelasticScatter::InelasticScatter(double T, Species species)
-    : BaseScatter(T), theSpecies{species} {}
+    : BaseScatter(T), theSpecies(species) {}
 
 double rad::InelasticScatter::I() {
   if (theSpecies == H2) {
     return 15.43;
   } else if (theSpecies == H) {
     return RYDBERG_EV;
-  } else {
+  } else if (theSpecies == He) {
     return 24.59;
+  } else {
+    std::cerr << "Species not supported! Returning 0.\n";
+    return 0;
   }
 }
 
@@ -64,7 +68,7 @@ double rad::InelasticScatter::D() {
     d = 6.3982;
     e = -7.8055;
     f = 2.144;
-  } else if (theSpecies = H) {
+  } else if (theSpecies == H) {
     b = -2.2473e-2;
     c = 1.1775;
     d = -4.6264e-1;
