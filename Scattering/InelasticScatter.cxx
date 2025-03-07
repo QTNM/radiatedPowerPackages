@@ -206,7 +206,7 @@ double rad::InelasticScatter::GetSDCS_W(double W) {
     d = 6.3982;
     e = -7.8055;
     f = 2.144;
-  } else if (theSpecies = H) {
+  } else if (theSpecies == H) {
     b = -2.2473e-2;
     c = 1.1775;
     d = -4.6264e-1;
