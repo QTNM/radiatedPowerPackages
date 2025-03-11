@@ -139,5 +139,5 @@ add_executable(TestWgTheory TestWgTheory.cxx)
 target_link_libraries(TestWgTheory PRIVATE BasicFunctions ElectronDynamics SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
 target_include_directories(TestWgTheory PRIVATE ${HDF5_INCLUDE_DIRS})
 
-add_executable(PlotRuddXSecs PlotRuddXSecs.cxx)
-target_link_libraries(PlotRuddXSecs PRIVATE BasicFunctions Scattering ${ROOT_LIBRARIES})
+add_executable(PlotXSecs PlotXSecs.cxx)
+target_link_libraries(PlotXSecs PRIVATE BasicFunctions Scattering ${ROOT_LIBRARIES})
