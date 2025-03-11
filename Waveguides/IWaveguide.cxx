@@ -37,3 +37,8 @@ double rad::IWaveguide::GetPhaseVelocity(WaveguideMode mode, double f) {
   const double f_c{GetCutoffFrequency(mode)};
   return TMath::C() / sqrt(1 - pow(f_c / f, 2));
 }
+
+double rad::IWaveguide::GetGroupVelocity(WaveguideMode mode, double f) {
+  const double f_c{GetCutoffFrequency(mode)};
+  return TMath::C() * sqrt(1 - pow(f_c / f, 2));
+}

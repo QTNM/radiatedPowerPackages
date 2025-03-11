@@ -126,6 +126,12 @@ class IWaveguide {
   /// @return The phase velocity in m/s
   double GetPhaseVelocity(WaveguideMode mode, double f);
 
+  /// @brief Function for calculating the group velocity of a mode
+  /// @param mode The waveguide mode to calculate for
+  /// @param f The frequency for which to calculate the group velocity in Hertz
+  /// @return The group velocity in m/s
+  double GetGroupVelocity(WaveguideMode mode, double f);
+
  private:
   // Normalisation constant
   double Pn;
