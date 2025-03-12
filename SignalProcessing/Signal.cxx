@@ -954,8 +954,8 @@ void rad::Signal::AddNewCavWgTimes(long double time, TVector3 ePos,
   timeVec.push_back(time);
 
   // Calculate the advanced time for cavity probe position
-  const double v_phase{waveguide->GetPhaseVelocity(probe.GetMode(), freq)};
-  long double ta{time + (ePos - probe.GetPosition()).Mag() / TMath::C()};
+  const double v_group{waveguide->GetGroupVelocity(probe.GetMode(), freq)};
+  long double ta{time + (ePos - probe.GetPosition()).Mag() / v_group};
   advancedTimeVec.at(0).push_back(ta);
 
   // If the deques are getting too long, get rid of the first element
