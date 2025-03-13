@@ -45,7 +45,43 @@ int main(int argc, char* argv[]) {
   // Create ROOT file
   TFile fT(outputStr.c_str(), "recreate");
 
-  // Create graphs for total cross-sections
+  /////////////////////////////////////////////////////////////////////
+  //////////////////// Ionisation Cross Sections //////////////////////
+  /////////////////////////////////////////////////////////////////////
+  // Create graphs for total ionisation cross-sections in centred units
+  // This is what is plotted in the Rudd paper
+  TGraph grHRudd;
+  grHRudd.SetName("grHRudd");
+  grHRudd.SetTitle("H");
+  setGraphAttr(grHRudd);
+  grHRudd.SetMarkerStyle(20);
+  grHRudd.SetMarkerColor(kRed);
+  grHRudd.SetLineColor(kRed);
+  grHRudd.SetLineWidth(2);
+  grHRudd.GetXaxis()->SetTitle("T - I [eV]");
+  grHRudd.GetYaxis()->SetTitle("Cross Section [10^{-20} m^{2}]");
+  TGraph grH2Rudd;
+  grH2Rudd.SetName("grH2Rudd");
+  grH2Rudd.SetTitle("H2");
+  setGraphAttr(grH2Rudd);
+  grH2Rudd.SetMarkerStyle(20);
+  grH2Rudd.SetMarkerColor(kOrange + 1);
+  grH2Rudd.SetLineColor(kOrange + 1);
+  grH2Rudd.SetLineWidth(2);
+  grH2Rudd.GetXaxis()->SetTitle("T - I [eV]");
+  grH2Rudd.GetYaxis()->SetTitle("Cross Section [10^{-20} m^{2}]");
+  TGraph grHeRudd;
+  grHeRudd.SetName("grHeRudd");
+  grHeRudd.SetTitle("He");
+  setGraphAttr(grHeRudd);
+  grHeRudd.SetMarkerStyle(20);
+  grHeRudd.SetMarkerColor(kGreen + 2);
+  grHeRudd.SetLineColor(kGreen + 2);
+  grHeRudd.SetLineWidth(2);
+  grHeRudd.GetXaxis()->SetTitle("T - I [eV]");
+  grHeRudd.GetYaxis()->SetTitle("Cross Section [10^{-20} m^{2}]");
+
+  // Now the non-centred plots which are more useful for our analysis
   TGraph grH;
   grH.SetName("grH");
   grH.SetTitle("H");
@@ -64,7 +100,7 @@ int main(int argc, char* argv[]) {
   grH2.SetMarkerColor(kOrange + 1);
   grH2.SetLineColor(kOrange + 1);
   grH2.SetLineWidth(2);
-  grH2.GetXaxis()->SetTitle("T [eV]");
+  grH2.GetXaxis()->SetTitle("T - I [eV]");
   grH2.GetYaxis()->SetTitle("Cross Section [10^{-20} m^{2}]");
   TGraph grHe;
   grHe.SetName("grHe");
@@ -74,33 +110,78 @@ int main(int argc, char* argv[]) {
   grHe.SetMarkerColor(kGreen + 2);
   grHe.SetLineColor(kGreen + 2);
   grHe.SetLineWidth(2);
-  grHe.GetXaxis()->SetTitle("T [eV]");
+  grHe.GetXaxis()->SetTitle("T - I [eV]");
   grHe.GetYaxis()->SetTitle("Cross Section [10^{-20} m^{2}]");
 
   const double maxTMinusI{20000};  // Kinetic minus binding energy in eV
   const double minTMinusI{0.5};    // Kinetic minus binding energy in eV
-  const unsigned int nPoints{200};
+  const unsigned int nPoints{400};
   double stepSize{log10(maxTMinusI / minTMinusI) / (nPoints - 1)};
   const double I_H{RYDBERG_EV};  // Binding energy of H in eV
   const double I_H2{15.43};      // Binding energy of H2 in eV
   const double I_He{24.59};      // Binding energy of He in eV
-  const double maxT{1e3};
-  const double minT{I_He + 1};
+  const double maxT{20e3};
+  const double minT{I_He + 1.0};
   double stepSizeT{log10(maxT / minT) / (nPoints - 1)};
   for (unsigned int iPnt{0}; iPnt < nPoints; ++iPnt) {
-    // double tMinusI{minTMinusI * pow(10, iPnt * stepSize)};
-    double t{minT * pow(10, iPnt * stepSizeT)};
-    InelasticScatter scatterH(t + I_H, Species::H);
-    InelasticScatter scatterH2(t + I_H2, Species::H2);
-    InelasticScatter scatterHe(t + I_He, Species::He);
-    grH.SetPoint(iPnt, t, scatterH.GetTotalXSec() * 1e20);
-    grH2.SetPoint(iPnt, t, scatterH2.GetTotalXSec() * 1e20);
-    grHe.SetPoint(iPnt, t, scatterHe.GetTotalXSec() * 1e20);
+    double TMinusI{minTMinusI * pow(10, iPnt * stepSize)};
+    InelasticScatter scatterH(TMinusI + I_H, Species::H);
+    InelasticScatter scatterH2(TMinusI + I_H2, Species::H2);
+    InelasticScatter scatterHe(TMinusI + I_He, Species::He);
+    grHRudd.SetPoint(iPnt, TMinusI, scatterH.GetTotalXSec() * 1e20);
+    grH2Rudd.SetPoint(iPnt, TMinusI, scatterH2.GetTotalXSec() * 1e20);
+    grHeRudd.SetPoint(iPnt, TMinusI, scatterHe.GetTotalXSec() * 1e20);
+
+    double T{minT * pow(10, iPnt * stepSizeT)};
+    InelasticScatter scatterH_2(T, Species::H);
+    InelasticScatter scatterH2_2(T, Species::H2);
+    InelasticScatter scatterHe_2(T, Species::He);
+    grH.SetPoint(iPnt, T, scatterH.GetTotalXSec() * 1e20);
+    grH2.SetPoint(iPnt, T, scatterH2.GetTotalXSec() * 1e20);
+    grHe.SetPoint(iPnt, T, scatterHe.GetTotalXSec() * 1e20);
   }
 
-  ///////////// Elastic cross sections /////////////////
-  // Make some plots of the total elastic cross-sections
-  //////////////////////////////////////////////////////
+  // Plots of the differential cross section in terms of W
+  TGraph grdW_H;
+  setGraphAttr(grdW_H);
+  grdW_H.SetName("grdW_H");
+  grdW_H.SetTitle("H");
+  grdW_H.GetXaxis()->SetTitle("W [eV]");
+  grdW_H.GetYaxis()->SetTitle("d#sigma/dW [m^{2}/eV]");
+  grdW_H.SetLineColor(kRed);
+  TGraph grdW_H2;
+  setGraphAttr(grdW_H2);
+  grdW_H2.SetName("grdW_H2");
+  grdW_H2.SetTitle("H2");
+  grdW_H2.GetXaxis()->SetTitle("W [eV]");
+  grdW_H2.GetYaxis()->SetTitle("d#sigma/dW [m^{2}/eV]");
+  grdW_H2.SetLineColor(kOrange + 1);
+  TGraph grdW_He;
+  setGraphAttr(grdW_He);
+  grdW_He.SetName("grdW_He");
+  grdW_He.SetTitle("He");
+  grdW_He.GetXaxis()->SetTitle("W [eV]");
+  grdW_He.GetYaxis()->SetTitle("d#sigma/dW [m^{2}/eV]");
+  grdW_He.SetLineColor(kGreen + 2);
+
+  const double wMin{1e-1};
+  const double wMax{1e2};
+  const unsigned int nPntsW{200};
+  const double stepSizeW{log10(wMax / wMin) / (nPntsW - 1)};
+  const double chosenT{18.6e3};
+  InelasticScatter scatterH(chosenT, Species::H);
+  InelasticScatter scatterH2(chosenT, Species::H2);
+  InelasticScatter scatterHe(chosenT, Species::He);
+  for (size_t i{0}; i < nPntsW; i++) {
+    const double W{wMin * pow(10, i * stepSizeW)};
+    grdW_H.SetPoint(i, W, scatterH.GetSDCS_W(W));
+    grdW_H2.SetPoint(i, W, scatterH2.GetSDCS_W(W));
+    grdW_He.SetPoint(i, W, scatterHe.GetSDCS_W(W));
+  }
+
+  ///////////// Elastic cross sections ////////////////////
+  // Make some plots of the total elastic cross-sections //
+  /////////////////////////////////////////////////////////
   const double TMin{200};
   const double TMax{20e3};
   const unsigned int nPnts{200};
@@ -195,6 +276,14 @@ int main(int argc, char* argv[]) {
   grH.Write();
   grH2.Write();
   grHe.Write();
+  grHRudd.Write();
+  grH2Rudd.Write();
+  grHeRudd.Write();
+
+  grdW_H.Write();
+  grdW_H2.Write();
+  grdW_He.Write();
+
   grHElastic.Write();
   grHeElastic.Write();
   grHRutherford.Write();
