@@ -570,6 +570,9 @@ int main(int argc, char *argv[]) {
 
       // Now generate the signals for the probes one at a time
       for (unsigned int iProbe{0}; iProbe < nProbes; iProbe++) {
+        // Start a clock for the signal generation
+        const clock_t startSignalClock{clock()};
+
         Signal signal(trackFile, wg, lo, sampleRate, probeArr[iProbe]);
         // Get the output voltage
         auto grV{signal.GetVITimeDomain()};
@@ -691,6 +694,21 @@ int main(int argc, char *argv[]) {
         H5::Attribute zWgAttr1{dataset1->createAttribute(
             "Waveguide impedance [Ohms]", H5::PredType::NATIVE_DOUBLE, zWgSpc)};
         zWgAttr1.write(H5::PredType::NATIVE_DOUBLE, &zWg);
+
+        // Stop the signal generation clock
+        const clock_t endSignalClock{clock()};
+        const double signalGenTime{(endSignalClock - startSignalClock) /
+                                   (double)CLOCKS_PER_SEC};
+        // Write the generation times to file
+        H5::DataSpace ePropTimeSpc(H5S_SCALAR);
+        H5::Attribute ePropAttr{dataset1->createAttribute(
+            "ePropTime", H5::PredType::NATIVE_DOUBLE, ePropTimeSpc)};
+        ePropAttr.write(H5::PredType::NATIVE_DOUBLE, &propTime);
+
+        H5::DataSpace signalGenTimeSpc(H5S_SCALAR);
+        H5::Attribute signalGenAttr{dataset1->createAttribute(
+            "signalGenTime", H5::PredType::NATIVE_DOUBLE, signalGenTimeSpc)};
+        signalGenAttr.write(H5::PredType::NATIVE_DOUBLE, &signalGenTime);
 
         for (uint i{0}; i < eiVec.size(); i++) {
           timeBuffer[i] = eiVec[i].startTime;
