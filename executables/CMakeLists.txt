@@ -141,3 +141,7 @@ target_include_directories(TestWgTheory PRIVATE ${HDF5_INCLUDE_DIRS})
 
 add_executable(PlotXSecs PlotXSecs.cxx)
 target_link_libraries(PlotXSecs PRIVATE BasicFunctions Scattering ${ROOT_LIBRARIES})
+
+add_executable(MLSampleGeneration MLSampleGeneration.cxx)
+target_link_libraries(MLSampleGeneration PRIVATE BasicFunctions ElectronDynamics SignalProcessing Waveguides ${HDF5_CXX_LIBRARIES})
+target_include_directories(MLSampleGeneration PRIVATE ${HDF5_INCLUDE_DIRS})
