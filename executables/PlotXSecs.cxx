@@ -136,10 +136,57 @@ int main(int argc, char* argv[]) {
     InelasticScatter scatterH_2(T, Species::H);
     InelasticScatter scatterH2_2(T, Species::H2);
     InelasticScatter scatterHe_2(T, Species::He);
-    grH.SetPoint(iPnt, T, scatterH.GetTotalXSec() * 1e20);
-    grH2.SetPoint(iPnt, T, scatterH2.GetTotalXSec() * 1e20);
-    grHe.SetPoint(iPnt, T, scatterHe.GetTotalXSec() * 1e20);
+    grH.SetPoint(iPnt, T, scatterH_2.GetTotalXSec() * 1e20);
+    grH2.SetPoint(iPnt, T, scatterH2_2.GetTotalXSec() * 1e20);
+    grHe.SetPoint(iPnt, T, scatterHe_2.GetTotalXSec() * 1e20);
   }
+
+  /////////////////////////////////////////////////////////////////////
+  //////// Data from Shah et al. 1987 J. Phys. B 20, 3501   ///////////
+  /////////////////////////////////////////////////////////////////////
+  double energiesShah[106] = {
+      14.6,   14.8,   15.0,   15.1,   15.2,   15.4,   15.6,   15.9,   16.1,
+      16.4,   16.6,   16.9,   17.1,   17.4,   17.6,   17.9,   18.1,   18.4,
+      18.7,   19.0,   19.3,   19.6,   20.0,   20.4,   20.9,   21.4,   22.0,
+      22.6,   23.3,   24.0,   24.8,   25.6,   26.6,   27.3,   28.3,   29.3,
+      30.5,   31.6,   32.8,   34.1,   35.4,   36.7,   38.1,   39.6,   41.2,
+      42.9,   44.7,   46.6,   48.6,   50.7,   52.9,   55.2,   57.6,   60.1,
+      63.0,   66.0,   69.0,   72.1,   75.5,   79.5,   84.0,   89.0,   94.0,
+      102.0,  103.0,  113.0,  121.0,  130.2,  138.2,  148.2,  158.2,  168.2,
+      178.2,  188.2,  198.2,  213.2,  228.2,  248.2,  268.2,  288.0,  317.9,
+      347.9,  387.9,  427.9,  467.9,  508.2,  548.2,  598.2,  668.2,  748.2,
+      818.2,  898.2,  998.2,  1100.0, 1200.0, 1300.0, 1506.7, 1662.7, 1848.1,
+      1998.1, 2198.1, 2448.1, 2698.1, 2998.1, 3298.1, 3648.1};
+  double xsecHShah[106] = {
+      0.544e-21, 0.661e-21, 0.762e-21, 0.820e-21, 0.870e-21, 0.990e-21,
+      1.08e-21,  1.25e-21,  1.37e-21,  1.45e-21,  1.63e-21,  1.68e-21,
+      1.73e-21,  1.96e-21,  2.07e-21,  2.15e-21,  2.22e-21,  2.35e-21,
+      2.50e-21,  2.61e-21,  2.75e-21,  2.81e-21,  2.93e-21,  3.11e-21,
+      3.34e-21,  3.39e-21,  3.61e-21,  3.76e-21,  4.01e-21,  4.15e-21,
+      4.30e-21,  4.44e-21,  4.57e-21,  4.75e-21,  4.95e-21,  5.01e-21,
+      5.10e-21,  5.27e-21,  5.39e-21,  5.53e-21,  5.59e-21,  5.74e-21,
+      5.83e-21,  5.89e-21,  6.02e-21,  6.07e-21,  6.08e-21,  6.23e-21,
+      6.27e-21,  6.19e-21,  6.23e-21,  6.21e-21,  6.13e-21,  6.14e-21,
+      6.11e-21,  6.11e-21,  6.01e-21,  5.96e-21,  5.91e-21,  5.84e-21,
+      5.78e-21,  5.59e-21,  5.40e-21,  5.42e-21,  5.23e-21,  5.07e-21,
+      5.05e-21,  4.83e-21,  4.62e-21,  4.55e-21,  4.43e-21,  4.28e-21,
+      4.10e-21,  3.98e-21,  3.79e-21,  3.61e-21,  3.43e-21,  3.31e-21,
+      3.03e-21,  2.84e-21,  2.66e-21,  2.50e-21,  2.31e-21,  2.15e-21,
+      2.00e-21,  1.86e-21,  1.77e-21,  1.59e-21,  1.47e-21,  1.38e-21,
+      1.26e-21,  1.13e-21,  1.05e-21,  0.982e-21, 0.914e-21, 0.807e-21,
+      0.721e-21, 0.673e-21, 0.631e-21, 0.577e-21, 0.525e-21, 0.472e-21,
+      0.437e-21, 0.403e-21, 0.370e-21, 0.339e-21};
+  for (size_t i{0}; i < 106; i++) {
+    xsecHShah[i] *= 1e20;
+  }
+  TGraph grHShah(106, energiesShah, xsecHShah);
+  setGraphAttr(grHShah);
+  grHShah.SetName("grHShah");
+  grHShah.SetTitle("Shah (1987)");
+  grHShah.GetXaxis()->SetTitle("T [eV]");
+  grHShah.GetYaxis()->SetTitle("Cross Section [m^{2}]");
+  grHShah.SetMarkerStyle(5);
+  grHShah.SetMarkerColor(kYellow + 2);
 
   // Plots of the differential cross section in terms of W
   TGraph grdW_H;
@@ -279,6 +326,8 @@ int main(int argc, char* argv[]) {
   grHRudd.Write();
   grH2Rudd.Write();
   grHeRudd.Write();
+
+  grHShah.Write();
 
   grdW_H.Write();
   grdW_H2.Write();
