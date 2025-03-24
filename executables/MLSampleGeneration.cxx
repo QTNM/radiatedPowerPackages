@@ -266,13 +266,14 @@ int main(int argc, char *argv[]) {
   const double initialSpeed{GetSpeedFromKE(energy, ME)};
   // Draw pitch angle from a uniform distribution
   std::uniform_real_distribution<double> pitchDist(minPitchAngle, 90.0);
-  const double pitchAngle{pitchDist(gen)};
-  const double pitchAngleRadians{pitchAngle * M_PI / 180};
 
   // Start generating events
   for (unsigned int iEvent{0}; iEvent < nEvents; iEvent++) {
     cout << "Generating event " << iEvent + 1 << " of " << nEvents << "\n";
     const clock_t startEventClock{clock()};
+
+    const double pitchAngle{pitchDist(gen)};
+    const double pitchAngleRadians{pitchAngle * M_PI / 180};
     // Create a uniform distribution
     std::uniform_real_distribution<double> uni1(0, 1);
 
