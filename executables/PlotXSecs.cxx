@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
 
   const double maxTMinusI{20000};  // Kinetic minus binding energy in eV
   const double minTMinusI{0.5};    // Kinetic minus binding energy in eV
-  const unsigned int nPoints{400};
+  const unsigned int nPoints{1000};
   double stepSize{log10(maxTMinusI / minTMinusI) / (nPoints - 1)};
   const double I_H{RYDBERG_EV};  // Binding energy of H in eV
   const double I_H2{15.43};      // Binding energy of H2 in eV
@@ -264,8 +264,8 @@ int main(int argc, char* argv[]) {
   grHeRutherford.SetLineColor(kCyan + 1);
   grHRutherford.SetLineStyle(2);
 
-  for (size_t i{0}; i < nPnts; i++) {
-    double T{TMin + i * (TMax - TMin) / (nPnts - 1)};
+  for (size_t i{0}; i < nPoints; i++) {
+    double T{minT * pow(10, double(i) * stepSizeT)};
     ElasticScatter scatterH(T, 1, 1);
     ElasticScatter scatterHe(T, 2, 4);
     grHElastic.SetPoint(i, T, scatterH.GetTotalXSec() * 1e20);
