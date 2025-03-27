@@ -56,17 +56,16 @@ class ElectronInfo {
   TVector3 startVel;  // m/s
 
   // Default constructor
-  ElectronInfo() {
-    startTime = 0;
-    startKE = -1;
-    startF = -1;
-    axialF = -1;
-    deltaE = -1;
-    pitchAngle = DBL_MAX;
-    zMax = -DBL_MAX;
-    startPos = TVector3(0, 0, 0);
-    startVel = TVector3(0, 0, 0);
-  }
+  ElectronInfo()
+      : startTime(0),
+        startKE(-1),
+        startF(-1),
+        axialF(-1),
+        pitchAngle(DBL_MAX),
+        zMax(-DBL_MAX),
+        deltaE(-1),
+        startPos(0, 0, 0),
+        startVel(0, 0, 0) {}
 
   void Reset() {
     startTime = 0;
@@ -133,6 +132,7 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
   eiTemp.startKE = ke;
   eiTemp.startPos = pos;
   eiTemp.startVel = vel;
+  eiTemp.deltaE = -1;
 
   // Set up some things for axial frequency calculation
   double zCrossTimes[3];
@@ -522,8 +522,6 @@ int main(int argc, char *argv[]) {
     // Calculate pitch angle
     const double pitchAngleRad{abs(atan(initVel.Perp() / initVel.Z()))};
     const double pitchAngleDeg{pitchAngleRad * 180 / M_PI};
-    cout << "Event " << nGenerated << ": Energy = " << initialKE
-         << " eV\tPitch angle = " << pitchAngleDeg << " degrees\n";
 
     // Now generate the trajectory
     std::string trackFileExt{make_uuid()};
@@ -533,21 +531,22 @@ int main(int argc, char *argv[]) {
     double simTime{GenerateElectron(trackFile, initPos, initVel, field,
                                     gasDensity, simStepSize, maxSimTime, eiVec,
                                     field, heFraction)};
-    // Print out the information for the different scattering events
-    for (auto &iInfo : eiVec) {
-      cout << "Start time = " << iInfo.startTime * 1e6
-           << " us\tStart KE = " << iInfo.startKE
-           << " eV\tStart frequency = " << iInfo.startF / 1e9
-           << " GHz\tAxial frequency = " << iInfo.axialF / 1e6
-           << " MHz\tMax z = " << iInfo.zMax * 100
-           << " cm\tPitch angle = " << iInfo.pitchAngle << " degrees\n";
-      cout << "Start position = (" << iInfo.startPos.X() << ", "
-           << iInfo.startPos.Y() << ", " << iInfo.startPos.Z()
-           << ")\tStart velocity = (" << iInfo.startVel.X() << ", "
-           << iInfo.startVel.Y() << ", " << iInfo.startVel.Z() << ")\n\n";
-    }
 
     if (simTime > 1e-6) {
+      // Print out the information for the different scattering events
+      for (auto &iInfo : eiVec) {
+        cout << "Start time = " << iInfo.startTime * 1e6
+             << " us\tStart KE = " << iInfo.startKE
+             << " eV\tStart frequency = " << iInfo.startF / 1e9
+             << " GHz\tAxial frequency = " << iInfo.axialF / 1e6
+             << " MHz\tMax z = " << iInfo.zMax * 100
+             << " cm\tPitch angle = " << iInfo.pitchAngle << " degrees\n";
+        cout << "Start position = (" << iInfo.startPos.X() << ", "
+             << iInfo.startPos.Y() << ", " << iInfo.startPos.Z()
+             << ")\tStart velocity = (" << iInfo.startVel.X() << ", "
+             << iInfo.startVel.Y() << ", " << iInfo.startVel.Z() << ")\n\n";
+      }
+
       const clock_t endPropClock{clock()};
       const double propTime{(endPropClock - startEventClock) /
                             (double)CLOCKS_PER_SEC};
