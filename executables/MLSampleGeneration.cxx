@@ -117,15 +117,16 @@ int main(int argc, char *argv[]) {
   const clock_t startTotalClock = clock();
 
   int opt{};
-  std::string outputStemStr{" "};  // Directory in which to store files
-  unsigned int nEvents{50};        // Number of events to generate
-  double maxSimTime{10e-6};        // seconds
-  double minPitchAngle{89.5};      // degrees
-  double energy{18.575e3};         // eV
-  bool bathtubTrap{false};         // Use a bathtub trap
-  double bkgField{1.0};            // Tesla
-  double wgRadius{5.0e-3};         // metres
-  double xMax{2e-3};               // Max start radius in metres
+  std::string outputStemStr{" "};       // Directory in which to store files
+  unsigned int nEvents{50};             // Number of events to generate
+  double maxSimTime{10e-6};             // seconds
+  double minPitchAngle{89.5};           // degrees
+  double energyWindow{0};               // eV
+  bool bathtubTrap{false};              // Use a bathtub trap
+  double bkgField{1.0};                 // Tesla
+  double wgRadius{5.0e-3};              // metres
+  double xMax{2e-3};                    // Max start radius in metres
+  const double endpointEnergy{18.6e3};  // eV
 
   while ((opt = getopt(argc, argv, ":o:n:e:p:t:f:r:x:bh")) != -1) {
     switch (opt) {
@@ -136,7 +137,7 @@ int main(int argc, char *argv[]) {
         nEvents = boost::lexical_cast<unsigned int>(optarg);
         break;
       case 'e':
-        energy = boost::lexical_cast<double>(optarg);
+        energyWindow = boost::lexical_cast<double>(optarg);
         break;
       case 'p':
         minPitchAngle = boost::lexical_cast<double>(optarg);
@@ -176,7 +177,14 @@ int main(int argc, char *argv[]) {
 
   cout << "Writing output files to " << outputStemStr << "\n";
   cout << "Attempting to generate " << nEvents << " events.\n";
-  cout << "Kinetic energy of electrons = " << energy << " eV\n";
+  if (energyWindow > 0) {
+    cout << "Generating electron energies between "
+         << endpointEnergy - energyWindow << " and " << endpointEnergy << " eV"
+         << endl;
+  } else {
+    cout << "Kinetic energy of electrons = " << endpointEnergy << " eV" << endl;
+  }
+
   cout << "Minimum pitch angle of electrons = " << minPitchAngle
        << " degrees\n";
   cout << "Background field = " << bkgField << " Tesla\n";
@@ -240,7 +248,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Calculate the rough cyclotron frequency
-  const double centralCycFreq{CalcCyclotronFreq(energy, bkgField)};
+  const double centralCycFreq{CalcCyclotronFreq(endpointEnergy, bkgField)};
 
   // Set number of steps per cyclotron orbit
   const double simStepSize{1 / (10 * centralCycFreq)};
@@ -262,20 +270,24 @@ int main(int argc, char *argv[]) {
   std::random_device rd;
   std::mt19937 gen(rd());
 
-  // Generation parameters
-  const double initialSpeed{GetSpeedFromKE(energy, ME)};
   // Draw pitch angle from a uniform distribution
   std::uniform_real_distribution<double> pitchDist(minPitchAngle, 90.0);
 
   // Start generating events
   for (unsigned int iEvent{0}; iEvent < nEvents; iEvent++) {
-    cout << "Generating event " << iEvent + 1 << " of " << nEvents << "\n";
     const clock_t startEventClock{clock()};
+    // Create a uniform distribution
+    std::uniform_real_distribution<double> uni1(0, 1);
+    // Generation parameters
+    const double energy{endpointEnergy - energyWindow +
+                        energyWindow * uni1(gen)};
+    const double initialSpeed{GetSpeedFromKE(energy, ME)};
+
+    cout << "Generating event " << iEvent + 1 << " of " << nEvents << ": "
+         << "Energy = " << energy / 1e3 << " keV\n";
 
     const double pitchAngle{pitchDist(gen)};
     const double pitchAngleRadians{pitchAngle * M_PI / 180};
-    // Create a uniform distribution
-    std::uniform_real_distribution<double> uni1(0, 1);
 
     // Generate a random position on a disk
     const double rhoGen{xMax * sqrt(uni1(gen))};
