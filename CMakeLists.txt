@@ -44,3 +44,5 @@ add_subdirectory(Waveguides)
 add_subdirectory(Scattering)
 
 add_subdirectory(executables)
+
+add_subdirectory(test)

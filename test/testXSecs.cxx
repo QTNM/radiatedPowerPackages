@@ -1,7 +1,7 @@
 /*
- * PlotRuddXSecs.cxx
+ * testXSecs.cxx
  *
- * Executable for makign some verification plots of inelastics cross-sections
+ * Executable for making verification plots of cross-sections
  * Created on: 04-02-2025
  */
 
