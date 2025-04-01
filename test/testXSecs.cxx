@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
   grH2.SetMarkerColor(kOrange + 1);
   grH2.SetLineColor(kOrange + 1);
   grH2.SetLineWidth(2);
-  grH2.GetXaxis()->SetTitle("T - I [eV]");
+  grH2.GetXaxis()->SetTitle("T [eV]");
   grH2.GetYaxis()->SetTitle("Cross Section [10^{-20} m^{2}]");
   TGraph grHe;
   grHe.SetName("grHe");
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
   grHe.SetMarkerColor(kGreen + 2);
   grHe.SetLineColor(kGreen + 2);
   grHe.SetLineWidth(2);
-  grHe.GetXaxis()->SetTitle("T - I [eV]");
+  grHe.GetXaxis()->SetTitle("T [eV]");
   grHe.GetYaxis()->SetTitle("Cross Section [10^{-20} m^{2}]");
 
   const double maxTMinusI{20000};  // Kinetic minus binding energy in eV

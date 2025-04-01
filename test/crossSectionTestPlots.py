@@ -42,6 +42,7 @@ def make_plots(fname_in="crosssections.root", fname_out="crosssections_H.png"):
     plt.plot(x_shah, y_shah, '.', label="Shah (1987)", color="green")
     plt.xlabel("Energy [eV]")
     plt.ylabel(r"Cross section [$10^{-20}$ m$^2$]")
+    plt.title("Cross sections for H")
     plt.xscale("log")
     plt.legend()
     plt.savefig(fname_out)
