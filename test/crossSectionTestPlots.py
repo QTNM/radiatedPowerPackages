@@ -27,8 +27,6 @@ def make_plots(fname_in="crosssections.root", fname_out="crosssections_H.png"):
     graphHIonisation = input_file.Get("grH")
     graphHShah = input_file.Get("grHShah")
 
-    # Allow LaTeX in matplotlib
-    plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
 
     # Get the x and y values from the TGraphs
@@ -43,7 +41,7 @@ def make_plots(fname_in="crosssections.root", fname_out="crosssections_H.png"):
     plt.plot(x_ionisation, y_ionisation, label="Ionisation", color="red")
     plt.plot(x_shah, y_shah, '.', label="Shah (1987)", color="green")
     plt.xlabel("Energy [eV]")
-    plt.ylabel(r"Cross section [10^{-20} m$^2$]")
+    plt.ylabel(r"Cross section [$10^{-20}$ m$^2$]")
     plt.xscale("log")
     plt.legend()
     plt.savefig(fname_out)
