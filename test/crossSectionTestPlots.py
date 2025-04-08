@@ -48,6 +48,7 @@ def make_plots(species="H",
     plt.xscale("log")
     plt.legend()
     fname_out = string_out + "_" + species + ".pdf"
+    print('Creating output plot file:', fname_out)
     plt.savefig(fname_out)
 
 

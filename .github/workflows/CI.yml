@@ -45,7 +45,7 @@ jobs:
         run: |
           cd build/bin
           ./testXSecs -o crosssections.root
-          python3 ../../test/crossSectionTestPlots.py --input crosssections.root --output crosssections_H.png
+          python3 ../../test/crossSectionTestPlots.py --input crosssections.root --output crosssections
 
       # Upload test results
       - name: Upload results
@@ -54,4 +54,5 @@ jobs:
           name: test-results
           path: |
             build/bin/*.png
+            build/bin/*.pdf
             build/bin/*.root
