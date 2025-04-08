@@ -46,6 +46,7 @@ def make_plots(species="H",
     plt.ylabel(r"Cross section [$10^{-20}$ m$^2$]")
     plt.title("Cross sections for "+species)
     plt.xscale("log")
+    plt.xlim(10.0, 20e3)
     plt.legend()
     fname_out = string_out + "_" + species + ".pdf"
     print('Creating output plot file:', fname_out)
