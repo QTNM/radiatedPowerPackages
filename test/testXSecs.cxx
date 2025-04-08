@@ -184,9 +184,38 @@ int main(int argc, char* argv[]) {
   grHShah.SetName("grHShah");
   grHShah.SetTitle("Shah (1987)");
   grHShah.GetXaxis()->SetTitle("T [eV]");
-  grHShah.GetYaxis()->SetTitle("Cross Section [m^{2}]");
+  grHShah.GetYaxis()->SetTitle("Cross Section [10^{-20} m^{2}]");
   grHShah.SetMarkerStyle(5);
   grHShah.SetMarkerColor(kYellow + 2);
+
+  /////////////////////////////////////////////////////////////////////
+  //////// Data from Shah et al. 1988 J. Phys. B 21, 2751   ///////////
+  /////////////////////////////////////////////////////////////////////
+  const unsigned int nHePoints{57};
+  double energiesHeShah[nHePoints] = {
+      26.6, 27.6, 28.6, 29.6, 30.6, 32.1, 33.6, 38.6, 43.6, 48.6, 53.6, 58.6,
+      68.6, 78.6, 88.6, 90.2, 95.2, 100,  105,  110,  115,  120,  130,  140,
+      150,  160,  170,  195,  220,  250,  280,  325,  375,  430,  500,  570,
+      650,  750,  870,  1000, 1150, 1320, 1520, 1750, 2010, 2300, 2650, 3000,
+      3500, 4000, 4600, 5300, 6100, 7000, 8000, 9000, 10000};
+  double xsecHeShah[nHePoints] = {
+      0.242, 0.366, 0.480, 0.604, 0.715, 0.871, 1.05,  1.52,  1.90,  2.26,
+      2.50,  2.73,  3.05,  3.29,  3.45,  3.53,  3.60,  3.67,  3.74,  3.70,
+      3.67,  3.70,  3.69,  3.67,  3.60,  3.58,  3.55,  3.42,  3.25,  3.13,
+      2.89,  2.65,  2.53,  2.32,  2.09,  1.87,  1.77,  1.61,  1.44,  1.28,
+      1.19,  1.07,  0.955, 0.872, 0.796, 0.693, 0.615, 0.551, 0.520, 0.448,
+      0.398, 0.337, 0.308, 0.276, 0.250, 0.224, 0.195};
+  for (size_t i{0}; i < nHePoints; i++) {
+    xsecHeShah[i] *= 1e-1;  // Account for units and scale to 10^-20 m^2
+  }
+  TGraph grHeShah(106, energiesHeShah, xsecHeShah);
+  setGraphAttr(grHeShah);
+  grHeShah.SetName("grHeShah");
+  grHeShah.SetTitle("Shah (1988)");
+  grHeShah.GetXaxis()->SetTitle("T [eV]");
+  grHeShah.GetYaxis()->SetTitle("Cross Section [10^{-20} m^{2}]");
+  grHeShah.SetMarkerStyle(5);
+  grHeShah.SetMarkerColor(kYellow + 2);
 
   // Plots of the differential cross section in terms of W
   TGraph grdW_H;
@@ -328,6 +357,7 @@ int main(int argc, char* argv[]) {
   grHeRudd.Write();
 
   grHShah.Write();
+  grHeShah.Write();
 
   grdW_H.Write();
   grdW_H2.Write();
