@@ -34,6 +34,36 @@ std::string make_uuid() {
   return boost::lexical_cast<std::string>((boost::uuids::random_generator())());
 }
 
+/// @brief Function for generating data of the electric field across a
+/// waveguide.
+/// @param theData The data to be filled
+/// @param wg The waveguide to be used
+/// @param mode The mode to be used
+/// @param omega The angular frequency of the wave
+/// @param nPoints The number of points to sample along each axis
+/// @param xMinMax The maximum value of the x axis
+/// @param yMinMax The maximum value of the y axis
+/// @param state The polarisation state
+template <size_t rows, size_t cols>
+void CalcFieldData(double (&theData)[rows][cols], rad::IWaveguide *wg,
+                   rad::WaveguideMode mode, double omega, unsigned int nPoints,
+                   double xMinMax = 5, double yMinMax = 5, bool state = true) {
+  const double dX{2 * xMinMax / double(nPoints - 1)};
+  const double dY{2 * yMinMax / double(nPoints - 1)};
+  const double xMin{-xMinMax};
+  const double yMin{-yMinMax};
+  const double zPos{0.0};
+  for (unsigned int iX{0}; iX < nPoints; ++iX) {
+    double xPos{xMin + dX * double(iX)};
+    for (unsigned int iY{0}; iY < nPoints; ++iY) {
+      double yPos{yMin + dY * double(iY)};
+      TVector3 pos(xPos, yPos, zPos);
+      TVector3 eField{wg->GetModeEField(pos, mode, 1.0, omega, state)};
+      theData[iX][iY] = eField.Mag();
+    }
+  }
+}
+
 int main(int argc, char *argv[]) {
   int opt{};
   std::string outputStr{" "};  // Location of output file
@@ -150,7 +180,6 @@ int main(int argc, char *argv[]) {
   dataset->write(powerFractions, H5::PredType::NATIVE_DOUBLE, *dspace);
   delete dataset;
   delete rectGroup;
-  delete wr42;
 
   // Now do the same for a circular waveguide
   std::string circGroupName{"/Circular"};
@@ -215,7 +244,6 @@ int main(int argc, char *argv[]) {
     // Delete the trajectory file
     gSystem->Exec("rm -f " + trackFile);
   }
-  delete circwg;
 
   // Write the data to the file
   dataset2->write(powerFractions, H5::PredType::NATIVE_DOUBLE, *dspace);
@@ -223,7 +251,67 @@ int main(int argc, char *argv[]) {
 
   delete dspace;
   delete circGroup;
-  delete fout;
 
+  /////////////////////////////////////////////////////////////
+  /////////////// Field pattern generation ////////////////////
+  /////////////////////////////////////////////////////////////
+  // Create a new group for the field data
+  std::string fieldGroupName{"/FieldData"};
+  auto fieldGroup = new H5::Group(fout->createGroup(fieldGroupName));
+  // Set up the data space
+  const unsigned int nFieldPoints{41};
+  const double xMinMax{5e-3};
+  const double yMinMax{5e-3};
+  double circWgFieldMags_P[nFieldPoints][nFieldPoints];
+  double circWgFieldMags_M[nFieldPoints][nFieldPoints];
+  double rectWgFieldMags[nFieldPoints][nFieldPoints];
+  // Set up the data space
+  hsize_t dimField[] = {nFieldPoints, nFieldPoints};
+  auto dspaceField = new H5::DataSpace(2, dimField);
+  const std::string CIRC_FIELD_P_DATASET_NAME(fieldGroupName +
+                                              "/circFieldDataTE11_P");
+  auto datasetCircP = new H5::DataSet(fieldGroup->createDataSet(
+      CIRC_FIELD_P_DATASET_NAME, H5::PredType::NATIVE_DOUBLE, *dspaceField,
+      plist));
+  const std::string CIRC_FIELD_M_DATASET_NAME(fieldGroupName +
+                                              "/circFieldDataTE11_M");
+  auto datasetCircM = new H5::DataSet(fieldGroup->createDataSet(
+      CIRC_FIELD_M_DATASET_NAME, H5::PredType::NATIVE_DOUBLE, *dspaceField,
+      plist));
+
+  const std::string RECT_FIELD_DATASET_NAME(fieldGroupName +
+                                            "/rectFieldDataTE10");
+  auto datasetRect = new H5::DataSet(fieldGroup->createDataSet(
+      RECT_FIELD_DATASET_NAME, H5::PredType::NATIVE_DOUBLE, *dspaceField,
+      plist));
+
+  // Get the modes to be tested
+  rad::WaveguideMode circMode(1, 1, rad::kTE);
+  rad::WaveguideMode rectMode(1, 0, rad::kTE);
+  const double omega{2 * M_PI * cyclotronFreq};
+  // Get the field data
+  CalcFieldData(circWgFieldMags_P, circwg, circMode, omega, nFieldPoints,
+                xMinMax, yMinMax, true);
+  CalcFieldData(circWgFieldMags_M, circwg, circMode, omega, nFieldPoints,
+                xMinMax, yMinMax, false);
+  CalcFieldData(rectWgFieldMags, wr42, rectMode, omega, nFieldPoints, xMinMax,
+                yMinMax);
+  // Write the data to the file
+  datasetCircP->write(circWgFieldMags_P, H5::PredType::NATIVE_DOUBLE,
+                      *dspaceField);
+  datasetCircM->write(circWgFieldMags_M, H5::PredType::NATIVE_DOUBLE,
+                      *dspaceField);
+  datasetRect->write(rectWgFieldMags, H5::PredType::NATIVE_DOUBLE,
+                     *dspaceField);
+  delete datasetCircP;
+  delete datasetCircM;
+  delete datasetRect;
+  delete fieldGroup;
+  delete dspaceField;
+
+  delete wr42;
+  delete circwg;
+
+  delete fout;
   return 0;
 }

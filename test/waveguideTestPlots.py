@@ -13,15 +13,10 @@ def parse_arguments():
                         type=str,
                         help="Input HDF5 file with data",
                         nargs="?")
-    parser.add_argument("--output",
-                        default="collectedpowers.pdf",
-                        type=str,
-                        help="Output file string",
-                        nargs="?")
     return parser.parse_args()
 
 
-def make_plots(fname_in="wg_data.h5", string_out="collectedpowers.pdf"):
+def make_plots(fname_in="wg_data.h5"):
     # Set LaTeX font for matplotlib
     plt.rc('font', family='serif')
 
@@ -31,6 +26,10 @@ def make_plots(fname_in="wg_data.h5", string_out="collectedpowers.pdf"):
         circWgPowerFrac = f['Circular']['collectedPower'][:, 1]
         wr42Pos = f['WR42']['collectedPower'][:, 0]
         wr42PowerFrac = f['WR42']['collectedPower'][:, 1]
+        # Get the field data
+        circWgField_P = f['FieldData']['circFieldDataTE11_P'][:]
+        circWgField_M = f['FieldData']['circFieldDataTE11_M'][:]
+        wr42Field = f['FieldData']['rectFieldDataTE10'][:]
 
     plt.figure(figsize=(12, 5))
     plt.subplot(121)
@@ -48,9 +47,35 @@ def make_plots(fname_in="wg_data.h5", string_out="collectedpowers.pdf"):
     plt.title("Power fraction in WR42 waveguide")
     plt.xlim(-5, 5)
     plt.ylim(0, 1.1 * np.max(wr42PowerFrac))
-    plt.savefig(string_out)
+    plt.savefig("collectedpowers.pdf", bbox_inches='tight')
+
+    # Now make a 2D colour plot of the field magnitudes
+    # The first dimension is the x-axis, the second dimension is the y-axis and the value is the field magnitude
+    plt.figure(figsize=(12, 5))
+    plt.subplot(121)
+    x = np.linspace(-5, 5, 41)
+    y = np.linspace(-5, 5, 41)
+    X, Y = np.meshgrid(x, y)
+    plt.subplot(121)
+    plt.contourf(X, Y, circWgField_P, levels=100)
+    plt.title("TE11+ field in circular waveguide")
+    plt.xlabel("x [mm]")
+    plt.ylabel("y [mm]")
+    plt.subplot(122)
+    plt.contourf(X, Y, circWgField_M, levels=100)
+    plt.title("TE11- field in circular waveguide")
+    plt.xlabel("x [mm]")
+    plt.ylabel("y [mm]")
+    plt.savefig("TE11Fields.pdf", bbox_inches='tight')
+
+    plt.figure(figsize=(6, 5))
+    plt.contourf(X, Y, wr42Field, levels=100)
+    plt.title("TE10 field in WR42 waveguide")
+    plt.xlabel("x [mm]")
+    plt.ylabel("y [mm]")
+    plt.savefig("TE10Fields.pdf", bbox_inches='tight')
 
 
 if __name__ == "__main__":
     options = parse_arguments()
-    make_plots(fname_in=options.input, string_out=options.output)
+    make_plots(fname_in=options.input)

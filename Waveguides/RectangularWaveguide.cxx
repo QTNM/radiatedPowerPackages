@@ -41,12 +41,12 @@ double rad::RectangularWaveguide::GetCutoffWavenumber(WaveguideMode mode) {
 TVector3 rad::RectangularWaveguide::GetModeEField(TVector3 pos,
                                                   WaveguideMode mode, double A,
                                                   double omega, bool state) {
-  if (pos.X() > a / 2 || pos.Y() > b / 2 || pos.Z() > d / 2)
-    return TVector3(0, 0, 0);
-
   double x{pos.X() + a / 2.0};
   double y{pos.Y() + b / 2.0};
   double z{pos.Z() + d / 2.0};
+  // if (abs(x) > a / 2 || abs(y) > b / 2 || abs(z) > d / 2)
+  //  return TVector3(0, 0, 0);
+  if (x > a || x < 0 || y > b || y < 0) return TVector3(0, 0, 0);
 
   double k_c{GetCutoffWavenumber(mode)};
   double m{double(mode.GetModeIndex1())};
