@@ -48,7 +48,7 @@ jobs:
           python3 ../../test/crossSectionTestPlots.py --input crosssections.root --output crosssections
 
           ./testWaveguide -o waveguidedata.h5 -n 41
-          python3 ../../test/waveguideTestPlots.py --input waveguidedata.h5 --output collectedPower.pdf
+          python3 ../../test/waveguideTestPlots.py --input waveguidedata.h5
 
       # Upload test results
       - name: Upload results
