@@ -35,17 +35,6 @@ class RectangularWaveguide : public IWaveguide {
   /// \Returns The short (y) dimension of the waveguide (in metres)
   double GetShortDimension() { return b; }
 
-  /// @brief Gets the complex electric field vector for a given mode at a point
-  /// @param mode The mode type
-  /// @param pos The position vector (in metres)
-  /// @param omega Angular frequency of the chosen wave
-  /// @param A Arbitrary amplitude for solution (default = 1)
-  /// @param B Arbitrary amplitude for solution has no effect
-  /// @return The mode electric field vector at the supplied point
-  ComplexVector3 GetModeEFieldComplex(WaveguideMode mode, TVector3 pos,
-                                      double omega, double A = 1,
-                                      double B = 0) override;
-
   /// @brief Gets the real electric field vector for a given mode at a point
   /// @param pos The position vector (in metres)
   /// @param mode The mode type to get (either TE or TM)
@@ -56,41 +45,15 @@ class RectangularWaveguide : public IWaveguide {
   TVector3 GetModeEField(TVector3 pos, WaveguideMode mode, double A,
                          double omega, bool state) override;
 
-  /// @brief Get mode electric field normalised such that the dot product of the
-  /// transverse field integrated across the waveguide cross-section is equal to
-  /// unity
-  /// @param modeType
-  /// @param pos
-  /// @param omega
-  /// @return Electric field vector
-  TVector3 GetNormalisedEField(WaveguideMode modeType, TVector3 pos,
-                               double omega);
-
-  /// @brief Gets the complex magnetic field strength vector for a given mode at
-  /// a point
-  /// @param modeType The mode type to get (either TE or TM)
-  /// @param pos The position vector (in metres)
-  /// @param omega Angular frequency of the chosen wave
-  /// @param A Arbitrary amplitude for solution (default = 1)
-  /// @return The mode H field vector at the supplied point
-  ComplexVector3 GetModeHFieldComplex(WaveguideMode mode, TVector3 pos,
-                                      double omega, double A = 1,
-                                      double B = 0) override;
-
   /// @brief Gets the H field vector for a given mode at a point
-  /// @param modeType The mode type to get (either TE or TM)
   /// @param pos The position vector (in metres)
+  /// @param modeType The mode type to get (either TE or TM)
+  /// @param A Arbitrary amplitude for solution
   /// @param omega Angular frequency of the chosen wave
-  /// @param A Arbitrary amplitude for solution (default = 1)
+  /// @param state Choose polarisation state (not applicable here)
   /// @return The mode H field vector at the supplied point
-  TVector3 GetModeHField(WaveguideMode mode, TVector3 pos, double omega,
-                         double A = 1, double B = 0) override;
-
-  TVector3 GetModalHField(WaveguideMode mode, TVector3 pos, double omega,
-                          double A = 1);
-
-  ComplexVector3 GetNormalisedHField(WaveguideMode mode, TVector3 pos,
-                                     double omega);
+  TVector3 GetModeHField(TVector3 pos, WaveguideMode mode, double A,
+                         double omega, bool state) override;
 
   /// Gets the cutoff frequency for a particular mode
   /// \param modeType The mode type to use

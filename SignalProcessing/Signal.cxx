@@ -357,8 +357,6 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
     integral = waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, true);
   }
   if (integral != 0) modeNorm = 1.0 / sqrt(integral);
-  std::cout << "Normalisation constant " << wm << " = " << modeNorm
-            << std::endl;
 
   // Figure out where we're going to generate the signal up to
   // By default, just do the whole electron trajectory file

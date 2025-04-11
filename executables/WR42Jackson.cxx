@@ -37,7 +37,7 @@ double GetEModeNormFactor(RectangularWaveguide *wv, int m, int n, double freq,
       TVector3 surfacePos{thisx, thisy, 0.0};
       WaveguideMode mode(m, n, kTE);
       ComplexVector3 eTransReal{
-          wv->GetNormalisedEField(mode, surfacePos, freq * 2 * TMath::Pi())};
+          wv->GetModeEField(surfacePos, mode, 1, freq * 2 * TMath::Pi(), true)};
       eTransReal.SetZ(0.0);
       sum += (eTransReal.Dot(eTransReal)).real() * area;
     }  // Loop over y points
@@ -63,7 +63,7 @@ double GetHModeNormFactor(RectangularWaveguide *wv, int m, int n, double freq,
       TVector3 surfacePos{thisx, thisy, 0.0};
       WaveguideMode mode(m, n, kTE);
       ComplexVector3 hTransReal{
-          wv->GetNormalisedHField(mode, surfacePos, freq * 2 * TMath::Pi())};
+          wv->GetModeHField(surfacePos, mode, 1, freq * 2 * TMath::Pi(), true)};
       hTransReal.SetZ(0.0);
       sum += (hTransReal.Dot(hTransReal)).real() * area;
     }  // Loop over y points
@@ -82,10 +82,10 @@ std::complex<double> GetPositiveAmp(RectangularWaveguide *wv, int m, int n,
   ComplexVector3 jComplex{j};
 
   ComplexVector3 eTrans{
-      wv->GetNormalisedEField(mode, pos, freq * 2 * TMath::Pi())};
+      wv->GetModeEField(pos, mode, 1, freq * 2 * TMath::Pi(), true)};
   eTrans.SetZ(std::complex<double>{0.0, 0.0});
   ComplexVector3 eAxial{
-      wv->GetNormalisedEField(mode, pos, freq * 2 * TMath::Pi())};
+      wv->GetModeEField(pos, mode, 1, freq * 2 * TMath::Pi(), true)};
   eAxial.SetX(std::complex<double>{0.0, 0.0});
   eAxial.SetY(std::complex<double>{0.0, 0.0});
   ComplexVector3 subVec{eTrans - eAxial};
@@ -102,10 +102,10 @@ std::complex<double> GetNegativeAmp(RectangularWaveguide *wv, int m, int n,
   ComplexVector3 jComplex{j};
 
   ComplexVector3 eTrans{
-      wv->GetNormalisedEField(mode, pos, freq * 2 * TMath::Pi())};
+      wv->GetModeEField(pos, mode, 1, freq * 2 * TMath::Pi(), true)};
   eTrans.SetZ(std::complex<double>{0.0, 0.0});
   ComplexVector3 eAxial{
-      wv->GetNormalisedEField(mode, pos, freq * 2 * TMath::Pi())};
+      wv->GetModeEField(pos, mode, 1, freq * 2 * TMath::Pi(), true)};
   eAxial.SetX(std::complex<double>{0.0, 0.0});
   eAxial.SetY(std::complex<double>{0.0, 0.0});
   ComplexVector3 subVec{eTrans + eAxial};
@@ -135,10 +135,10 @@ double CalculatePowerPlus(RectangularWaveguide *wv, int m, int n, double freq,
 
       WaveguideMode mode(m, n, kTE);
       ComplexVector3 ETotal{
-          wv->GetNormalisedEField(mode, surfacePos, freq * 2 * TMath::Pi())};
+          wv->GetModeEField(surfacePos, mode, 1, freq * 2 * TMath::Pi(), true)};
       ETotal *= aPlus;
       ComplexVector3 HTotal{
-          wv->GetNormalisedHField(mode, surfacePos, freq * 2 * TMath::Pi())};
+          wv->GetModeHField(surfacePos, mode, 1, freq * 2 * TMath::Pi(), true)};
       HTotal *= aPlus;
 
       totalPowerPlus += (ETotal.Cross(HTotal.Conj())).Z().real() * area;

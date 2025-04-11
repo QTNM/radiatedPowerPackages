@@ -23,17 +23,6 @@ class IWaveguide {
   // Different kinds of modes we may have
   enum Mode_t { kTE, kTM, kTEM };
 
-  /// Gets the complex electric field vector for a given mode at a point
-  /// \param mode The mode to get
-  /// \param pos The position vector (in metres)
-  /// \param omega Angular frequency of the chosen wave
-  /// \param A Arbitrary amplitude for part of solution (default = 1)
-  /// \param B Arbitrary amplitude for part of solution (default = 0)
-  /// \Returns The mode electric field vector at the supplied point
-  virtual ComplexVector3 GetModeEFieldComplex(WaveguideMode mode, TVector3 pos,
-                                              double omega, double A = 1,
-                                              double B = 0) = 0;
-
   /// @brief Gets the electric field vector for a given mode at a point
   /// @param pos The position vector (in metres)
   /// @param mode The waveguide mode to get
@@ -44,27 +33,15 @@ class IWaveguide {
   virtual TVector3 GetModeEField(TVector3 pos, WaveguideMode mode, double A,
                                  double omega, bool state) = 0;
 
-  /// @brief Gets the complex magnetic field strength vector for a given mode at
-  /// a point
-  /// @param mode The mode to get
+  /// @brief Gets the H field vector for a given mode at a point
   /// @param pos The position vector (in metres)
+  /// @param mode The mode to get
+  /// @param A Arbitrary amplitude for part of solution
   /// @param omega Angular frequency of the chosen wave
-  /// @param A Arbitrary amplitude for part of solution (default = 1)
-  /// @param B Arbitrary amplitude for part of solution (default = 0)
+  /// @param state Choose polarisation state (where applicable)
   /// @return The mode H field vector at the supplied point
-  virtual ComplexVector3 GetModeHFieldComplex(WaveguideMode mode, TVector3 pos,
-                                              double omega, double A = 1,
-                                              double B = 0) = 0;
-
-  /// Gets the H field vector for a given mode at a point
-  /// \param mode The mode to get
-  /// \param pos The position vector (in metres)
-  /// \param omega Angular frequency of the chosen wave
-  /// \param A Arbitrary amplitude for part of solution (default = 1)
-  /// \param B Arbitrary amplitude for part of solution (default = 0)
-  /// \Returns The mode H field vector at the supplied point
-  virtual TVector3 GetModeHField(WaveguideMode mode, TVector3 pos, double omega,
-                                 double A = 1, double B = 0) = 0;
+  virtual TVector3 GetModeHField(TVector3 pos, WaveguideMode mode, double A,
+                                 double omega, bool state) = 0;
 
   /// @brief Gets the characteristic mode impedance for a given mode
   /// @param mode The mode to get
@@ -131,6 +108,14 @@ class IWaveguide {
   /// @param f The frequency for which to calculate the group velocity in Hertz
   /// @return The group velocity in m/s
   double GetGroupVelocity(WaveguideMode mode, double f);
+
+  /// @brief Function for calculating normalisation constant Pn for a given
+  /// mode. Also sets the variable Pn for the waveguide
+  /// @param mode Mode type in questions
+  /// @param omega Angular frequency of the chosen wave
+  /// @param nSurfPnts Number of points in each dimension to test
+  virtual void CalculatePn(WaveguideMode mode, double omega,
+                           unsigned int nSurfPnts = 100) = 0;
 
  private:
   // Normalisation constant

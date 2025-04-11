@@ -15,77 +15,6 @@
 rad::CircularWaveguide::CircularWaveguide(double radius, double length)
     : a(radius), d(radius) {}
 
-rad::ComplexVector3 rad::CircularWaveguide::GetModeEFieldComplex(
-    WaveguideMode mode, TVector3 pos, double omega, double A, double B) {
-  double rho{pos.Perp()};
-  if (rho > a) return ComplexVector3(0, 0, 0);
-
-  double phi{pos.Phi()};
-  double z{pos.Z() + d / 2.0};
-  std::complex<double> i{0.0, 1.0};
-
-  ModeType modeType{mode.GetModeType()};
-  unsigned int n{mode.GetModeIndex1()};
-  unsigned int m{mode.GetModeIndex2()};
-
-  if (modeType == ModeType::kTE) {
-    // We have a TE mode
-    double pnmPrime{GetBesselPrimeZero(n, m)};
-    double k_c{pnmPrime / a};
-    std::complex<double> betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-    std::complex<double> beta{sqrt(betaSq)};
-
-    std::complex<double> Ez{0.0, 0.0};
-    std::complex<double> Erho{
-        (-1.0 * omega * MU0 * double(n) / (k_c * k_c * rho)) *
-        (A * cos(double(n) * phi) - B * sin(double(n) * phi)) *
-        boost::math::cyl_bessel_j(n, k_c * rho)};
-    Erho *= i * exp(-1.0 * i * beta * z);
-    std::complex<double> Ephi{
-        (omega * MU0 / k_c) *
-        (A * sin(double(n) * phi) + B * cos(double(n) * phi)) *
-        boost::math::cyl_bessel_j_prime(n, k_c * rho)};
-    Ephi *= i * exp(-1.0 * i * beta * z);
-
-    ComplexVector3 eField{Erho * cos(phi) - Ephi * sin(phi),
-                          Erho * sin(phi) + Ephi * cos(phi), Ez};
-    return eField;
-  } else if (modeType == ModeType::kTM) {
-    // We have a TM mode
-    double pnm{boost::math::cyl_bessel_j_zero(double(n), m)};
-    double k_c{pnm / a};
-    std::complex<double> betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-    std::complex<double> beta{sqrt(betaSq)};
-
-    std::complex<double> Ez{
-        (A * sin(double(n) * phi) + B * cos(double(n) * phi)) *
-            boost::math::cyl_bessel_j(n, k_c * rho),
-        0.0};
-    Ez *= exp(-1.0 * i * beta * z);
-    std::complex<double> Erho{
-        (-1.0 * beta / k_c) *
-        (A * sin(double(n) * phi) + B * cos(double(n) * phi)) *
-        boost::math::cyl_bessel_j_prime(n, k_c * rho)};
-    Erho *= i * exp(-1.0 * i * beta * z);
-    std::complex<double> Ephi{
-        (-1.0 * beta * double(n) / (k_c * k_c * rho)) *
-        (A * cos(double(n) * phi) - B * sin(double(n) * phi)) *
-        boost::math::cyl_bessel_j(n, k_c * rho)};
-    Ephi *= i * exp(-1.0 * i * beta * z);
-
-    ComplexVector3 eField{Erho * cos(phi) - Ephi * sin(phi),
-                          Erho * sin(phi) + Ephi * cos(phi), Ez};
-    return eField;
-  } else {
-    // This is a TEM mode that which is not supported by this waveguide
-    std::cout << "TEM modes are not supported by circular waveguides."
-              << std::endl;
-    ComplexVector3 eField{std::complex<double>{0}, std::complex<double>{0},
-                          std::complex<double>{0}};
-    return eField;
-  }
-}
-
 TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, WaveguideMode mode,
                                                double A, double omega,
                                                bool state) {
@@ -107,11 +36,11 @@ TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, WaveguideMode mode,
     EPhi = (A * XnmPrime / a) *
            boost::math::cyl_bessel_j_prime(n, XnmPrime * rho / a);
     if (state) {
-      ERho *= -sin(double(n) * phi);
-      EPhi *= cos(double(n) * phi);
-    } else {
       ERho *= cos(double(n) * phi);
       EPhi *= sin(double(n) * phi);
+    } else {
+      ERho *= -sin(double(n) * phi);
+      EPhi *= cos(double(n) * phi);
     }
   } else if (mode.GetModeType() == ModeType::kTM) {
     // We have a TM mode
@@ -125,13 +54,13 @@ TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, WaveguideMode mode,
     EPhi = (-A * beta * double(n) / (k_c * k_c * rho)) *
            boost::math::cyl_bessel_j(n, k_c * rho);
     if (state) {
-      EZ *= cos(double(n) * phi);
-      ERho *= cos(double(n) * phi);
-      EPhi *= -sin(double(n) * phi);
-    } else {
       EZ *= sin(double(n) * phi);
       ERho *= sin(double(n) * phi);
       EPhi *= cos(double(n) * phi);
+    } else {
+      EZ *= cos(double(n) * phi);
+      ERho *= cos(double(n) * phi);
+      EPhi *= -sin(double(n) * phi);
     }
   } else {
     // This is a TEM mode that which is not supported by this waveguide
@@ -143,148 +72,63 @@ TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, WaveguideMode mode,
   return eField;
 }
 
-rad::ComplexVector3 rad::CircularWaveguide::GetModeHFieldComplex(
-    WaveguideMode mode, TVector3 pos, double omega, double A, double B) {
-  double rho{pos.Perp()};
-  if (rho > a) return ComplexVector3(0, 0, 0);
-
-  double phi{pos.Phi()};
-  double z{pos.Z() + d / 2.0};
-  std::complex<double> i{0.0, 1.0};
-
-  ModeType modeType{mode.GetModeType()};
+TVector3 rad::CircularWaveguide::GetModeHField(TVector3 pos, WaveguideMode mode,
+                                               double A, double omega,
+                                               bool state) {
+  if (pos.Perp() > a) return TVector3(0, 0, 0);
   unsigned int n{mode.GetModeIndex1()};
   unsigned int m{mode.GetModeIndex2()};
-
-  if (modeType == ModeType::kTE) {
+  double rho{pos.Perp()};
+  double phi{pos.Phi()};
+  double HRho{0};
+  double HPhi{0};
+  double HZ{0};
+  if (mode.GetModeType() == ModeType::kTE) {
     // We have a TE mode
-    double pnmPrime{GetBesselPrimeZero(n, m)};
-    double k_c{pnmPrime / a};
-    std::complex<double> betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-    std::complex<double> beta{sqrt(betaSq)};
-
-    std::complex<double> Hz{
-        (A * sin(double(n) * phi) + B * cos(double(n) * phi)) *
-            boost::math::cyl_bessel_j(n, k_c * rho),
-        0.0};
-    Hz *= exp(-1.0 * i * beta * z);
-    std::complex<double> Hrho{
-        (-1.0 * beta / k_c) *
-        (A * sin(double(n) * phi) + B * cos(double(n) * phi)) *
-        boost::math::cyl_bessel_j_prime(n, k_c * rho)};
-    Hrho *= i * exp(-1.0 * i * beta * z);
-    std::complex<double> Hphi{
-        (-1.0 * beta * double(n) / (k_c * k_c * rho)) *
-        (A * cos(double(n) * phi) - B * sin(double(n) * phi)) *
-        boost::math::cyl_bessel_j(n, k_c * rho)};
-    Hphi *= i * exp(-1.0 * i * beta * z);
-
-    ComplexVector3 hField{Hrho * cos(phi) - Hphi * sin(phi),
-                          Hrho * sin(phi) + Hphi * cos(phi), Hz};
-    return hField;
-  } else if (modeType == ModeType::kTM) {
+    double XnmPrime{GetBesselPrimeZero(n, m)};
+    double k_c{XnmPrime / a};
+    double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
+    double beta{sqrt(betaSq)};
+    HZ = -A * k_c * k_c * boost::math::cyl_bessel_j(n, k_c * rho) /
+         (omega * MU0);
+    HRho = -A * beta * k_c * boost::math::cyl_bessel_j_prime(n, k_c * rho) /
+           (omega * MU0);
+    HPhi = -A * beta * double(n) * boost::math::cyl_bessel_j(n, k_c * rho) /
+           (rho * omega * MU0);
+    if (state) {
+      HZ *= sin(double(n) * phi);
+      HRho *= sin(double(n) * phi);
+      HPhi *= cos(double(n) * phi);
+    } else {
+      HZ *= cos(double(n) * phi);
+      HRho *= cos(double(n) * phi);
+      HPhi *= -sin(double(n) * phi);
+    }
+  } else if (mode.GetModeType() == ModeType::kTM) {
     // We have a TM mode
-    double pnm{boost::math::cyl_bessel_j_zero(double(n), m)};
-    double k_c{pnm / a};
-    std::complex<double> betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-    std::complex<double> beta{sqrt(betaSq)};
-
-    std::complex<double> Hz{0.0, 0.0};
-    std::complex<double> Hrho{
-        (omega * EPSILON0 * double(n) / (k_c * k_c * rho)) *
-        (A * cos(double(n) * phi) - B * sin(double(n) * phi)) *
-        boost::math::cyl_bessel_j(n, k_c * rho)};
-    Hrho *= i * exp(-1.0 * i * beta * z);
-    std::complex<double> Hphi{
-        (-1.0 * omega * EPSILON0 / k_c) *
-        (A * sin(double(n) * phi) + B * cos(double(n) * phi)) *
-        boost::math::cyl_bessel_j_prime(n, k_c * rho)};
-    Hphi *= i * exp(-1.0 * i * beta * z);
-
-    ComplexVector3 hField{Hrho * cos(phi) - Hphi * sin(phi),
-                          Hrho * sin(phi) + Hphi * cos(phi), Hz};
-    return hField;
+    double Xnm{boost::math::cyl_bessel_j_zero(double(n), m)};
+    double k_c{Xnm / a};
+    double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
+    double beta{sqrt(betaSq)};
+    HRho = A * EPSILON0 * double(n) * boost::math::cyl_bessel_j(n, k_c * rho) /
+           (rho * MU0);
+    HPhi = -A * EPSILON0 * k_c * boost::math::cyl_bessel_j_prime(n, k_c * rho) /
+           MU0;
+    if (state) {
+      HRho *= cos(double(n) * phi);
+      HPhi *= sin(double(n) * phi);
+    } else {
+      HRho *= -sin(double(n) * phi);
+      HPhi *= cos(double(n) * phi);
+    }
   } else {
     // This is a TEM mode that which is not supported by this waveguide
     std::cout << "TEM modes are not supported by circular waveguides."
               << std::endl;
-    ComplexVector3 eField{std::complex<double>{0}, std::complex<double>{0},
-                          std::complex<double>{0}};
-    return eField;
   }
-}
 
-rad::ComplexVector3 rad::CircularWaveguide::GetModalHField(WaveguideMode mode,
-                                                           TVector3 pos,
-                                                           double omega,
-                                                           double A, double B) {
-  double rho{pos.Perp()};
-  if (rho > a) return ComplexVector3(0, 0, 0);
-
-  double phi{pos.Phi()};
-  double z{pos.Z() + d / 2.0};
-  std::complex<double> i{0.0, 1.0};
-
-  ModeType modeType{mode.GetModeType()};
-  unsigned int n{mode.GetModeIndex1()};
-  unsigned int m{mode.GetModeIndex2()};
-
-  if (modeType == ModeType::kTE) {
-    // We have a TE mode
-    double pnmPrime{GetBesselPrimeZero(n, m)};
-    double k_c{pnmPrime / a};
-    std::complex<double> betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-    std::complex<double> beta{sqrt(betaSq)};
-
-    std::complex<double> Hrho{
-        (beta / k_c) * (A * sin(double(n) * phi) + B * cos(double(n) * phi)) *
-        boost::math::cyl_bessel_j_prime(n, k_c * rho)};
-    std::complex<double> Hphi{
-        (beta * double(n) / (k_c * k_c * rho)) *
-        (A * cos(double(n) * phi) - B * sin(double(n) * phi)) *
-        boost::math::cyl_bessel_j(n, k_c * rho)};
-    std::complex<double> Hz{
-        i * (A * sin(double(n) * phi) + B * cos(double(n) * phi)) *
-        boost::math::cyl_bessel_j(n, k_c * rho)};
-
-    ComplexVector3 hField{Hrho * cos(phi) - Hphi * sin(phi),
-                          Hrho * sin(phi) + Hphi * cos(phi), Hz};
-    return hField;
-  } else if (modeType == ModeType::kTM) {
-    // We have a TM mode
-    double pnm{boost::math::cyl_bessel_j_zero(double(n), m)};
-    double k_c{pnm / a};
-    std::complex<double> betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-    std::complex<double> beta{sqrt(betaSq)};
-
-    std::complex<double> Hrho{
-        (-1.0 * omega * EPSILON0 * double(n) / (k_c * k_c * rho)) *
-        (A * cos(double(n) * phi) - B * sin(double(n) * phi)) *
-        boost::math::cyl_bessel_j(n, k_c * rho)};
-    std::complex<double> Hphi{
-        (omega * EPSILON0 / k_c) *
-        (A * sin(double(n) * phi) + B * cos(double(n) * phi)) *
-        boost::math::cyl_bessel_j_prime(n, k_c * rho)};
-    std::complex<double> Hz{0.0, 0.0};
-
-    ComplexVector3 hField{Hrho * cos(phi) - Hphi * sin(phi),
-                          Hrho * sin(phi) + Hphi * cos(phi), Hz};
-    return hField;
-  } else {
-    // This is a TEM mode that which is not supported by this waveguide
-    std::cout << "TEM modes are not supported by circular waveguides."
-              << std::endl;
-    ComplexVector3 eField{std::complex<double>{0}, std::complex<double>{0},
-                          std::complex<double>{0}};
-    return eField;
-  }
-}
-
-TVector3 rad::CircularWaveguide::GetModeHField(WaveguideMode mode, TVector3 pos,
-                                               double omega, double A,
-                                               double B) {
-  ComplexVector3 field{GetModeHFieldComplex(mode, pos, omega, A, B)};
-  return field.Real();
+  return TVector3(HRho * cos(phi) - HPhi * sin(phi),
+                  HRho * sin(phi) + HPhi * cos(phi), HZ);
 }
 
 double rad::CircularWaveguide::GetCutoffFrequency(WaveguideMode mode) {
@@ -380,7 +224,7 @@ double rad::CircularWaveguide::GetHFieldIntegral(WaveguideMode mode,
                      TMath::TwoPi() * double(iPhi) / double(nSurfPnts)};
 
       TVector3 surfacePos{thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0.0};
-      ComplexVector3 hTrans{GetModalHField(mode, surfacePos, omega, A, B)};
+      ComplexVector3 hTrans{GetModeHField(surfacePos, mode, A, omega, true)};
       hTrans.SetZ(std::complex<double>{0, 0});
       integral += (hTrans.Dot(hTrans)).real() * area;
     }
@@ -414,8 +258,7 @@ double rad::CircularWaveguide::GetFieldAmp(WaveguideMode mode, double omega,
 }
 
 void rad::CircularWaveguide::CalculatePn(WaveguideMode mode, double omega,
-                                         unsigned int nSurfPnts, double A,
-                                         double B) {
+                                         unsigned int nSurfPnts) {
   double sum{0};
   // Calculate element of area
   for (unsigned int iRho{0}; iRho < nSurfPnts; iRho++) {
@@ -432,13 +275,13 @@ void rad::CircularWaveguide::CalculatePn(WaveguideMode mode, double omega,
                      GetLength() / 2);
 
       // Get transverse E and H components
-      TVector3 eTrans1{GetModeEField(sPos1, mode, A, omega, true)};
+      TVector3 eTrans1{GetModeEField(sPos1, mode, 1, omega, true)};
       eTrans1.SetZ(0);
-      TVector3 hTrans1{GetModeHField(mode, sPos1, omega, A, B)};
+      TVector3 hTrans1{GetModeHField(sPos1, mode, 1, omega, true)};
       hTrans1.SetZ(0);
-      TVector3 eTrans2{GetModeEField(sPos1, mode, A, omega, true)};
+      TVector3 eTrans2{GetModeEField(sPos1, mode, 1, omega, true)};
       eTrans2.SetZ(0);
-      TVector3 hTrans2{GetModeHField(mode, sPos2, omega, A, B)};
+      TVector3 hTrans2{GetModeHField(sPos2, mode, 1, omega, true)};
       hTrans2.SetZ(0);
       sum += (eTrans1.Cross(hTrans1)).Z() * elArea;
       sum += (eTrans2.Cross(hTrans2)).Z() * elArea;

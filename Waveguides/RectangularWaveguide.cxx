@@ -38,61 +38,6 @@ double rad::RectangularWaveguide::GetCutoffWavenumber(WaveguideMode mode) {
   }
 }
 
-rad::ComplexVector3 rad::RectangularWaveguide::GetModeEFieldComplex(
-    WaveguideMode mode, TVector3 pos, double omega, double A, double B) {
-  if (pos.X() > a / 2 || pos.Y() > b / 2 || pos.Z() > d / 2)
-    ComplexVector3(0, 0, 0);
-
-  double x{pos.X() + a / 2.0};
-  double y{pos.Y() + b / 2.0};
-  double z{pos.Z() + d / 2.0};
-  std::complex<double> i{0.0, 1.0};
-  double k_c{GetCutoffWavenumber(mode)};
-  std::complex<double> betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-  std::complex<double> beta{sqrt(betaSq)};
-
-  ModeType modeType{mode.GetModeType()};
-  unsigned int m{mode.GetModeIndex1()};
-  unsigned int n{mode.GetModeIndex2()};
-
-  if (modeType == ModeType::kTE) {
-    // We have a TE mode
-    std::complex<double> Ex{
-        (i * omega * MU0 * double(n) * TMath::Pi() / (k_c * k_c * b)) * A *
-        cos(double(m) * TMath::Pi() * x / a) *
-        sin(double(n) * TMath::Pi() * y / b) * exp(-i * beta * z)};
-    std::complex<double> Ey{
-        (-1.0 * i * omega * MU0 * double(m) * TMath::Pi() / (k_c * k_c * a)) *
-        A * sin(double(m) * TMath::Pi() * x / a) *
-        cos(double(n) * TMath::Pi() * y / b) * exp(-i * beta * z)};
-    std::complex<double> Ez{0.0, 0.0};
-    ComplexVector3 eField{Ex, Ey, Ez};
-    return eField;
-  } else if (modeType == ModeType::kTM) {
-    // We have a TM mode
-    std::complex<double> Ex{
-        (-1.0 * i * beta * double(m) * TMath::Pi() / (k_c * k_c * a)) * A *
-        cos(double(m) * TMath::Pi() * x / a) *
-        sin(double(n) * TMath::Pi() * y / b) * exp(-i * beta * z)};
-    std::complex<double> Ey{
-        (-1.0 * i * beta * double(n) * TMath::Pi() / (k_c * k_c * b)) * A *
-        sin(double(m) * TMath::Pi() * x / a) *
-        cos(double(n) * TMath::Pi() * y / b) * exp(-i * beta * z)};
-    std::complex<double> Ez{A * sin(double(m) * TMath::Pi() * x / a) *
-                            sin(double(n) * TMath::Pi() * y / b) *
-                            exp(-i * beta * z)};
-    ComplexVector3 eField{Ex, Ey, Ez};
-    return eField;
-  } else {
-    // We have a TEM mode
-    std::cout << "TEM modes are not supported by circular waveguides."
-              << std::endl;
-    ComplexVector3 eField{std::complex<double>{0}, std::complex<double>{0},
-                          std::complex<double>{0}};
-    return eField;
-  }
-}
-
 TVector3 rad::RectangularWaveguide::GetModeEField(TVector3 pos,
                                                   WaveguideMode mode, double A,
                                                   double omega, bool state) {
@@ -141,212 +86,11 @@ TVector3 rad::RectangularWaveguide::GetModeEField(TVector3 pos,
   }
 }
 
-TVector3 rad::RectangularWaveguide::GetNormalisedEField(WaveguideMode mode,
-                                                        TVector3 pos,
-                                                        double omega) {
-  if (pos.X() > a / 2 || pos.Y() > b / 2 || pos.Z() > d / 2)
-    return TVector3(0, 0, 0);
-
-  double x{pos.X() + a / 2.0};
-  double y{pos.Y() + b / 2.0};
-  double z{pos.Z() + d / 2.0};
-  double k_c{GetCutoffWavenumber(mode)};
-  double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-  double beta{sqrt(betaSq)};
-
-  ModeType modeType{mode.GetModeType()};
-  unsigned int m{mode.GetModeIndex1()};
-  unsigned int n{mode.GetModeIndex2()};
-
-  if (modeType == ModeType::kTE) {
-    double Ex{(double(n) / b) * cos(double(m) * TMath::Pi() * x / a) *
-              sin(double(n) * TMath::Pi() * y / b)};
-    double Ey{-(double(m) / a) * sin(double(m) * TMath::Pi() * x / a) *
-              cos(double(n) * TMath::Pi() * y / b)};
-    double Ez{0};
-    TVector3 eField{Ex, Ey, Ez};
-    eField *= sqrt(4 * a * b / (pow(a * double(n), 2) + pow(b * double(m), 2)));
-    if (m == 0 || n == 0) eField *= (1.0 / sqrt(2.0));
-    return eField;
-  } else if (modeType == ModeType::kTM) {
-    double Ex{-(double(m) / a) * cos(double(m) * TMath::Pi() * x / a) *
-              sin(double(n) * TMath::Pi() * y / b)};
-    double Ey{-(double(n) / b) * sin(double(m) * TMath::Pi() * x / a) *
-              cos(double(n) * TMath::Pi() * y / b)};
-    double Ez{k_c * k_c / M_PI * sin(double(m) * TMath::Pi() * x / a) *
-              sin(double(n) * TMath::Pi() * y / b)};
-    TVector3 eField{Ex, Ey, Ez};
-    eField *= sqrt(4 * a * b / (pow(a * double(m), 2) + pow(b * double(n), 2)));
-    return eField;
-  } else {
-    // We have a TEM mode
-    std::cout << "TEM modes are not supported by rectangular waveguides."
-              << std::endl;
-    TVector3 eField(0, 0, 0);
-    return eField;
-  }
-}
-
-rad::ComplexVector3 rad::RectangularWaveguide::GetModeHFieldComplex(
-    WaveguideMode mode, TVector3 pos, double omega, double A, double B) {
-  if (pos.X() > a / 2 || pos.Y() > b / 2 || pos.Z() > d / 2)
-    ComplexVector3(0, 0, 0);
-
-  double x{pos.X() + a / 2.0};
-  double y{pos.Y() + b / 2.0};
-  double z{pos.Z() + d / 2.0};
-  std::complex<double> i{0.0, 1.0};
-  double k_c{GetCutoffWavenumber(mode)};
-  std::complex<double> betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-  std::complex<double> beta{sqrt(betaSq)};
-
-  ModeType modeType{mode.GetModeType()};
-  unsigned int m{mode.GetModeIndex1()};
-  unsigned int n{mode.GetModeIndex2()};
-
-  if (modeType == ModeType::kTE) {
-    // We have a TE mode
-    std::complex<double> Hx{
-        (i * beta * double(m) * TMath::Pi() / (k_c * k_c * a)) * A *
-        sin(double(m) * TMath::Pi() * x / a) *
-        cos(double(n) * TMath::Pi() * y / b) * exp(-i * beta * z)};
-    std::complex<double> Hy{
-        (i * beta * double(n) * TMath::Pi() / (k_c * k_c * b)) * A *
-        cos(double(m) * TMath::Pi() * x / a) *
-        sin(double(n) * TMath::Pi() * y / b) * exp(-i * beta * z)};
-    std::complex<double> Hz{A * cos(double(m) * TMath::Pi() * x / a) *
-                            cos(double(n) * TMath::Pi() * y / b) *
-                            exp(-i * beta * z)};
-    ComplexVector3 hField{Hx, Hy, Hz};
-    return hField;
-  } else if (modeType == ModeType::kTM) {
-    // We have a TM mode
-    std::complex<double> Hx{
-        (i * omega * EPSILON0 * double(n) * TMath::Pi() / (k_c * k_c * b)) * A *
-        sin(double(m) * TMath::Pi() * x / a) *
-        cos(double(n) * TMath::Pi() * y / b) * exp(-i * beta * z)};
-    std::complex<double> Hy{(-1.0 * i * omega * EPSILON0 * double(m) *
-                             TMath::Pi() / (k_c * k_c * a)) *
-                            A * cos(double(m) * TMath::Pi() * x / a) *
-                            sin(double(n) * TMath::Pi() * y / b) *
-                            exp(-i * beta * z)};
-    std::complex<double> Hz{0.0, 0.0};
-    ComplexVector3 hField{Hx, Hy, Hz};
-    return hField;
-  } else {
-    // We have a TEM mode
-    std::cout << "TEM modes are not supported by circular waveguides."
-              << std::endl;
-    ComplexVector3 hField{std::complex<double>{0}, std::complex<double>{0},
-                          std::complex<double>{0}};
-    return hField;
-  }
-}
-
-TVector3 rad::RectangularWaveguide::GetModeHField(WaveguideMode mode,
-                                                  TVector3 pos, double omega,
-                                                  double A, double B) {
-  ComplexVector3 field{GetModeHFieldComplex(mode, pos, omega, A, B)};
+TVector3 rad::RectangularWaveguide::GetModeHField(TVector3 pos,
+                                                  WaveguideMode mode, double A,
+                                                  double omega, bool state) {
+  ComplexVector3 field{0, 0, 0};
   return field.Real();
-}
-
-TVector3 rad::RectangularWaveguide::GetModalHField(WaveguideMode mode,
-                                                   TVector3 pos, double omega,
-                                                   double A) {
-  if (pos.X() > a || pos.Y() > b || pos.Z() > d) return TVector3(0, 0, 0);
-
-  double x{pos.X() + a / 2.0};
-  double y{pos.Y() + b / 2.0};
-  double z{pos.Z() + d / 2.0};
-  double k_c{GetCutoffWavenumber(mode)};
-  double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-  double beta{sqrt(betaSq)};
-
-  ModeType modeType{mode.GetModeType()};
-  unsigned int m{mode.GetModeIndex1()};
-  unsigned int n{mode.GetModeIndex2()};
-
-  if (modeType == ModeType::kTE) {
-    // We have a TE mode
-    double Hx{(beta * double(m) * TMath::Pi() / (k_c * k_c * a)) * A *
-              sin(double(m) * TMath::Pi() * x / a) *
-              cos(double(n) * TMath::Pi() * y / b)};
-    double Hy{(beta * double(n) * TMath::Pi() / (k_c * k_c * b)) * A *
-              cos(double(m) * TMath::Pi() * x / a) *
-              sin(double(n) * TMath::Pi() * y / b)};
-    double Hz{A * cos(double(m) * TMath::Pi() * x / a) *
-              cos(double(n) * TMath::Pi() * y / b)};
-    TVector3 hField{Hx, Hy, Hz};
-    return hField;
-  } else if (modeType == ModeType::kTM) {
-    // We have a TM mode
-    double Hx{(omega * EPSILON0 * double(n) * TMath::Pi() / (k_c * k_c * b)) *
-              A * sin(double(m) * TMath::Pi() * x / a) *
-              cos(double(n) * TMath::Pi() * y / b)};
-    double Hy{
-        (-1.0 * omega * EPSILON0 * double(m) * TMath::Pi() / (k_c * k_c * a)) *
-        A * cos(double(m) * TMath::Pi() * x / a) *
-        sin(double(n) * TMath::Pi() * y / b)};
-    double Hz{0.0};
-    TVector3 hField{Hx, Hy, Hz};
-    return hField;
-  } else {
-    // We have a TEM mode
-    std::cout << "TEM modes are not supported by rectangular waveguides."
-              << std::endl;
-    TVector3 hField{0, 0, 0};
-    return hField;
-  }
-}
-
-rad::ComplexVector3 rad::RectangularWaveguide::GetNormalisedHField(
-    WaveguideMode mode, TVector3 pos, double omega) {
-  if (pos.X() > a / 2 || pos.Y() > b / 2 || pos.Z() > d / 2)
-    ComplexVector3(0, 0, 0);
-
-  double x{pos.X() + a / 2.0};
-  double y{pos.Y() + b / 2.0};
-  double z{pos.Z() + d / 2.0};
-
-  double k_c{GetCutoffWavenumber(mode)};
-  double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
-  double beta{sqrt(betaSq)};
-  std::complex<double> i{0, 1};
-  double waveImp{GetModeImpedance(mode, omega)};
-  TVector3 unitZ{0, 0, 1};
-  ComplexVector3 unitZComplex{unitZ};
-
-  ModeType modeType{mode.GetModeType()};
-  unsigned int m{mode.GetModeIndex1()};
-  unsigned int n{mode.GetModeIndex2()};
-
-  if (modeType == ModeType::kTE) {
-    ComplexVector3 eFieldTrans{GetNormalisedEField(mode, pos, omega)};
-    eFieldTrans.SetZ(std::complex<double>{0, 0});
-    ComplexVector3 hFieldTrans{unitZComplex.Cross(eFieldTrans) *
-                               (1.0 / waveImp)};
-    std::complex<double> Hz{(-2.0 * i * k_c) / (beta * waveImp * sqrt(a * b)) *
-                            cos(double(m) * TMath::Pi() * x / a) *
-                            cos(double(n) * TMath::Pi() * y / b)};
-    ComplexVector3 hField{hFieldTrans.X(), hFieldTrans.Y(), Hz};
-    return hField;
-  } else if (modeType == ModeType::kTM) {
-    ComplexVector3 eFieldTrans{GetNormalisedEField(mode, pos, omega)};
-    eFieldTrans.SetZ(std::complex<double>{0, 0});
-    ComplexVector3 hFieldTrans{unitZComplex.Cross(eFieldTrans) *
-                               (1.0 / waveImp)};
-    std::complex<double> Hz{0, 0};
-    ComplexVector3 hField{hFieldTrans.X(), hFieldTrans.Y(), Hz};
-    return hField;
-  } else {
-    // We have a TEM mode
-    std::cout << "TEM modes are not supported by rectangular waveguides."
-              << std::endl;
-    ComplexVector3 hField{std::complex<double>{0, 0},
-                          std::complex<double>{0, 0},
-                          std::complex<double>{0, 0}};
-    return hField;
-  }
 }
 
 double rad::RectangularWaveguide::GetCutoffFrequency(WaveguideMode mode) {
@@ -395,9 +139,9 @@ double rad::RectangularWaveguide::GetFieldAmp(WaveguideMode mode, double omega,
   TVector3 j{-TMath::Qe() * eVel};
   TVector3 jComplex{j};
 
-  TVector3 eTrans{GetNormalisedEField(mode, ePos, omega)};
+  TVector3 eTrans{GetModeEField(ePos, mode, normA, omega, state)};
   eTrans.SetZ(0);
-  TVector3 eAxial{GetNormalisedEField(mode, ePos, omega)};
+  TVector3 eAxial{GetModeEField(ePos, mode, normA, omega, state)};
   eAxial.SetX(0);
   eAxial.SetY(0);
 
@@ -430,13 +174,13 @@ void rad::RectangularWaveguide::CalculatePn(WaveguideMode mode, double omega,
 
       TVector3 surfacePos1(thisx, thisy, -0.01);
       TVector3 surfacePos2(thisx, thisy, 0.01);
-      ComplexVector3 eTrans1{GetNormalisedEField(mode, surfacePos1, omega)};
+      ComplexVector3 eTrans1{GetModeEField(surfacePos1, mode, 1, omega, true)};
       eTrans1.SetZ(0);
-      ComplexVector3 hTrans1{GetNormalisedHField(mode, surfacePos1, omega)};
+      ComplexVector3 hTrans1{GetModeHField(surfacePos1, mode, 1, omega, true)};
       hTrans1.SetZ(0);
-      ComplexVector3 eTrans2{GetNormalisedEField(mode, surfacePos2, omega)};
+      ComplexVector3 eTrans2{GetModeEField(surfacePos2, mode, 1, omega, true)};
       eTrans2.SetZ(0);
-      ComplexVector3 hTrans2{GetNormalisedHField(mode, surfacePos2, omega)};
+      ComplexVector3 hTrans2{GetModeHField(surfacePos2, mode, 1, omega, true)};
       hTrans2.SetZ(0);
       sum += (eTrans1.Cross(hTrans1)).Z().real() * elArea;
       sum += (eTrans2.Cross(hTrans2)).Z().real() * elArea;
