@@ -289,7 +289,7 @@ void rad::CircularWaveguide::CalculatePn(WaveguideMode mode, double omega,
       eTrans.SetZ(0);
       TVector3 hTrans{GetModeHField(surfacePos, mode, 1, omega, true)};
       hTrans.SetZ(0);
-      sum += (eTrans.Cross(hTrans)).Z() * elArea;
+      sum += (eTrans.Cross(hTrans)).Dot(TVector3(0, 0, 1)) * elArea;
     }
   }
   SetPn(sum * 2);
