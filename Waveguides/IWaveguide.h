@@ -70,12 +70,12 @@ class IWaveguide {
   /// @param omega Angular frequency of the chosen wave
   /// @param ePos The electron position vector
   /// @param eVel The electron velocity vector
-  /// @param normA Normalisation of one polarisation (circular guide only)
+  /// @param norm Constant factor multiplying mode
   /// @param state Choose polarisation state (where more than one exists)
   /// @param isPositive Do we want the positive or negative amplitude?
   /// @return The field amplitude at a given time
   virtual double GetFieldAmp(WaveguideMode mode, double omega, TVector3 ePos,
-                             TVector3 eVel, double normA, bool state,
+                             TVector3 eVel, double norm, bool state,
                              bool isPositive) = 0;
 
   /// @brief Getter function for normalisation constant
