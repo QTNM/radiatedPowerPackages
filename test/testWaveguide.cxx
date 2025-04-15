@@ -114,6 +114,8 @@ int main(int argc, char *argv[]) {
   // Calculate the free space radiated power
   const double freeSpacePower{rad::CalcLarmorPower(eKE, bField, M_PI / 2)};
 
+  const double loadImpedance{50};  // Ohm
+
   // Create a waveguide with dimensions of a WR42
   const double WR42_A{10.668e-3};      // m
   const double WR42_B{4.318e-3};       // m
@@ -122,9 +124,6 @@ int main(int argc, char *argv[]) {
   TVector3 probePosition2(0, 0, -waveguideLength / 2);
   rad::RectangularWaveguide *wr42 =
       new rad::RectangularWaveguide(WR42_A, WR42_B, waveguideLength);
-  // Get the mode impedance
-  const double wr42Impedance{wr42->GetModeImpedance(
-      rad::WaveguideMode(1, 0, rad::kTE), 2 * M_PI * cyclotronFreq)};
 
   const double xPosMinWR42{-wr42->GetLongDimension() * 0.9 / 2.0};
   const double xPosMaxWR42{wr42->GetLongDimension() * 0.9 / 2.0};
@@ -167,7 +166,7 @@ int main(int argc, char *argv[]) {
     for (int i{0}; i < grV1->GetN(); ++i) {
       double voltage1{grV1->GetPointY(i)};
       double voltage2{grV2->GetPointY(i)};
-      avgPower += (pow(voltage1, 2) + pow(voltage2, 2)) / wr42Impedance;
+      avgPower += (pow(voltage1, 2) + pow(voltage2, 2)) / loadImpedance;
     }
     avgPower /= double(grV1->GetN());
     powerFractions[iP][0] = xPos;
@@ -187,9 +186,6 @@ int main(int argc, char *argv[]) {
   // Define circular waveguide
   const double wgRadius = {5e-3};  // m
   auto circwg = new rad::CircularWaveguide(wgRadius, waveguideLength);
-  // Get the mode impedance
-  const double circwgImpedance{circwg->GetModeImpedance(
-      rad::WaveguideMode(1, 1, rad::kTE), 2 * M_PI * cyclotronFreq)};
   const std::string CIRC_DATASET_NAME(circGroupName + "/collectedPower");
   auto dataset2 = new H5::DataSet(circGroup->createDataSet(
       CIRC_DATASET_NAME, H5::PredType::NATIVE_DOUBLE, *dspace, plist));
@@ -235,7 +231,7 @@ int main(int argc, char *argv[]) {
       double voltage2_2{grV2_2->GetPointY(i)};
       avgPower += (pow(voltage1_1, 2) + pow(voltage1_2, 2) +
                    pow(voltage2_1, 2) + pow(voltage2_2, 2)) /
-                  circwgImpedance;
+                  loadImpedance;
     }
     avgPower /= double(grV1_1->GetN());
     powerFractions[iP][0] = xPos;

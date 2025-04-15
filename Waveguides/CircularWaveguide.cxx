@@ -257,8 +257,7 @@ void rad::CircularWaveguide::CalculatePn(WaveguideMode mode, double omega,
     for (unsigned int iPhi{0}; iPhi < nSurfPnts; iPhi++) {
       double thisPhi{TMath::TwoPi() / (2 * double(nSurfPnts)) +
                      TMath::TwoPi() * double(iPhi) / double(nSurfPnts)};
-      TVector3 surfacePos(thisRho * cos(thisPhi), thisRho * sin(thisPhi),
-                          -GetLength() / 2);
+      TVector3 surfacePos(thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0);
 
       // Get transverse E and H components
       TVector3 eTrans{GetModeEField(surfacePos, mode, 1, omega, true)};

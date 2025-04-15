@@ -394,7 +394,7 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       double vi{0};
       const double loadImp{50};  // Assume 50 Ohm line
       // Assume all power travelling down the guide couples to the probe
-      vi += CalcWgAmp(tr, wm, omega) * sqrt(waveguide->GetPn() / 2) * loadImp;
+      vi += CalcWgAmp(tr, wm, omega) * sqrt(waveguide->GetPn() * loadImp / 2);
 
       double vq{vi};
       DownmixVoltages(vi, vq, sample10Time);

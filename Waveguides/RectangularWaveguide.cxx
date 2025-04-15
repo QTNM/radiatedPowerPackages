@@ -188,7 +188,7 @@ void rad::RectangularWaveguide::CalculatePn(WaveguideMode mode, double omega,
                    GetShortDimension() / (2.0 * double(nSurfPnts)) +
                    GetShortDimension() * double(iy) / double(nSurfPnts)};
 
-      TVector3 surfacePos(thisx, thisy, -0.01);
+      TVector3 surfacePos(thisx, thisy, 0);
       TVector3 eTrans{GetModeEField(surfacePos, mode, 1, omega, true)};
       eTrans.SetZ(0);
       TVector3 hTrans{GetModeHField(surfacePos, mode, 1, omega, true)};

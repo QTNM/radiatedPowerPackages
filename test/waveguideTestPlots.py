@@ -21,11 +21,11 @@ def make_plots(fname_in="wg_data.h5"):
     plt.rc('font', family='serif')
 
     with h5py.File(fname_in, 'r') as f:
-        # Assuming the data is stored in a dataset named 'data'
+        # Get the collected power data. Factor of 4 accounts for downmixing
         circWgPos = f['Circular']['collectedPower'][:, 0]
-        circWgPowerFrac = f['Circular']['collectedPower'][:, 1]
+        circWgPowerFrac = f['Circular']['collectedPower'][:, 1] * 4.0
         wr42Pos = f['WR42']['collectedPower'][:, 0]
-        wr42PowerFrac = f['WR42']['collectedPower'][:, 1]
+        wr42PowerFrac = f['WR42']['collectedPower'][:, 1] * 4.0
         # Get the field data
         circWgField_P = f['FieldData']['circFieldDataTE11_P'][:]
         circWgField_M = f['FieldData']['circFieldDataTE11_M'][:]
@@ -38,7 +38,7 @@ def make_plots(fname_in="wg_data.h5"):
     plt.ylabel("Collected power fraction")
     plt.title("Power fraction in circular waveguide")
     plt.xlim(-5, 5)
-    plt.ylim(0, 1.1 * np.max(circWgPowerFrac))
+    plt.ylim(0, 1.1)
 
     plt.subplot(122)
     plt.plot(wr42Pos * 1e3, wr42PowerFrac)
@@ -46,7 +46,7 @@ def make_plots(fname_in="wg_data.h5"):
     plt.ylabel("Colled power fraction")
     plt.title("Power fraction in WR42 waveguide")
     plt.xlim(-5, 5)
-    plt.ylim(0, 1.1 * np.max(wr42PowerFrac))
+    plt.ylim(0, 1.1)
     plt.savefig("collectedpowers.pdf", bbox_inches='tight')
 
     # Now make a 2D colour plot of the field magnitudes
