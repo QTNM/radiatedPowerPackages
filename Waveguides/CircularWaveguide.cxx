@@ -281,22 +281,15 @@ void rad::CircularWaveguide::CalculatePn(WaveguideMode mode, double omega,
     for (unsigned int iPhi{0}; iPhi < nSurfPnts; iPhi++) {
       double thisPhi{TMath::TwoPi() / (2 * double(nSurfPnts)) +
                      TMath::TwoPi() * double(iPhi) / double(nSurfPnts)};
-      TVector3 sPos1(thisRho * cos(thisPhi), thisRho * sin(thisPhi),
-                     -GetLength() / 2);
-      TVector3 sPos2(thisRho * cos(thisPhi), thisRho * sin(thisPhi),
-                     GetLength() / 2);
+      TVector3 surfacePos(thisRho * cos(thisPhi), thisRho * sin(thisPhi),
+                          -GetLength() / 2);
 
       // Get transverse E and H components
-      TVector3 eTrans1{GetModeEField(sPos1, mode, 1, omega, true)};
-      eTrans1.SetZ(0);
-      TVector3 hTrans1{GetModeHField(sPos1, mode, 1, omega, true)};
-      hTrans1.SetZ(0);
-      TVector3 eTrans2{GetModeEField(sPos1, mode, 1, omega, true)};
-      eTrans2.SetZ(0);
-      TVector3 hTrans2{GetModeHField(sPos2, mode, 1, omega, true)};
-      hTrans2.SetZ(0);
-      sum += (eTrans1.Cross(hTrans1)).Z() * elArea;
-      sum += (eTrans2.Cross(hTrans2)).Z() * elArea;
+      TVector3 eTrans{GetModeEField(surfacePos, mode, 1, omega, true)};
+      eTrans.SetZ(0);
+      TVector3 hTrans{GetModeHField(surfacePos, mode, 1, omega, true)};
+      hTrans.SetZ(0);
+      sum += (eTrans.Cross(hTrans)).Z() * elArea;
     }
   }
   SetPn(sum * 2);

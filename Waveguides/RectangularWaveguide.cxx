@@ -213,18 +213,12 @@ void rad::RectangularWaveguide::CalculatePn(WaveguideMode mode, double omega,
                    GetShortDimension() / (2.0 * double(nSurfPnts)) +
                    GetShortDimension() * double(iy) / double(nSurfPnts)};
 
-      TVector3 surfacePos1(thisx, thisy, -0.01);
-      TVector3 surfacePos2(thisx, thisy, 0.01);
-      ComplexVector3 eTrans1{GetModeEField(surfacePos1, mode, 1, omega, true)};
-      eTrans1.SetZ(0);
-      ComplexVector3 hTrans1{GetModeHField(surfacePos1, mode, 1, omega, true)};
-      hTrans1.SetZ(0);
-      ComplexVector3 eTrans2{GetModeEField(surfacePos2, mode, 1, omega, true)};
-      eTrans2.SetZ(0);
-      ComplexVector3 hTrans2{GetModeHField(surfacePos2, mode, 1, omega, true)};
-      hTrans2.SetZ(0);
-      sum += (eTrans1.Cross(hTrans1)).Z().real() * elArea;
-      sum += (eTrans2.Cross(hTrans2)).Z().real() * elArea;
+      TVector3 surfacePos(thisx, thisy, -0.01);
+      TVector3 eTrans{GetModeEField(surfacePos, mode, 1, omega, true)};
+      eTrans.SetZ(0);
+      TVector3 hTrans{GetModeHField(surfacePos, mode, 1, omega, true)};
+      hTrans.SetZ(0);
+      sum += (eTrans.Cross(hTrans)).Dot(TVector3(0, 0, 1)) * elArea;
     }
   }
   SetPn(sum * 2);
