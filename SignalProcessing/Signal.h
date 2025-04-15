@@ -199,10 +199,9 @@ class Signal {
   /// @brief Calculate electric field at waveguide probe position
   /// @param tr Retarded time in seconds
   /// @param mode Waveguide mode to calculate
-  /// @param norm Field normalisation
   /// @param omega Angular frequency of cyclotron motion
   /// @return Waveguide mode amplitude
-  double CalcWgAmp(double tr, WaveguideMode mode, double norm, double omega);
+  double CalcWgAmp(double tr, WaveguideMode mode, double omega);
 
   /// @brief Function for downmixing voltages
   /// @param vi In phase voltage component
