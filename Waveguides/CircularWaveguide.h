@@ -76,19 +76,6 @@ class CircularWaveguide : public IWaveguide {
   double GetHFieldIntegral(WaveguideMode mode, double omega, double A, double B,
                            int nSurfPnts);
 
-  /// @brief Gets the field amplitude from a moving electron in the guide
-  /// @param mode The mode to calculate for
-  /// @param omega Angular frequency of the chosen wave
-  /// @param ePos The electron position vector
-  /// @param eVel The electron velocity vector
-  /// @param normA Normalisation
-  /// @param state Choose polarisation state
-  /// @param isPositive Do we want the positive or negative amplitude?
-  /// @return The field amplitude at a given time
-  double GetFieldAmp(WaveguideMode mode, double omega, TVector3 ePos,
-                     TVector3 eVel, double normA, bool state,
-                     bool isPositive) override;
-
   /// @brief Calculate and set Pn for a given circular waveguide mode
   /// @param mode The mode
   /// @param omega Angular frequency of chosen mode

@@ -42,3 +42,24 @@ double rad::IWaveguide::GetGroupVelocity(WaveguideMode mode, double f) {
   const double f_c{GetCutoffFrequency(mode)};
   return TMath::C() * sqrt(1 - pow(f_c / f, 2));
 }
+
+double rad::IWaveguide::GetFieldAmp(WaveguideMode mode, double omega,
+                                    TVector3 ePos, TVector3 eVel, double norm,
+                                    bool state, bool isPositive) {
+  TVector3 j{-TMath::Qe() * eVel};
+  TVector3 eTrans{GetModeEField(ePos, mode, norm, omega, state)};
+  eTrans.SetZ(0);
+  TVector3 eAxial{GetModeEField(ePos, mode, norm, omega, state)};
+  eAxial.SetX(0);
+  eAxial.SetY(0);
+
+  TVector3 eField(0, 0, 0);
+  if (isPositive) {
+    eField = eTrans - eAxial;
+  } else {
+    eField = eTrans + eAxial;
+  }
+
+  double A{eField.Dot(j)};
+  return A;
+}

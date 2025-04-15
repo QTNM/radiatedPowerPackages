@@ -245,27 +245,6 @@ double rad::CircularWaveguide::GetHFieldIntegral(WaveguideMode mode,
   return integral;
 }
 
-double rad::CircularWaveguide::GetFieldAmp(WaveguideMode mode, double omega,
-                                           TVector3 ePos, TVector3 eVel,
-                                           double normA, bool state,
-                                           bool isPositive) {
-  TVector3 j{-TMath::Qe() * eVel};
-  TVector3 eTrans{GetModeEField(ePos, mode, normA, omega, state)};
-  eTrans.SetZ(0);
-  TVector3 eAxial{GetModeEField(ePos, mode, normA, omega, state)};
-  eAxial.SetX(0);
-  eAxial.SetY(0);
-  TVector3 eField(0, 0, 0);
-  if (isPositive) {
-    eField = eTrans - eAxial;
-  } else {
-    eField = eTrans + eAxial;
-  }
-
-  double A{eField.Dot(j)};
-  return A;
-}
-
 void rad::CircularWaveguide::CalculatePn(WaveguideMode mode, double omega,
                                          unsigned int nSurfPnts) {
   double sum{0};

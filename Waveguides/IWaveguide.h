@@ -74,9 +74,8 @@ class IWaveguide {
   /// @param state Choose polarisation state (where more than one exists)
   /// @param isPositive Do we want the positive or negative amplitude?
   /// @return The field amplitude at a given time
-  virtual double GetFieldAmp(WaveguideMode mode, double omega, TVector3 ePos,
-                             TVector3 eVel, double norm, bool state,
-                             bool isPositive) = 0;
+  double GetFieldAmp(WaveguideMode mode, double omega, TVector3 ePos,
+                     TVector3 eVel, double norm, bool state, bool isPositive);
 
   /// @brief Getter function for normalisation constant
   /// @return Normalisation constant
