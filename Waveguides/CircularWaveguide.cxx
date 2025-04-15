@@ -18,6 +18,12 @@ rad::CircularWaveguide::CircularWaveguide(double radius, double length)
 TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, WaveguideMode mode,
                                                double A, double omega,
                                                bool state) {
+  if (omega < GetCutoffFrequency(mode)) {
+    std::cout
+        << "Mode is below cutoff frequency and will not propagate. Returning 0."
+        << std::endl;
+    return TVector3(0, 0, 0);
+  }
   unsigned int n{mode.GetModeIndex1()};
   unsigned int m{mode.GetModeIndex2()};
 
@@ -75,6 +81,12 @@ TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, WaveguideMode mode,
 TVector3 rad::CircularWaveguide::GetModeHField(TVector3 pos, WaveguideMode mode,
                                                double A, double omega,
                                                bool state) {
+  if (omega < GetCutoffFrequency(mode)) {
+    std::cout
+        << "Mode is below cutoff frequency and will not propagate. Returning 0."
+        << std::endl;
+    return TVector3(0, 0, 0);
+  }
   if (pos.Perp() > a) return TVector3(0, 0, 0);
   unsigned int n{mode.GetModeIndex1()};
   unsigned int m{mode.GetModeIndex2()};

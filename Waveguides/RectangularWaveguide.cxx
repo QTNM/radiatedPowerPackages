@@ -41,11 +41,15 @@ double rad::RectangularWaveguide::GetCutoffWavenumber(WaveguideMode mode) {
 TVector3 rad::RectangularWaveguide::GetModeEField(TVector3 pos,
                                                   WaveguideMode mode, double A,
                                                   double omega, bool state) {
+  if (omega < GetCutoffFrequency(mode)) {
+    std::cout
+        << "Mode is below cutoff frequency and will not propagate. Returning 0."
+        << std::endl;
+    return TVector3(0, 0, 0);
+  }
   double x{pos.X() + a / 2.0};
   double y{pos.Y() + b / 2.0};
   double z{pos.Z() + d / 2.0};
-  // if (abs(x) > a / 2 || abs(y) > b / 2 || abs(z) > d / 2)
-  //  return TVector3(0, 0, 0);
   if (x > a || x < 0 || y > b || y < 0) return TVector3(0, 0, 0);
 
   double k_c{GetCutoffWavenumber(mode)};
@@ -89,8 +93,45 @@ TVector3 rad::RectangularWaveguide::GetModeEField(TVector3 pos,
 TVector3 rad::RectangularWaveguide::GetModeHField(TVector3 pos,
                                                   WaveguideMode mode, double A,
                                                   double omega, bool state) {
-  ComplexVector3 field{0, 0, 0};
-  return field.Real();
+  if (omega < GetCutoffFrequency(mode)) {
+    std::cout
+        << "Mode is below cutoff frequency and will not propagate. Returning 0."
+        << std::endl;
+    return TVector3(0, 0, 0);
+  }
+  double x{pos.X() + a / 2.0};
+  double y{pos.Y() + b / 2.0};
+  double z{pos.Z() + d / 2.0};
+  if (x > a || x < 0 || y > b || y < 0) return TVector3(0, 0, 0);
+
+  double k_c{GetCutoffWavenumber(mode)};
+  double m{double(mode.GetModeIndex1())};
+  double n{double(mode.GetModeIndex2())};
+  double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
+  double beta{sqrt(betaSq)};
+
+  double HX{0};
+  double HY{0};
+  double HZ{0};
+  if (mode.GetModeType() == ModeType::kTE) {
+    HX = A * beta * double(m) * M_PI * sin(double(m) * M_PI * x / a) *
+         cos(double(n) * M_PI * y / b) / (k_c * k_c * a);
+    HY = A * beta * double(n) * M_PI * cos(double(m) * M_PI * x / a) *
+         sin(double(n) * M_PI * y / b) / (k_c * k_c * b);
+    HZ = A * cos(double(m) * M_PI * x / a) * cos(double(n) * M_PI * y / b);
+  } else if (mode.GetModeType() == ModeType::kTM) {
+    HX = A * omega * EPSILON0 * double(n) * M_PI *
+         sin(double(m) * M_PI * x / a) * cos(double(n) * M_PI * y / b) /
+         (k_c * k_c * b);
+    HY = -A * omega * EPSILON0 * double(m) * M_PI *
+         cos(double(m) * M_PI * x / a) * sin(double(n) * M_PI * y / b) /
+         (k_c * k_c * a);
+  } else {
+    std::cout << "TEM modes are not supported by rectangular waveguides."
+              << std::endl;
+    return TVector3(0, 0, 0);
+  }
+  return TVector3(HX, HY, HZ);
 }
 
 double rad::RectangularWaveguide::GetCutoffFrequency(WaveguideMode mode) {
