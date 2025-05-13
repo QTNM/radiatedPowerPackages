@@ -73,11 +73,12 @@ class Signal {
   /// Destructor
   ~Signal();
 
-  /// @brief Getter function for in-phase voltage component
+  /// @brief Getter function for in-phase voltage component. Assumes 50 Ohm load
   /// @return Time domain voltage graph
   TGraph* GetVITimeDomain() { return grVITime; }
 
-  /// @brief Getter function for quadrature voltage component
+  /// @brief Getter function for quadrature voltage component. Assumes 50 Ohm
+  /// load
   /// @return Time domain voltage graph
   TGraph* GetVQTimeDomain() { return grVQTime; }
 
