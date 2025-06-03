@@ -375,10 +375,33 @@ int main(int argc, char *argv[]) {
   bool useBathtub{false};          // Use a bathtub field
   double wgRadius{6.0e-3};         // metres
   double heFraction{0};            // Fraction of helium in the gas
-  double minPitchAngle{0};         // Minimum initial pitch angle we simulate in degrees
+  double minPitchAngle{
+      0};                  // Minimum initial pitch angle we simulate in degrees
+  double trapDepth{4e-3};  // Tesla, depth of the magnetic trap
 
-  while ((opt = getopt(argc, argv, ":o:n:d:t:r:f:p:bh")) != -1) {
+  // Long options
+  static struct option longOptions[] = {
+      {"output", required_argument, nullptr, 'o'},
+      {"nevents", required_argument, nullptr, 'n'},
+      {"density", required_argument, nullptr, 'd'},
+      {"max_time", required_argument, nullptr, 't'},
+      {"wg_radius", required_argument, nullptr, 'r'},
+      {"he_fraction", required_argument, nullptr, 'f'},
+      {"min_pitch_angle", required_argument, nullptr, 'p'},
+      {"trap_depth", required_argument, nullptr, 0},
+      {"bathtub", no_argument, nullptr, 'b'},
+      {"help", no_argument, nullptr, 'h'},
+      {nullptr, 0, nullptr, 0}};
+
+  int optionIndex{0};
+  while ((opt = getopt_long(argc, argv, ":o:n:d:t:r:f:p:bh", longOptions,
+                            &optionIndex)) != -1) {
     switch (opt) {
+      case 0:  // Handle the long-only option
+        if (std::string(longOptions[optionIndex].name) == "trap_depth") {
+          trapDepth = boost::lexical_cast<double>(optarg);
+        }
+        break;
       case 'o':
         outputStemStr = optarg;
         break;
@@ -398,36 +421,37 @@ int main(int argc, char *argv[]) {
         heFraction = boost::lexical_cast<double>(optarg);
         break;
       case 'p':
-	minPitchAngle = boost::lexical_cast<double>(optarg);
-	break;
+        minPitchAngle = boost::lexical_cast<double>(optarg);
+        break;
       case 'b':
         useBathtub = true;
         break;
       case 'h':
         cout << "Usage: " << argv[0]
-             << " [-o output directory] [-n number of events] [-d gas "
-                "density] "
-                "[-t simulation time] [-r waveguide radius] [-f helium fraction]"
-	        "[-p minimum initial pitch angle] [-b bathtub trap "
-                "boolean]"
+             << "[--output|-o] [--nevents|-n] [--density|-d] "
+                "[--max_time|-t] [--wg_radius|-r] [--he_fraction|-f]"
+                "[--min_pitch_angle|-p] [--bathtub|-b] [--trap_depth]"
+                "[--help|-h]"
              << endl;
-        return 1;
+        return 0;
       case ':':
-        cout << "Option -" << static_cast<char>(optopt)
-             << " requires an argument." << endl;
+        std::cerr << "Option -" << static_cast<char>(optopt)
+                  << " requires an argument.";
         return 1;
-      case '?':
-        cout << "Unknown option: " << static_cast<char>(optopt) << endl;
+      default:
+        std::cerr << "Unknown option " << static_cast<char>(optopt);
         return 1;
     }
   }
 
-  cout << "Writing output files to " << outputStemStr << "\n";
-  cout << "Attempting to generate " << nEvents << " events.\n";
-  cout << "Maximum simulation time = " << maxSimTime * 1e6 << " us\n";
-  cout << "Gas density = " << gasDensity << " m^-3\n";
-  cout << "Helium fraction = " << heFraction << "\n";
-  cout << "Minimum initial pitch angle = " << minPitchAngle << " degrees" << endl;
+  cout << "Writing output files to " << outputStemStr << endl;
+  cout << "Attempting to generate " << nEvents << " events" << endl;
+  cout << "Maximum simulation time = " << maxSimTime * 1e6 << " us" << endl;
+  cout << "Gas density = " << gasDensity << " m^-3" << endl;
+  cout << "Trap depth = " << trapDepth << " T" << endl;
+  cout << "Helium fraction = " << heFraction << endl;
+  cout << "Minimum initial pitch angle = " << minPitchAngle << " degrees"
+       << endl;
 
   // Check if the chosen output directory exists
   bool dirExists{std::filesystem::is_directory(outputStemStr)};
@@ -445,12 +469,9 @@ int main(int argc, char *argv[]) {
   // Magnitude of background field
   double bkgField{1.0};  // Tesla
   // Define the field depending on the trap type selected
-  const double rCoil{20e-3};                  // metres
-  const double deltaTheta{4.0 * M_PI / 180};  // radians
-  const double trapDepth{bkgField *
-                         (1 / pow(cos(deltaTheta), 2) - 1)};  // Tesla
-  const double iCoil{2 * trapDepth * rCoil / MU0};            // Amps
-  const double trapLength{0.1};  // metres, bathtub only
+  const double rCoil{20e-3};                        // metres
+  const double iCoil{2 * trapDepth * rCoil / MU0};  // Amps
+  const double trapLength{0.1};                     // metres, bathtub only
 
   BaseField *field{nullptr};
   if (useBathtub) {
@@ -528,7 +549,7 @@ int main(int argc, char *argv[]) {
     // Calculate pitch angle
     const double pitchAngleRad{abs(atan(initVel.Perp() / initVel.Z()))};
     const double pitchAngleDeg{pitchAngleRad * 180 / M_PI};
-    
+
     if (pitchAngleDeg < minPitchAngle) continue;
 
     // Now generate the trajectory
