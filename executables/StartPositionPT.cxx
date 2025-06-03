@@ -165,7 +165,7 @@ int main() {
 
   TString trackFile88{outputDir + "/trackFile88.root"};
   ElectronTrajectoryGen traj88(trackFile88, trap2, startPos88, startVel88,
-                               1e-12, 1e-6);
+                               1e-12, 1e-6, false);
   // Open the input file and make various graphs
   auto fin88 = std::make_unique<TFile>(trackFile88, "read");
   auto tr88 = (TTree*)fin88->Get("tree");
@@ -222,7 +222,7 @@ int main() {
 
   TString trackFile90{outputDir + "/trackFile90.root"};
   ElectronTrajectoryGen traj90(trackFile90, trap2, startPos90, startVel90,
-                               1e-12, 1e-6);
+                               1e-12, 1e-6, false);
   // Open the input file and make various graphs
   auto fin90 = std::make_unique<TFile>(trackFile90, "read");
   auto tr90 = (TTree*)fin90->Get("tree");

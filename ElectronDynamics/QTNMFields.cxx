@@ -250,3 +250,62 @@ TVector3 rad::HTSMagnetTrap::evaluate_field_at_point(const TVector3 vec) {
   TVector3 totalField = bkgField - coilField;
   return totalField;
 }
+
+rad::HelmholtzField::HelmholtzField(double coilRadius, double coilLength,
+                                    double coilCurrent, double turnsPerMetre) {
+  const double zOffset{coilRadius * 1.02 / 2};
+
+  coil1 = SolenoidField(coilRadius, coilLength, coilCurrent, turnsPerMetre, MU0,
+                        -zOffset);
+  coil2 = SolenoidField(coilRadius, coilLength, coilCurrent, turnsPerMetre, MU0,
+                        zOffset);
+}
+
+TVector3 rad::HelmholtzField::evaluate_field_at_point(const TVector3 vec) {
+  TVector3 totalField{coil1.evaluate_field_at_point(vec) +
+                      coil2.evaluate_field_at_point(vec)};
+  return totalField;
+}
+
+rad::FourCoilField::FourCoilField(double rPair1, double iPair1,
+                                  double zOffPair1, double rPair2,
+                                  double iPair2, double zOffPair2) {
+  coil1a = CoilField(rPair1, iPair1, -zOffPair1);
+  coil1b = CoilField(rPair1, iPair1, zOffPair1);
+  coil2a = CoilField(rPair2, iPair2, -zOffPair2);
+  coil2b = CoilField(rPair2, iPair2, zOffPair2);
+}
+
+TVector3 rad::FourCoilField::evaluate_field_at_point(const TVector3 vec) {
+  TVector3 totalField{coil1a.evaluate_field_at_point(vec) +
+                      coil1b.evaluate_field_at_point(vec) +
+                      coil2a.evaluate_field_at_point(vec) +
+                      coil2b.evaluate_field_at_point(vec)};
+  return totalField;
+}
+
+rad::FourCoilBathtub::FourCoilBathtub(double rPair1, double iPair1,
+                                      double zOffPair1, double rPair2,
+                                      double iPair2, double zOffPair2,
+                                      double bkgField) {
+  fourCoils =
+      FourCoilField(rPair1, iPair1, zOffPair1, rPair2, iPair2, zOffPair2);
+  bkg = TVector3(0, 0, bkgField);
+}
+
+TVector3 rad::FourCoilBathtub::evaluate_field_at_point(const TVector3 vec) {
+  TVector3 totalField{fourCoils.evaluate_field_at_point(vec) + bkg};
+  return totalField;
+}
+
+rad::FourCoilHelmholtz::FourCoilHelmholtz(FourCoilField tField,
+                                          HelmholtzField bgField) {
+  trapField = tField;
+  bkgField = bgField;
+}
+
+TVector3 rad::FourCoilHelmholtz::evaluate_field_at_point(const TVector3 vec) {
+  TVector3 totalField{trapField.evaluate_field_at_point(vec) +
+                      bkgField.evaluate_field_at_point(vec)};
+  return totalField;
+}

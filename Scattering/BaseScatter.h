@@ -16,7 +16,7 @@ class BaseScatter {
 
  protected:
   /// @brief Getter function for incident electron KE
-  /// @return
+  /// @return The incident electron KE in eV
   double GetIncidentKE() { return ke; }
 
  public:
@@ -45,6 +45,11 @@ class BaseScatter {
   /// @return Scattered velocity vector
   TVector3 GetScatteredVector(TVector3 vel, double outKE, double theta);
 
+  /// @brief Sets incident kinetic energy
+  /// @param T New incident KE in eV
+  void SetIncidentKE(double T) { ke = T; }
+
+  /// @brief Virtual destructor
   virtual ~BaseScatter(){};
 };
 }  // namespace rad

@@ -9,15 +9,46 @@
 
 #include "BasicFunctions/Constants.h"
 #include "Scattering/BaseScatter.h"
-#include "TMath.h"
 
 namespace rad {
+enum Species { H, H2, He };
+
 class InelasticScatter : public BaseScatter {
  private:
   // Private member functions
-  // Double differenial cross-sections calculated using formulae from
+  // Double differential cross-sections calculated using formulae from
   // M. E. Rudd 1991
 
+  /// Gives the binding energy for the species in question
+  /// @return Binding energy in eV
+  double I();
+
+  /// @brief Average kinetic energy of electron in orbital
+  /// @return Average kinetic energy in eV
+  double U();
+
+  double N();
+
+  double Ni();
+
+  /// @brief Integral of oscillator strength
+  double D();
+
+  double BETA();
+
+  double GAMMA();
+
+  double G_B();
+
+  double n();
+
+  double A1();
+
+  double A2();
+
+  double A3();
+
+  double S();
   double BETA();
 
   double GAMMA();
@@ -35,31 +66,31 @@ class InelasticScatter : public BaseScatter {
   double S();
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @return
-  double G2(double omega, double t);
+  double G2(double W, double T);
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @return
-  double G3(double omega, double t);
+  double G3(double W, double T);
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @return
-  double G4(double omega, double t);
+  double G4(double W, double T);
 
   double G5();
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @param theta Angle in radians
   /// @return
-  double f_BE(double omega, double t, double theta);
+  double f_BE(double W, double T, double theta);
 
   /// @brief
   /// @param theta Angle in radians
@@ -67,27 +98,56 @@ class InelasticScatter : public BaseScatter {
   double f_b(double theta);
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @return
-  double g_BE(double omega, double t);
+  double g_BE(double W, double T);
 
   /// @brief
-  /// @param t
+  /// @param T
   /// @return
-  double F(double t);
+  double F(double T);
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @return
-  double f_1(double omega, double t);
+  double f_1(double W, double T);
 
   /// @brief
-  /// @param omega
-  /// @param t
+  /// @param W
+  /// @param T
   /// @return
-  double G1(double omega, double t);
+  double G1(double W, double T);
+
+  /// @brief
+  /// @param W
+  /// @param T
+  /// @param theta
+  /// @return
+  double G4fb(double W, double T, double theta);
+
+  /// @brief
+  /// @param T
+  /// @return
+  double g1(double T);
+
+  Species theSpecies;
+
+  /// @brief Calculate the CDF for the singly-differential cross section (in
+  /// omega)
+  /// @param omega Normalised outgoing electron energy
+  /// @param t Normalised incident electron energy
+  /// @return Cumulative distribution function for a given value of omega
+  double CDF_SingleDiffXSec_W(double omega, double t);
+
+  /// @brief Calculate the CDF for the double-differential cross section (in
+  /// theta and omega)
+  /// @param omega Normalised outgoing electron energy
+  /// @param t Normalised incident electron energy
+  /// @param theta Scattering angle of secondary electron in radians
+  /// @return CDF for a given value of theta and omega
+  double CDF_DoubleDiffXSec_theta(double omega, double t, double theta);
 
   /// @brief Calculate the CDF for the singly-differential cross section (in
   /// omega)
@@ -107,7 +167,8 @@ class InelasticScatter : public BaseScatter {
  public:
   /// @brief Override constructor
   /// @param T Incident kinetic energy in eV
-  InelasticScatter(double T) : BaseScatter(T) {}
+  /// @param species Species of the incident particle
+  InelasticScatter(double T, Species species = H2);
 
   /// @brief Calculate total inelastic cross section on atomic hydrogen
   /// @return Cross section in m^2
@@ -122,6 +183,11 @@ class InelasticScatter : public BaseScatter {
   /// @param theta Scattering angle of secondary electron in radians
   /// @return Cross-section in m^2 / eV / rad
   double GetDoubleDiffXSec(double W, double theta);
+
+  /// @brief Single differential cross-section (in W)
+  /// @param W Kinetic energy of ejected electron in eV
+  /// @return Cross-section in m^2 / eV
+  double GetSDCS_W(double W);
 
   /// @brief Get a random secondary electron KE
   /// @return Energy in eV

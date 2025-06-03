@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
       TString trackFile{Form(
           "/home/sjones/work/qtnm/outputs/RFBandwidth/track%d.root", iPnt)};
       ElectronTrajectoryGen traj(trackFile, field1m, X0, V0, simStepSize,
-                                 simTime, 0.0, tau);
+                                 simTime);
 
       // Now open track file
       TFile *fin = new TFile(trackFile, "READ");

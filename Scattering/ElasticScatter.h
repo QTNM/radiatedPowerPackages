@@ -53,9 +53,56 @@ class ElasticScatter : public BaseScatter {
                                   1.878 - 2, 1.71e-3,   -4.697e-3,
                                   2.774e-2,  -8.267e-3, 1.820e-2};
 
-  /// @brief Calculates the rutherford cross section on atomic hydrogen
-  /// @return Cross section in m^2
-  double TotalRutherfordXSec();
+  // Arrays used for calculating the differential cross section
+  // Data from Salvat et al. Phys. Rev. A 36, 467 (1987)
+  const std::array<std::array<double, 2>, 5> Ai{{{-184.39, 185.39},
+                                                 {-0.2259, 1.2259},
+                                                 {0.6045, 0.3955},
+                                                 {0.3278, 0.6722},
+                                                 {0.2327, 0.7673}}};
+  const std::array<std::array<double, 2>, 5> alphai{{{2.0027, 1.9973},
+                                                     {5.5272, 2.3992},
+                                                     {2.8174, 0.6625},
+                                                     {4.5430, 0.9852},
+                                                     {5.9900, 1.2135}}};
+
+  /// @brief Calculates the rutherford differential cross section
+  /// @param theta Scattering angle in radians
+  /// @return Differential cross section in units of m^2/sr
+  double RutherfordDCS(double theta);
+
+  /// @brief Calculate the momentum transfer for a given scattering angle
+  /// @param theta Scattering angle in radians
+  /// @return Momentum transfer in kg m/s
+  double Calcq(double theta);
+
+  /// @brief Calculate correction factor
+  /// @return Correction factor
+  double Calct();
+
+  /// @brief Calculate form factor
+  /// @return Form factor
+  double CalcFe(double q);
+
+  /// @brief Calculate form factor
+  /// @param R Radius in m
+  /// @param q Momentum transfer in kg m/s
+  /// @return Form factor
+  double CalcF(double R, double q);
+
+  /// @brief Nuclear radius for a given atomic number
+  /// @return Nuclear radius in m
+  double R0();
+
+  /// @brief Nuclear form factor
+  /// @param q Momentum transfer in kg m/s
+  /// @return Form factor
+  double NuclearFormFactor(double q);
+
+  /// @brief Calculates the screening factor for a given momentum transfer
+  /// @param theta Scattering angle in radians
+  /// @return Screening factor
+  double ScreeningFactor(double theta);
 
   /// @brief Calculate differential cross section using parametrization from
   /// Riley, MacCallum, Biggs (1975)
@@ -67,24 +114,41 @@ class ElasticScatter : public BaseScatter {
   double GetDiffXSec(std::vector<double> A, double B, std::vector<double> C,
                      double cosTheta);
 
+  unsigned int Z;  // Atomic number of target
+
+  unsigned int A;  // Atomic mass of target
+
  public:
   /// @brief Override constructor
   /// @param T Incident kinetic energy in eV
-  ElasticScatter(double T) : BaseScatter(T) {}
+  /// @param aNum Atomic number of target (default is 1)
+  /// @param aMass Atomic mass of target (default is 3)
+  ElasticScatter(double T, unsigned int aNum = 1, unsigned int aMass = 3);
 
   /// @brief Total Mott cross section
+  /// Method from Gauvin & Drouin, Scanning 15, 3 (1993)
   /// @return Cross section in m^2
   double GetTotalXSec() override;
 
+  /// @brief Calculates the total Rutherford cross section
+  /// Method from Gauvin & Drouin, Scanning 15, 3 (1993)
+  /// @return Cross section in m^2
+  double TotalRutherfordXSec();
+
   /// @brief Calculate the elastic differential cross section on hydrogen
-  /// @param cosTheta Cosine of scattering angle of the electron
+  /// @param theta Scattering angle of the electron in radians
   /// @return Differential cross section in units of m^2 / sr
-  double GetDiffXSec(double cosTheta);
+  double GetDiffXSec(double theta);
 
   /// @brief Generates a random scattering angle according to the differential
   /// cross-section
   /// @return The scattering angle in radians
   double GetRandomScatteringAngle();
+
+  /// @brief Gives the energy of the outgoing electron
+  /// @param theta Scattering angle in radians
+  /// @return Post-scatter kinetic energy in eV
+  double GetEnergyAfterScatter(double theta);
 };
 }  // namespace rad
 

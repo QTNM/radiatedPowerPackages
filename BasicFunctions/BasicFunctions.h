@@ -19,9 +19,9 @@ void setGraphAttr(TGraph *gr);
 
 void setGraphAttr(std::unique_ptr<TGraph> &gr);
 
-/// @brief Sets graph to correct formatting
+/// @brief Formatter for TGraph references
 /// @param gr Graph to be formatted
-void SetGraphAttr(TGraph &gr);
+void setGraphAttr(TGraph &gr);
 
 void SetHistAttr(TH1 *h);
 
@@ -102,14 +102,40 @@ std::vector<double> BandPassFilter(std::vector<double> xVals,
                                    std::vector<double> yVals, double minFreq,
                                    double maxFreq);
 
-/// Given a set of 4 (x, y) values allow for interpolating at a value
+/// @brief Given a set of 4 (x, y) values allow for interpolating at a value.
 /// Use a 3rd order Lagrange interpolating polynomial
-/// \param xVals A vector of 4 x values. These do not have to be evenly spaced
-/// \param yVals A vector of the corresponding y values
-/// \param xInterp The x value at which to interpolate
-/// \return The interpolated y value
-double CubicInterpolation(std::vector<double> xVals, std::vector<double> yVals,
-                          double xInterp);
+/// @param xVals A vector of 4 x values. These do not have to be evenly spaced
+/// @param yVals A vector of the corresponding y values
+/// @param xInterp The x value at which to interpolate
+/// @return The interpolated y value
+template <typename T>
+T CubicInterpolation(std::vector<T> &xVals, std::vector<T> &yVals, T xInterp) {
+  // Check we have the right number of values
+  if (xVals.size() != 4 || yVals.size() != 4) {
+    std::cout << "Invalid interpolation input size! Require 4 values.\n";
+    return 0;
+  }
+  // Check that we have monotonically increasing x values
+  for (unsigned int i{1}; i < xVals.size(); i++) {
+    if (xVals.at(i) - xVals.at(i - 1) <= 0) {
+      std::cout
+          << "x values (for interpolation) do not increase monotonically!\n";
+      return 0;
+    }
+  }
+
+  // First calculate the Lagrange xInterpolating basis functions
+  T l0{(xInterp - xVals[1]) * (xInterp - xVals[2]) * (xInterp - xVals[3]) /
+       ((xVals[0] - xVals[1]) * (xVals[0] - xVals[2]) * (xVals[0] - xVals[3]))};
+  T l1{(xInterp - xVals[0]) * (xInterp - xVals[2]) * (xInterp - xVals[3]) /
+       ((xVals[1] - xVals[0]) * (xVals[1] - xVals[2]) * (xVals[1] - xVals[3]))};
+  T l2{(xInterp - xVals[0]) * (xInterp - xVals[1]) * (xInterp - xVals[3]) /
+       ((xVals[2] - xVals[0]) * (xVals[2] - xVals[1]) * (xVals[2] - xVals[3]))};
+  T l3{(xInterp - xVals[0]) * (xInterp - xVals[1]) * (xInterp - xVals[2]) /
+       ((xVals[3] - xVals[0]) * (xVals[3] - xVals[1]) * (xVals[3] - xVals[2]))};
+
+  return l0 * yVals[0] + l1 * yVals[1] + l2 * yVals[2] + l3 * yVals[3];
+}
 
 /// @brief PDF of the Rayleigh distribution
 /// @param x
@@ -235,14 +261,17 @@ double SkewedGaussian(double x, double A, double mu, double sigma,
 /// @return The chirp function at the supplied time
 double ChirpSignal(double A, double t, double phi0, double f0, double c);
 
-/// @brief Rotate vector to different coordinate system
-/// @param v
-/// @param newX
-/// @param newY
-/// @param newZ
-/// @return
-TVector3 RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
-                        TVector3 newZ);
+/// Heaviside step function
+/// \param x Input parameter
+/// \Returns 1, for x > 0
+/// \Returns 0, for x <= 0
+double HeavisideFunc(double x);
+
+/// Function for getting the zeros of the derivative of Bessel functions
+/// \param n The order of the Bessel function being differentiated
+/// \param m The zero of the derived function (must be > 0)
+/// \Returns The specified root of the derivative of the nth Bessel function
+double GetBesselPrimeZero(unsigned int n, unsigned int m);
 
 /// @brief Larmor radiated power
 /// @param ke Kinetic energy in eV
@@ -251,6 +280,15 @@ TVector3 RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
 /// @param m Particle mass in kg
 /// @return Larmor power in Watts
 double CalcLarmorPower(double ke, double B, double theta, double m = ME);
+
+/// @brief Rotate vector to different coordinate system
+/// @param v Vector to be rotated
+/// @param newX X axis of frame to be rotated to
+/// @param newY Y axis of frame to be rotated to
+/// @param newZ Z axis of frame to be rotated to
+/// @return 3-vector of rotated vector
+TVector3 RotateToCoords(TVector3 v, TVector3 newX, TVector3 newY,
+                        TVector3 newZ);
 
 /// @brief The linear sum of the power in a TGraph
 /// @param gr A pointer to the input TGraph

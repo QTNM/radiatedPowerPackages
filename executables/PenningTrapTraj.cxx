@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   TString trackFile{
       "/home/sjones/work/qtnm/outputs/PenningTrapTraj/track.root"};
   ElectronTrajectoryGen traj(trackFile, trap, initPos, initVel, stepSize,
-                             simTime);
+                             simTime, false);
 
   // Plot the z position and the radial position as a function of time
   auto tFile = std::make_unique<TFile>(trackFile, "READ");

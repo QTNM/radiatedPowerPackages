@@ -124,8 +124,9 @@ class SolenoidField : public BaseField {
   /// \param perm Permeability (default is permeability of free space)
   /// \param zOffset Offset (in metres) of the solenoid centre from z = 0
   /// (default is 0)
-  SolenoidField(double radius, double length, double current,
-                double turnsPerMetre, double perm = MU0, double zOffset = 0.0)
+  SolenoidField(double radius = 0.2, double length = 0.05, double current = 1e3,
+                double turnsPerMetre = 400, double perm = MU0,
+                double zOffset = 0.0)
       : r(radius),
         l(length),
         i(current),
@@ -291,6 +292,117 @@ class HTSMagnetTrap : public BaseField {
  public:
   HTSMagnetTrap(double radius, double current);
 
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
+
+  /// @brief Calculate electric field at a point
+  /// @param v Position at which to calculate field
+  /// @return Electric field = 0
+  TVector3 evaluate_e_field_at_point(TVector3 v) override {
+    return TVector3(0, 0, 0);
+  }
+};
+
+class HelmholtzField : public BaseField {
+ private:
+  SolenoidField coil1;
+  SolenoidField coil2;
+
+ public:
+  /// @brief Generate field from Helmholtz coils
+  /// @param coilRadius Radius of both coils in metres
+  /// @param coilLength Length of both coils in metres
+  /// @param coilCurrent Current through both coils in Amps
+  /// @param turnsPerMetre Turns per metre for coils
+  HelmholtzField(double coilRadius = 0.2, double coilLength = 0.05,
+                 double coilCurrent = 1e3, double turnsPerMetre = 400);
+
+  /// @brief Get magnetic field at point
+  /// @param vec 3-vector at which to evaluate B field
+  /// @return Magnetic field vector in Tesla
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
+
+  /// @brief Calculate electric field at a point
+  /// @param v Position at which to calculate field
+  /// @return Electric field = 0
+  TVector3 evaluate_e_field_at_point(TVector3 v) override {
+    return TVector3(0, 0, 0);
+  }
+};
+
+// Class representing 4 current loops
+// Useful for representing a shaped bathtub
+// Two pair of coils symmetric about z = 0
+class FourCoilField : public BaseField {
+ private:
+  CoilField coil1a;
+  CoilField coil1b;
+  CoilField coil2a;
+  CoilField coil2b;
+
+ public:
+  /// @brief Parametrised constructor
+  /// @param rPair1 Radius in metres of first coil pair
+  /// @param iPair1 Current in amps of first coil pair
+  /// @param zOffPair1 z offset of first coil pair
+  /// @param rPair2 Radius in metres of second coil pair
+  /// @param iPair2 Current in amps of second coil pair
+  /// @param zOffPair1 z offset of second coil pair
+  FourCoilField(double rPair1 = 15e-3, double iPair1 = 100,
+                double zOffPair1 = 25e-3, double rPair2 = 15e-3,
+                double iPair2 = -50, double zOffPair2 = 19e-3);
+
+  /// @brief Get magnetic field at point
+  /// @param vec 3-vector at which to evaluate B field
+  /// @return Magnetic field vector in Tesla
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
+
+  /// @brief Calculate electric field at a point
+  /// @param v Position at which to calculate field
+  /// @return Electric field = 0
+  TVector3 evaluate_e_field_at_point(TVector3 v) override {
+    return TVector3(0, 0, 0);
+  }
+};
+
+// Bathtub field with the above 4-coil trap
+class FourCoilBathtub : public BaseField {
+ private:
+  FourCoilField fourCoils;
+  TVector3 bkg;
+
+ public:
+  /// @brief Parametrised constructor
+  FourCoilBathtub(double rPair1, double iPair1, double zOffPair1, double rPair2,
+                  double iPair2, double zOffPair2, double bkgField);
+
+  /// @brief Get magnetic field at point
+  /// @param vec 3-vector at which to evaluate B field
+  /// @return Magnetic field vector in Tesla
+  TVector3 evaluate_field_at_point(const TVector3 vec) override;
+
+  /// @brief Calculate electric field at a point
+  /// @param v Position at which to calculate field
+  /// @return Electric field = 0
+  TVector3 evaluate_e_field_at_point(TVector3 v) override {
+    return TVector3(0, 0, 0);
+  }
+};
+
+// Bathtub field with a Helmholtz background field
+class FourCoilHelmholtz : public BaseField {
+ private:
+  FourCoilField trapField;
+  HelmholtzField bkgField;
+
+ public:
+  /// @brief Parametrised constructor
+  /// @param tField Trap field
+  /// @param bgField Background field
+  FourCoilHelmholtz(FourCoilField tField, HelmholtzField bgField);
+
+  /// @brief Get magnetic field at point
+  /// @param vec 3-vector at which to evaluate B field
+  /// @return Magnetic field vector in Tesla
   TVector3 evaluate_field_at_point(const TVector3 vec) override;
 
   /// @brief Calculate electric field at a point

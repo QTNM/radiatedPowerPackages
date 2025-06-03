@@ -16,7 +16,8 @@
 
 rad::ElectronTrajectoryGen::ElectronTrajectoryGen(
     TString outputFile, BaseField *field, TVector3 initPos, TVector3 initVel,
-    double simStepSize, double simTime, double initialSimTime, double tau) {
+    double simStepSize, double simTime, bool energyLoss, CircularCavity *cav,
+    double initialSimTime) {
   // Check the file path can be opened in
   auto foutTest = std::make_unique<TFile>(outputFile, "RECREATE");
   if (!foutTest) {
@@ -28,7 +29,8 @@ rad::ElectronTrajectoryGen::ElectronTrajectoryGen(
     foutTest->Close();
   }
 
-  solver = BorisSolver(field, -TMath::Qe(), ME, tau);
+  double tau = energyLoss ? 2 * R_E / (3 * TMath::C()) : 0.0;
+  solver = BorisSolver(field, -TMath::Qe(), ME, tau, cav);
 
   // Check that various input values make sense
   if (simStepSize <= 0) {
@@ -79,14 +81,16 @@ rad::ElectronTrajectoryGen::ElectronTrajectoryGen(
 
   double nTimeSteps{round(simTime / simStepSize)};
   // Advance through the time steps
-  const double printoutTime{1e-6};  // seconds
+  const double printoutInterval{1e-6};    // seconds
+  double printoutTime{printoutInterval};  // seconds
   for (int i = 1; i < nTimeSteps; i++) {
     time = initialSimTime + double(i) * simStepSize;
     std::tuple<TVector3, TVector3> outputStep =
         solver.advance_step(simStepSize, ePos, eVel);
 
-    if (std::fmod(time, printoutTime) < simStepSize) {
-      std::cout << time << " seconds of trajectory simulated..." << std::endl;
+    if (time >= printoutTime) {
+      std::cout << printoutTime << " seconds of trajectory simulated...\n";
+      printoutTime += printoutInterval;
     }
 
     ePos = std::get<0>(outputStep);

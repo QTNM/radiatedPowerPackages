@@ -18,6 +18,10 @@
 #include "TFile.h"
 #include "TGraph.h"
 #include "TTree.h"
+#include "Waveguides/ICavity.h"
+#include "Waveguides/IWaveguide.h"
+#include "Waveguides/Probe.h"
+#include "Waveguides/WaveguideMode.h"
 
 namespace rad {
 class Signal {
@@ -44,14 +48,37 @@ class Signal {
          LocalOscillator lo, double sRate,
          std::vector<GaussianNoise> noiseTerms = {}, double tAcq = -1);
 
+  /// @brief Parametrised constructor using cavity as RF collection device
+  /// @param filePath String to electron trajectory file
+  /// @param cav Cavity used for RF collection
+  /// @param lo Local oscillator for downmixing
+  /// @param sRate Sample rate in Hertz
+  /// @param noiseTerms Vector of noise terms
+  /// @param tAcq Acquisition time for signal in seconds
+  Signal(TString filePath, ICavity* cav, LocalOscillator lo, double sRate,
+         std::vector<GaussianNoise> noiseTerms = {}, double tAcq = -1);
+
+  /// @brief Parametrised constructor using waveguide as RF collection device
+  /// @param filePath String to electron trajectory file
+  /// @param wg Pointer to waveguide
+  /// @param lo Local oscillator
+  /// @param sRate Sample rate in Hertz
+  /// @param probe Probe for signal readout
+  /// @param noiseTerms Vector of noise to add
+  /// @param tAcq Max acqusition time in seconds
+  Signal(TString filePath, IWaveguide* wg, LocalOscillator lo, double sRate,
+         Probe probe, std::vector<GaussianNoise> noiseTerms = {},
+         double tAcq = -1);
+
   /// Destructor
   ~Signal();
 
-  /// @brief Getter function for in-phase voltage component
+  /// @brief Getter function for in-phase voltage component. Assumes 50 Ohm load
   /// @return Time domain voltage graph
   TGraph* GetVITimeDomain() { return grVITime; }
 
-  /// @brief Getter function for quadrature voltage component
+  /// @brief Getter function for quadrature voltage component. Assumes 50 Ohm
+  /// load
   /// @return Time domain voltage graph
   TGraph* GetVQTimeDomain() { return grVQTime; }
 
@@ -74,14 +101,18 @@ class Signal {
   // Sample rate
   double sampleRate;
 
+  // Simulation step size
+  long double simStepSize;
+
   // Noise terms
   std::vector<GaussianNoise> noiseVec;
 
   TGraph* grVITime = 0;  // In phase component
   TGraph* grVQTime = 0;  // Quadrature component
 
-  std::deque<double> timeVec;
-  std::vector<std::deque<double>> advancedTimeVec;  // One deque per antenna
+  std::deque<long double> timeVec;
+  std::vector<std::deque<long double>>
+      advancedTimeVec;  // One deque per antenna
 
   // Input file details
   double fileStartTime{};
@@ -101,22 +132,38 @@ class Signal {
   // Pointer to the antenna
   std::vector<IAntenna*> antenna;
 
+  // Pointer to cavity if necessary
+  ICavity* cavity;
+
+  // Pointer to waveguide if necessary
+  IWaveguide* waveguide;
+
+  // Probe for waveguide
+  Probe pr;
+
   /// @brief Function to add new times to vectors
   /// @param time New time from file in seconds
   /// @param ePos Electron position vector in metres
-  /// @param ant Pointer to chosen antenna
-  void AddNewTimes(double time, TVector3 ePos);
+  void AddNewTimes(long double time, TVector3 ePos);
+
+  /// @brief Function to add new times for vector
+  /// @param time New time from file in seconds
+  /// @param ePos Electron position vector in metres
+  /// @param probe Probe to use for signal readout
+  /// @param freq Frequency of signal in Hertz
+  void AddNewCavWgTimes(long double time, TVector3 ePos, Probe& probe,
+                        double freq);
 
   /// @brief Calculate the retarded time
   /// @param ts Sample time in seconds
-  /// @param antInd
+  /// @param antInd Index of antenna
   /// @return Relevant retarded time in seconds
-  double GetRetardedTime(double ts, unsigned int antInd);
+  long double GetRetardedTime(long double ts, unsigned int antInd);
 
   /// @brief Get a guess for the index to start at
   /// @param ts Sample time in seconds
   /// @return Index of guess
-  unsigned int GetFirstGuessPoint(double ts, unsigned int antInd);
+  int GetFirstGuessPoint(long double ts, unsigned int antInd);
 
   /// @brief Sets up the tree to be read in
   /// @param filePath Path to electron trajectory file
@@ -133,7 +180,29 @@ class Signal {
   /// @param tr Retarded time at which to calculate the voltage [seconds]
   /// @param ant Pointer to chosen antenna
   /// @return Voltage in volts
-  double CalcVoltage(double tr, IAntenna* ant);
+  double CalcVoltage(long double tr, IAntenna* ant);
+
+  /// @brief Calculate electric field at cavity probe position
+  /// @param tr Retarded time in seconds
+  /// @param norm Field normalisation
+  /// @return Electric field at point in V/m
+  TVector3 CalcCavityEField(double tr, std::complex<double> norm);
+
+  /// @brief Calculate electric field at waveguide probe position
+  /// @param tr Retarded time in seconds
+  /// @param mode Waveguide mode to calculate
+  /// @param norm Field normalisation
+  /// @param omega Angular frequency of cyclotron motion
+  /// @return Electric field at point in V/m
+  TVector3 CalcWaveguideEField(double tr, WaveguideMode mode, double norm,
+                               double omega, bool state);
+
+  /// @brief Calculate electric field at waveguide probe position
+  /// @param tr Retarded time in seconds
+  /// @param mode Waveguide mode to calculate
+  /// @param omega Angular frequency of cyclotron motion
+  /// @return Waveguide mode amplitude
+  double CalcWgAmp(double tr, WaveguideMode mode, double omega);
 
   /// @brief Function for downmixing voltages
   /// @param vi In phase voltage component
@@ -149,6 +218,10 @@ class Signal {
 
   /// @brief Sets up voltage graphs for class
   void CreateVoltageGraphs();
+
+  /// @brief Calculates the initial electron frequency from trajectory info
+  /// @return Initial cyclotron frequency in Hertz
+  double CalcInitialFreq();
 };
 
 }  // namespace rad

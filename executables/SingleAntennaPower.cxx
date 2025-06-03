@@ -60,8 +60,8 @@ int main(int argc, char *argv[]) {
   const double simStepSize{1e-12};  // seconds
   TString trackFile{
       "/home/sjones/work/qtnm/outputs/SingleAntennaPower/track.root"};
-  ElectronTrajectoryGen traj(trackFile, field, pos0, vel0, simStepSize, simTime,
-                             0.0, tau);
+  ElectronTrajectoryGen traj(trackFile, field, pos0, vel0, simStepSize,
+                             simTime);
 
   const double xAxisDeg{1500};
   const double xAxisCycles{xAxisDeg / 360};

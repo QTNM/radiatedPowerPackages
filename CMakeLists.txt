@@ -20,8 +20,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 # Locate HDF5
 find_package(HDF5 COMPONENTS C CXX HL REQUIRED)
-link_directories(${HDF5_LIBRARY_DIRS})
-include_directories(${HDF5_INCLUDE_DIRS})
 
 # Locate FFTW3
 find_package(FFTW3 REQUIRED)
@@ -32,23 +30,19 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # Add libraries
 add_subdirectory(BasicFunctions)
-list(APPEND EXTRA_LIBS BasicFunctions)
-list(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/BasicFunctions")
 
 add_subdirectory(FieldClasses)
-list(APPEND EXTRA_LIBS FieldClasses)
-list(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/FieldClasses")
 
 add_subdirectory(SignalProcessing)
-list(APPEND EXTRA_LIBS SignalProcessing)
-list(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/SignalProcessing")
 
 add_subdirectory(Antennas)
-list(APPEND EXTRA_LIBS Antennas)
-list(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/Antennas")
 
 add_subdirectory(ElectronDynamics)
+
+add_subdirectory(Waveguides)
 
 add_subdirectory(Scattering)
 
 add_subdirectory(executables)
+
+add_subdirectory(test)
