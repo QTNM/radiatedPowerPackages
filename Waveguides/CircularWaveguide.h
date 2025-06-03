@@ -34,17 +34,6 @@ class CircularWaveguide : public IWaveguide {
   /// \Returns The waveguide length (in metres)
   double GetLength() { return d; }
 
-  /// Complex electric field vector
-  /// \param mode The mode to get
-  /// \param pos The position vector (in metres)
-  /// \param omega Angular frequency of the chosen wave
-  /// \param A Arbitrary amplitude for part of solution (default = 1)
-  /// \param B Arbitrary amplitude for part of solution (default = 0)
-  /// \Returns The mode complex electric field vector at the supplied point
-  ComplexVector3 GetModeEFieldComplex(WaveguideMode mode, TVector3 pos,
-                                      double omega, double A = 1,
-                                      double B = 0) override;
-
   /// @brief Gets the electric field vector for a given mode at a point
   /// @param pos Position vector (in metres)
   /// @param mode The mode to get
@@ -55,30 +44,15 @@ class CircularWaveguide : public IWaveguide {
   TVector3 GetModeEField(TVector3 pos, WaveguideMode mode, double A,
                          double omega, bool state) override;
 
-  /// @brief Gets the complex magnetic field strength vector for a given mode at
-  /// a point
-  /// @param mode The mode to get
+  /// @brief Gets the H field vector for a given mode at a point
   /// @param pos The position vector (in metres)
+  /// @param mode The mode to get
+  /// @param A Arbitrary amplitude for part of solution
   /// @param omega Angular frequency of the chosen wave
-  /// @param A Arbitrary amplitude for part of solution (default = 1)
-  /// @param B Arbitrary amplitude for part of solution (default = 0)
+  /// @param state Choose polarisation state
   /// @return The mode H field vector at the supplied point
-  ComplexVector3 GetModeHFieldComplex(WaveguideMode mode, TVector3 pos,
-                                      double omega, double A = 1,
-                                      double B = 0) override;
-
-  /// Gets the H field vector for a given mode at a point
-  /// \param mode The mode to get
-  /// \param pos The position vector (in metres)
-  /// \param omega Angular frequency of the chosen wave
-  /// \param A Arbitrary amplitude for part of solution (default = 1)
-  /// \param B Arbitrary amplitude for part of solution (default = 0)
-  /// \Returns The mode H field vector at the supplied point
-  TVector3 GetModeHField(WaveguideMode mode, TVector3 pos, double omega,
-                         double A = 1, double B = 0) override;
-
-  ComplexVector3 GetModalHField(WaveguideMode mode, TVector3 pos, double omega,
-                                double A = 1, double B = 0);
+  TVector3 GetModeHField(TVector3 pos, WaveguideMode mode, double A,
+                         double omega, bool state) override;
 
   /// @brief Gets the cutoff frequency for a particular waveguide mode
   /// \param mode The mode to get
@@ -102,27 +76,11 @@ class CircularWaveguide : public IWaveguide {
   double GetHFieldIntegral(WaveguideMode mode, double omega, double A, double B,
                            int nSurfPnts);
 
-  /// @brief Gets the field amplitude from a moving electron in the guide
-  /// @param mode The mode to calculate for
-  /// @param omega Angular frequency of the chosen wave
-  /// @param ePos The electron position vector
-  /// @param eVel The electron velocity vector
-  /// @param normA Normalisation
-  /// @param state Choose polarisation state
-  /// @param isPositive Do we want the positive or negative amplitude?
-  /// @return The field amplitude at a given time
-  double GetFieldAmp(WaveguideMode mode, double omega, TVector3 ePos,
-                     TVector3 eVel, double normA, bool state,
-                     bool isPositive) override;
-
   /// @brief Calculate and set Pn for a given circular waveguide mode
   /// @param mode The mode
   /// @param omega Angular frequency of chosen mode
-  /// @param A Constant 1
-  /// @param B Constant 2
   /// @param nSurfPnts Number of points to use for integration
-  void CalculatePn(WaveguideMode mode, double omega, unsigned int nSurfPnts,
-                   double A, double B);
+  void CalculatePn(WaveguideMode mode, double omega, unsigned int nSurfPnts);
 
   bool MultiplePolarisations() { return true; }
 };

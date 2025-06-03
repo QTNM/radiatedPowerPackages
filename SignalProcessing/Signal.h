@@ -73,11 +73,12 @@ class Signal {
   /// Destructor
   ~Signal();
 
-  /// @brief Getter function for in-phase voltage component
+  /// @brief Getter function for in-phase voltage component. Assumes 50 Ohm load
   /// @return Time domain voltage graph
   TGraph* GetVITimeDomain() { return grVITime; }
 
-  /// @brief Getter function for quadrature voltage component
+  /// @brief Getter function for quadrature voltage component. Assumes 50 Ohm
+  /// load
   /// @return Time domain voltage graph
   TGraph* GetVQTimeDomain() { return grVQTime; }
 
@@ -199,10 +200,9 @@ class Signal {
   /// @brief Calculate electric field at waveguide probe position
   /// @param tr Retarded time in seconds
   /// @param mode Waveguide mode to calculate
-  /// @param norm Field normalisation
   /// @param omega Angular frequency of cyclotron motion
   /// @return Waveguide mode amplitude
-  double CalcWgAmp(double tr, WaveguideMode mode, double norm, double omega);
+  double CalcWgAmp(double tr, WaveguideMode mode, double omega);
 
   /// @brief Function for downmixing voltages
   /// @param vi In phase voltage component

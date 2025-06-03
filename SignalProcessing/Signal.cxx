@@ -338,27 +338,7 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
 
   // Calculate mode integral and resulting normalisation
   const unsigned int nSurfPnts{100};
-  double modeNorm{0};
-  double integral{0};
-  if (waveguide->MultiplePolarisations()) {
-    // Check if there are actually multiple polarisations (i.e. they have
-    // equal non-zero integrals
-    integral = waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts,
-                                            pr.GetPolarisationState());
-    double integralTest2{waveguide->GetEFieldIntegral(
-        wm, omega, 1, nSurfPnts, !pr.GetPolarisationState())};
-    if ((integral - integralTest2) / integral < 0.01) {
-      // We have two polarisations so require an additional factor of two
-      integral /= 2;
-    } else {
-      std::cout << "Only one polarisation found\n";
-    }
-  } else {
-    integral = waveguide->GetEFieldIntegral(wm, omega, 1, nSurfPnts, true);
-  }
-  if (integral != 0) modeNorm = 1.0 / sqrt(integral);
-  std::cout << "Normalisation constant " << wm << " = " << modeNorm
-            << std::endl;
+  waveguide->CalculatePn(pr.GetMode(), omega, nSurfPnts);
 
   // Figure out where we're going to generate the signal up to
   // By default, just do the whole electron trajectory file
@@ -412,8 +392,9 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
       long double tr{GetRetardedTime(sample10Time, 0)};
 
       double vi{0};
-      double modeImp{waveguide->GetModeImpedance(wm, omega)};
-      vi += CalcWgAmp(tr, wm, modeNorm, omega);
+      const double loadImp{50};  // Assume 50 Ohm line
+      // Assume all power travelling down the guide couples to the probe
+      vi += CalcWgAmp(tr, wm, omega) * sqrt(waveguide->GetPn() * loadImp / 2);
 
       double vq{vi};
       DownmixVoltages(vi, vq, sample10Time);
@@ -833,8 +814,7 @@ TVector3 rad::Signal::CalcWaveguideEField(double tr, WaveguideMode mode,
   }
 }
 
-double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
-                              double omega) {
+double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double omega) {
   if (tr == -1) {
     // The voltage is from before the signal has reached the probe
     // Therefore there is no electric field there at this time
@@ -855,10 +835,12 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       // Calculate the field amplitudes after checking where our probe is in
       // relation to the electron
       if (pr.GetPosition().Z() > pos.Z()) {
-        return waveguide->GetFieldAmp(mode, omega, pos, vel, norm,
+        return waveguide->GetFieldAmp(mode, omega, pos, vel,
+                                      1 / waveguide->GetPn(),
                                       pr.GetPolarisationState(), true);
       } else {
-        return waveguide->GetFieldAmp(mode, omega, pos, vel, norm,
+        return waveguide->GetFieldAmp(mode, omega, pos, vel,
+                                      1 / waveguide->GetPn(),
                                       pr.GetPolarisationState(), false);
       }
     } else if (firstGuessTime < tr) {
@@ -901,11 +883,13 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       // Calculate the field amplitudes after checking where our probe is in
       // relation to the electron
       if (pr.GetPosition().Z() > pos.Z()) {
-        ampVals.at(0) = waveguide->GetFieldAmp(mode, omega, pos, vel, norm,
+        ampVals.at(0) = waveguide->GetFieldAmp(mode, omega, pos, vel,
+                                               1 / waveguide->GetPn(),
                                                pr.GetPolarisationState(), true);
       } else {
         ampVals.at(0) = waveguide->GetFieldAmp(
-            mode, omega, pos, vel, norm, pr.GetPolarisationState(), false);
+            mode, omega, pos, vel, 1 / waveguide->GetPn(),
+            pr.GetPolarisationState(), false);
       }
     }
 
@@ -918,10 +902,12 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double norm,
       // Calculate the field amplitudes
       if (pr.GetPosition().Z() > pos.Z()) {
         ampVals.at(iEl) = waveguide->GetFieldAmp(
-            mode, omega, pos, vel, norm, pr.GetPolarisationState(), true);
+            mode, omega, pos, vel, 1 / waveguide->GetPn(),
+            pr.GetPolarisationState(), true);
       } else {
         ampVals.at(iEl) = waveguide->GetFieldAmp(
-            mode, omega, pos, vel, norm, pr.GetPolarisationState(), false);
+            mode, omega, pos, vel, 1 / waveguide->GetPn(),
+            pr.GetPolarisationState(), false);
       }
     }
 

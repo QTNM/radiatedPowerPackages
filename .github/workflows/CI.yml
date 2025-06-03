@@ -30,7 +30,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # Build Package
       - name: Build
@@ -39,3 +39,23 @@ jobs:
           mkdir build && cd build
           cmake ..
           make
+
+      # Run Tests
+      - name: RunTests
+        run: |
+          cd build/bin
+          ./testXSecs -o crosssections.root
+          python3 ../../test/crossSectionTestPlots.py --input crosssections.root --output crosssections
+
+          ./testWaveguide -o waveguidedata.h5 -n 41
+          python3 ../../test/waveguideTestPlots.py --input waveguidedata.h5
+
+      # Upload test results
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            build/bin/*.png
+            build/bin/*.pdf
+            build/bin/*.root
