@@ -375,8 +375,9 @@ int main(int argc, char *argv[]) {
   bool useBathtub{false};          // Use a bathtub field
   double wgRadius{6.0e-3};         // metres
   double heFraction{0};            // Fraction of helium in the gas
+  double minPitchAngle{0};         // Minimum initial pitch angle we simulate in degrees
 
-  while ((opt = getopt(argc, argv, ":o:n:d:t:r:f:bh")) != -1) {
+  while ((opt = getopt(argc, argv, ":o:n:d:t:r:f:p:bh")) != -1) {
     switch (opt) {
       case 'o':
         outputStemStr = optarg;
@@ -396,6 +397,9 @@ int main(int argc, char *argv[]) {
       case 'f':
         heFraction = boost::lexical_cast<double>(optarg);
         break;
+      case 'p':
+	minPitchAngle = boost::lexical_cast<double>(optarg);
+	break;
       case 'b':
         useBathtub = true;
         break;
@@ -403,7 +407,8 @@ int main(int argc, char *argv[]) {
         cout << "Usage: " << argv[0]
              << " [-o output directory] [-n number of events] [-d gas "
                 "density] "
-                "[-t simulation time] [-r waveguide radius] [-b bathtub trap "
+                "[-t simulation time] [-r waveguide radius] [-f helium fraction]"
+	        "[-p minimum initial pitch angle] [-b bathtub trap "
                 "boolean]"
              << endl;
         return 1;
@@ -422,6 +427,7 @@ int main(int argc, char *argv[]) {
   cout << "Maximum simulation time = " << maxSimTime * 1e6 << " us\n";
   cout << "Gas density = " << gasDensity << " m^-3\n";
   cout << "Helium fraction = " << heFraction << "\n";
+  cout << "Minimum initial pitch angle = " << minPitchAngle << " degrees" << endl;
 
   // Check if the chosen output directory exists
   bool dirExists{std::filesystem::is_directory(outputStemStr)};
@@ -522,6 +528,8 @@ int main(int argc, char *argv[]) {
     // Calculate pitch angle
     const double pitchAngleRad{abs(atan(initVel.Perp() / initVel.Z()))};
     const double pitchAngleDeg{pitchAngleRad * 180 / M_PI};
+    
+    if (pitchAngleDeg < minPitchAngle) continue;
 
     // Now generate the trajectory
     std::string trackFileExt{make_uuid()};
