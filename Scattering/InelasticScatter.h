@@ -49,21 +49,6 @@ class InelasticScatter : public BaseScatter {
   double A3();
 
   double S();
-  double BETA();
-
-  double GAMMA();
-
-  double G_B();
-
-  double n();
-
-  double A1();
-
-  double A2();
-
-  double A3();
-
-  double S();
 
   /// @brief
   /// @param W
@@ -133,21 +118,6 @@ class InelasticScatter : public BaseScatter {
   double g1(double T);
 
   Species theSpecies;
-
-  /// @brief Calculate the CDF for the singly-differential cross section (in
-  /// omega)
-  /// @param omega Normalised outgoing electron energy
-  /// @param t Normalised incident electron energy
-  /// @return Cumulative distribution function for a given value of omega
-  double CDF_SingleDiffXSec_W(double omega, double t);
-
-  /// @brief Calculate the CDF for the double-differential cross section (in
-  /// theta and omega)
-  /// @param omega Normalised outgoing electron energy
-  /// @param t Normalised incident electron energy
-  /// @param theta Scattering angle of secondary electron in radians
-  /// @return CDF for a given value of theta and omega
-  double CDF_DoubleDiffXSec_theta(double omega, double t, double theta);
 
   /// @brief Calculate the CDF for the singly-differential cross section (in
   /// omega)
