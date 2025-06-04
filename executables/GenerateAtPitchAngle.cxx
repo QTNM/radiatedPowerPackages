@@ -415,6 +415,16 @@ int main(int argc, char *argv[]) {
                                         H5::PredType::NATIVE_DOUBLE, zWgSpc);
     zWgAttr.write(H5::PredType::NATIVE_DOUBLE, &zWg);
 
+    // Write the load impedance of 50 Ohms
+    const double loadImp{50};  // Ohms
+    H5::DataSpace loadImpSpc(H5S_SCALAR);
+    H5::Attribute loadImpAttr{dataset1->createAttribute(
+        "Load impedance [Ohms]", H5::PredType::NATIVE_DOUBLE, loadImpSpc)};
+    loadImpAttr.write(H5::PredType::NATIVE_DOUBLE, &loadImp);
+    loadImpAttr = dataset2->createAttribute(
+        "Load impedance [Ohms]", H5::PredType::NATIVE_DOUBLE, loadImpSpc);
+    loadImpAttr.write(H5::PredType::NATIVE_DOUBLE, &loadImp);
+
     // Write the metadata for the trap config
     H5::DataSpace rCoilSpc(H5S_SCALAR);
     H5::Attribute rCoilAttr{dataset1->createAttribute(

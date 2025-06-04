@@ -723,6 +723,13 @@ int main(int argc, char *argv[]) {
             "Waveguide impedance [Ohms]", H5::PredType::NATIVE_DOUBLE, zWgSpc)};
         zWgAttr1.write(H5::PredType::NATIVE_DOUBLE, &zWg);
 
+        // Write the load impedance of 50 Ohms
+        const double loadImp{50};  // Ohms
+        H5::DataSpace loadImpSpc(H5S_SCALAR);
+        H5::Attribute loadImpAttr{dataset1->createAttribute(
+            "Load impedance [Ohms]", H5::PredType::NATIVE_DOUBLE, loadImpSpc)};
+        loadImpAttr.write(H5::PredType::NATIVE_DOUBLE, &loadImp);
+
         // Stop the signal generation clock
         const clock_t endSignalClock{clock()};
         const double signalGenTime{(endSignalClock - startSignalClock) /
