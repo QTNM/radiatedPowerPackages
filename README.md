@@ -5,14 +5,14 @@ Designed to offer easy calculation of EM fields and the associated voltage signa
 
 The core code requires C++20, built with CMake (3.18+) with the following external dependencies for each package:
 
-|   | BOOST (1.73+) | ROOT (6.14+) | 
-|:-:|:-------------:|:------------:|
-| Basic Functions | | x |
-| Field Classes | | x |
-| Signal Processing | | x | 
-| Antennas | | x | 
-| Electron Dynamics | x | x | 
-| Scattering | x | | 
+|   | BOOST (1.73+) | ROOT (6.14+) | FFTW3 |
+|:-:|:-------------:|:------------:|:-----:|
+| Basic Functions | | x | x |
+| Field Classes | | x | |
+| Signal Processing | | x | |
+| Antennas | | x | |
+| Electron Dynamics | x | x | | 
+| Scattering | x | | |
 
 HDF5 libraries are also required for some executables purely for I/O.
 
