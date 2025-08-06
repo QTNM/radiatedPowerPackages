@@ -20,8 +20,8 @@
 #include <string>
 
 #include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "BasicFunctions/NuFitValues.h"
+#include "BasicCore/Constants.h"
+#include "BasicCore/NuFitValues.h"
 #include "BasicFunctions/TritiumSpectrum.h"
 #include "ElectronDynamics/BorisSolver.h"
 #include "ElectronDynamics/QTNMFields.h"

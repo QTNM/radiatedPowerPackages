@@ -8,7 +8,7 @@
 #include <iostream>
 #include <random>
 
-#include "BasicFunctions/Constants.h"
+#include "BasicCore/Constants.h"
 
 rad::InelasticScatter::InelasticScatter(double T, Species species)
     : BaseScatter(T), theSpecies(species) {}

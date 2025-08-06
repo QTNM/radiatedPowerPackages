@@ -9,7 +9,7 @@
 #ifndef QTNM_FIELDS_H
 #define QTNM_FIELDS_H
 
-#include "BasicFunctions/Constants.h"
+#include "BasicCore/Constants.h"
 #include "ElectronDynamics/BaseField.h"
 #include "TGraph.h"
 #include "TSpline.h"

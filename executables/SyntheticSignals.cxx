@@ -12,8 +12,8 @@
 #include <string>
 
 #include "Antennas/IsotropicAntenna.h"
+#include "BasicCore/Constants.h"
 #include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
 #include "ElectronDynamics/QTNMFields.h"
 #include "ElectronDynamics/TrajectoryGen.h"
 #include "FieldClasses/FieldClasses.h"

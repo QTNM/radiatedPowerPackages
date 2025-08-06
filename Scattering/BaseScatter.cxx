@@ -9,7 +9,7 @@
 #include <random>
 
 #include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
+#include "BasicCore/Constants.h"
 #include "TMath.h"
 
 double rad::BaseScatter::GetMeanFreePath(double N) {

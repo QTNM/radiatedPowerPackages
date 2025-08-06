@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
+#include "BasicCore/Constants.h"
 #include "BasicFunctions/TritiumSpectrum.h"
 #include "ElectronDynamics/BorisSolver.h"
 #include "ElectronDynamics/QTNMFields.h"

@@ -7,8 +7,8 @@
 #include <iostream>
 #include <memory>
 
+#include "BasicCore/Constants.h"
 #include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
 #include "ElectronDynamics/PenningTraps.h"
 #include "ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"

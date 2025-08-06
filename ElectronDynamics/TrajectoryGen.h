@@ -8,7 +8,7 @@
 #ifndef TRAJECTORY_GEN_H
 #define TRAJECTORY_GEN_H
 
-#include "BasicFunctions/Constants.h"
+#include "BasicCore/Constants.h"
 #include "ElectronDynamics/BaseField.h"
 #include "ElectronDynamics/BorisSolver.h"
 #include "TString.h"

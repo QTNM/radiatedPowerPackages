@@ -10,8 +10,8 @@
 #include <iostream>
 #include <string>
 
+#include "BasicCore/Constants.h"
 #include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
 #include "BasicFunctions/TritiumSpectrum.h"
 #include "TF1.h"
 #include "TFile.h"
@@ -103,12 +103,15 @@ int main(int argc, char *argv[]) {
             << std::endl;
 
   // Try and do a calculation for CRESDA
-  const double densCRESDA{1e18}; // m^-3
-  const double volCRESDA{TMath::Pi() * 80e-3 * 30e-3 * 30e-3}; // Uniform field region
+  const double densCRESDA{1e18};  // m^-3
+  const double volCRESDA{TMath::Pi() * 80e-3 * 30e-3 *
+                         30e-3};  // Uniform field region
   const double nAtomsCRESDA{densCRESDA * volCRESDA};
   const double nDecaysCRESDA{nAtomsCRESDA * decayRateInt * seconds1Yr};
-  std::cout << "CRESDA0 volume is " << volCRESDA << " m^3, " << volCRESDA * 1e6 << " cm^3\n";
+  std::cout << "CRESDA0 volume is " << volCRESDA << " m^3, " << volCRESDA * 1e6
+            << " cm^3\n";
   std::cout << "Number of atoms in CRESDA0 = " << nAtomsCRESDA << std::endl;
-  std::cout << "Visible CRESDA decays in one year = " << nDecaysCRESDA << std::endl;
+  std::cout << "Visible CRESDA decays in one year = " << nDecaysCRESDA
+            << std::endl;
   return 0;
 }

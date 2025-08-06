@@ -11,8 +11,8 @@
 #include <random>
 #include <vector>
 
+#include "BasicCore/Constants.h"
 #include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
 #include "BasicFunctions/TritiumSpectrum.h"
 #include "ElectronDynamics/BorisSolver.h"
 #include "ElectronDynamics/QTNMFields.h"
@@ -155,8 +155,8 @@ int main(int argc, char *argv[]) {
   const double coilCurrent{2 * trapDepth * coilRadius / MU0};  // T
   const double bkg{0.72};                                      // Tesla
   auto field = new HarmonicField(coilRadius, coilCurrent, bkg);
-  const double tritiumDensity{2e18};                           // atoms m^-3
-  const double zMax{0.1};                                      // metres
+  const double tritiumDensity{2e18};  // atoms m^-3
+  const double zMax{0.1};             // metres
 
   for (unsigned int i{0}; i < nElectrons; i++) {
     TVector3 pos(0, 0, 0);  // metres

@@ -4,7 +4,7 @@
 /// the trapping condition checked
 
 #include "Antennas/HalfWaveDipole.h"
-#include "BasicFunctions/Constants.h"
+#include "BasicCore/Constants.h"
 #include "ElectronDynamics/BorisSolver.h"
 #include "ElectronDynamics/QTNMFields.h"
 #include "SignalProcessing/InducedVoltage.h"

@@ -19,7 +19,7 @@
 #include <string>
 
 #include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
+#include "BasicCore/Constants.h"
 #include "ElectronDynamics/BorisSolver.h"
 #include "ElectronDynamics/QTNMFields.h"
 #include "H5Cpp.h"
