@@ -6,14 +6,14 @@
 
 #include <iostream>
 
-#include "BasicFunctions/BasicFunctions.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TLine.h"
 #include "TMultiGraph.h"
 #include "TString.h"
 #include "TText.h"
-#include "Waveguides/CircularCavity.h"
+#include "physics/Waveguides/CircularCavity.h"
 
 using namespace rad;
 

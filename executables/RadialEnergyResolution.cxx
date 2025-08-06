@@ -7,10 +7,10 @@
 #include <iostream>
 #include <memory>
 
-#include "BasicCore/Constants.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "ElectronDynamics/ComsolFields.h"
-#include "ElectronDynamics/QTNMFields.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "physics/ElectronDynamics/ComsolFields.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TGraph.h"

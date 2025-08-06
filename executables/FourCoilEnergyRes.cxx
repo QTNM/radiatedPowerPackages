@@ -17,21 +17,21 @@
 #include <string>
 #include <tuple>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicCore/Constants.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/Signal.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "utilities/BasicCore/Constants.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TString.h"
 #include "TSystem.h"
 #include "TTree.h"
-#include "Waveguides/CircularWaveguide.h"
-#include "Waveguides/Probe.h"
-#include "Waveguides/WaveguideMode.h"
+#include "physics/Waveguides/CircularWaveguide.h"
+#include "physics/Waveguides/Probe.h"
+#include "physics/Waveguides/WaveguideMode.h"
 
 using namespace rad;
 

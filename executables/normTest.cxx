@@ -12,8 +12,8 @@
 #include "TTree.h"
 
 // My files
-#include "BasicFunctions/BasicFunctions.h"
-#include "FieldClasses/FieldClasses.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "physics/FieldClasses/FieldClasses.h"
 
 using namespace rad;
 

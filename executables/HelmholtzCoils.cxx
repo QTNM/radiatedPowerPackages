@@ -6,9 +6,9 @@
 
 #include <iostream>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicCore/Constants.h"
-#include "ElectronDynamics/QTNMFields.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "utilities/BasicCore/Constants.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TH2.h"

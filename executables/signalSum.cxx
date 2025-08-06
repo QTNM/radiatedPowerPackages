@@ -1,10 +1,10 @@
 // signalSum.cxx
 
-#include "Antennas/HertzianDipole.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/NoiseFunc.h"
-#include "SignalProcessing/Signal.h"
+#include "physics/Antennas/HertzianDipole.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/NoiseFunc.h"
+#include "physics/SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TMath.h"

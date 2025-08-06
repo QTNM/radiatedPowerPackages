@@ -11,12 +11,12 @@
 #include <iostream>
 #include <string>
 
-#include "Antennas/IsotropicAntenna.h"
-#include "BasicCore/Constants.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
-#include "FieldClasses/FieldClasses.h"
+#include "physics/Antennas/IsotropicAntenna.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/FieldClasses/FieldClasses.h"
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TH2.h"

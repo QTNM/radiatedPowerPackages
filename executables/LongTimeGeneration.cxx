@@ -13,13 +13,13 @@
 #include <random>
 #include <vector>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicCore/Constants.h"
-#include "BasicFunctions/TritiumSpectrum.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "Scattering/ElasticScatter.h"
-#include "Scattering/InelasticScatter.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/TritiumSpectrum.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/Scattering/ElasticScatter.h"
+#include "physics/Scattering/InelasticScatter.h"
 #include "TBranch.h"
 #include "TFile.h"
 #include "TH1.h"

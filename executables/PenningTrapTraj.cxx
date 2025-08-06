@@ -4,9 +4,9 @@
 
 #include <memory>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "ElectronDynamics/PenningTraps.h"
-#include "ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "physics/ElectronDynamics/PenningTraps.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TGraph2D.h"

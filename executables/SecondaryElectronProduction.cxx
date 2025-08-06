@@ -18,12 +18,12 @@
 #include <random>
 #include <string>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicCore/Constants.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "Scattering/ElasticScatter.h"
-#include "Scattering/InelasticScatter.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "utilities/BasicCore/Constants.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/Scattering/ElasticScatter.h"
+#include "physics/Scattering/InelasticScatter.h"
 #include "TFile.h"
 #include "TString.h"
 #include "TTree.h"

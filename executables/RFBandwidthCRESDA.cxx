@@ -8,10 +8,10 @@
 
 #include <iostream>
 
-#include "BasicCore/Constants.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TMath.h"

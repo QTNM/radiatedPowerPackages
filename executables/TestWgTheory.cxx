@@ -16,24 +16,24 @@
 #include <random>
 #include <string>
 
-#include "BasicCore/Constants.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "H5Cpp.h"
-#include "Scattering/ElasticScatter.h"
-#include "Scattering/InelasticScatter.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/Signal.h"
+#include "physics/Scattering/ElasticScatter.h"
+#include "physics/Scattering/InelasticScatter.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TString.h"
 #include "TSystem.h"
 #include "TTree.h"
 #include "TVector3.h"
-#include "Waveguides/CircularWaveguide.h"
-#include "Waveguides/Probe.h"
-#include "Waveguides/RectangularWaveguide.h"
-#include "Waveguides/WaveguideMode.h"
+#include "physics/Waveguides/CircularWaveguide.h"
+#include "physics/Waveguides/Probe.h"
+#include "physics/Waveguides/RectangularWaveguide.h"
+#include "physics/Waveguides/WaveguideMode.h"
 
 using namespace rad;
 using std::cout;

@@ -10,18 +10,18 @@
 #include <iostream>
 #include <string>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicCore/Constants.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "utilities/BasicCore/Constants.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"
 #include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
 #include "TTreeReader.h"
 #include "TTreeReaderValue.h"
-#include "Waveguides/CircularCavity.h"
+#include "physics/Waveguides/CircularCavity.h"
 
 using namespace rad;
 

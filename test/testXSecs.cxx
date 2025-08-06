@@ -12,9 +12,9 @@
 #include <iostream>
 #include <string>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "Scattering/ElasticScatter.h"
-#include "Scattering/InelasticScatter.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "physics/Scattering/ElasticScatter.h"
+#include "physics/Scattering/InelasticScatter.h"
 #include "TAxis.h"
 #include "TFile.h"
 #include "TGraph.h"

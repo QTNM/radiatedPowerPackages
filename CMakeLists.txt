@@ -28,26 +28,9 @@ find_package(FFTW3 REQUIRED)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# Add libraries
-add_subdirectory(BasicCore)
-
-add_subdirectory(SignalUtils)
-
-add_subdirectory(ROOTUtils)
-
-add_subdirectory(BasicFunctions)
-
-add_subdirectory(FieldClasses)
-
-add_subdirectory(SignalProcessing)
-
-add_subdirectory(Antennas)
-
-add_subdirectory(ElectronDynamics)
-
-add_subdirectory(Waveguides)
-
-add_subdirectory(Scattering)
+# Add library directories
+add_subdirectory(utilities)
+add_subdirectory(physics)
 
 add_subdirectory(executables)
 

@@ -12,9 +12,9 @@
 #include <string>
 #include <tuple>
 
-#include "BasicCore/Constants.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
+#include "utilities/BasicCore/Constants.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
 #include "TFile.h"
 #include "TMath.h"
 #include "TTree.h"

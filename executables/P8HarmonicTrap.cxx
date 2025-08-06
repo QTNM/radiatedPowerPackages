@@ -12,19 +12,19 @@
 #include <cmath>
 #include <iostream>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicCore/Constants.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/Signal.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "utilities/BasicCore/Constants.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TH2.h"
 #include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
-#include "Waveguides/CircularWaveguide.h"
+#include "physics/Waveguides/CircularWaveguide.h"
 
 using namespace rad;
 

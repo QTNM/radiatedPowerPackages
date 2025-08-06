@@ -7,11 +7,11 @@
 #include <iostream>
 #include <vector>
 
-#include "Antennas/HalfWaveDipole.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/NoiseFunc.h"
-#include "SignalProcessing/Signal.h"
+#include "physics/Antennas/HalfWaveDipole.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/NoiseFunc.h"
+#include "physics/SignalProcessing/Signal.h"
 #include "TArrow.h"
 #include "TAxis.h"
 #include "TFile.h"

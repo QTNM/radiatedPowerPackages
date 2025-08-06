@@ -5,8 +5,8 @@
 #include <iostream>
 
 // ROOT includes
-#include "BasicFunctions/BasicFunctions.h"
-#include "FieldClasses/FieldClasses.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "physics/FieldClasses/FieldClasses.h"
 #include "TAxis.h"
 #include "TFile.h"
 #include "TGraph.h"

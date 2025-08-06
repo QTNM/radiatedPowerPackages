@@ -10,9 +10,9 @@
 #include <iostream>
 #include <string>
 
-#include "BasicCore/Constants.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/TritiumSpectrum.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "utilities/BasicFunctions/TritiumSpectrum.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TMath.h"

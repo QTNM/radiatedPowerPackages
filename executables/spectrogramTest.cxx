@@ -3,10 +3,10 @@
 #include "TFile.h"
 #include "TGraph.h"
 
-#include "FieldClasses/FieldClasses.h"
-#include "SignalProcessing/Spectrogram.h"
-#include "SignalProcessing/NoiseFunc.h"
-#include "Antennas/HertzianDipole.h"
+#include "physics/FieldClasses/FieldClasses.h"
+#include "physics/SignalProcessing/Spectrogram.h"
+#include "physics/SignalProcessing/NoiseFunc.h"
+#include "physics/Antennas/HertzianDipole.h"
 
 using namespace rad;
 

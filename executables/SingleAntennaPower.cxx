@@ -4,14 +4,14 @@
   Measurement of the power collected by a single dipole antenna
 */
 
-#include "Antennas/HalfWaveDipole.h"
-#include "BasicCore/Constants.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
-#include "FieldClasses/FieldClasses.h"
-#include "FieldClasses/FieldPointNR.h"
-#include "SignalProcessing/InducedVoltage.h"
+#include "physics/Antennas/HalfWaveDipole.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/FieldClasses/FieldClasses.h"
+#include "physics/FieldClasses/FieldPointNR.h"
+#include "physics/SignalProcessing/InducedVoltage.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TMath.h"

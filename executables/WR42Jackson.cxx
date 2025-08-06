@@ -4,19 +4,19 @@
 #include <iostream>
 #include <memory>
 
-#include "BasicCore/Constants.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/ComplexVector3.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "utilities/BasicFunctions/ComplexVector3.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
-#include "Waveguides/Probe.h"
-#include "Waveguides/RectangularWaveguide.h"
-#include "Waveguides/WaveguideMode.h"
+#include "physics/Waveguides/Probe.h"
+#include "physics/Waveguides/RectangularWaveguide.h"
+#include "physics/Waveguides/WaveguideMode.h"
 
 using namespace rad;
 

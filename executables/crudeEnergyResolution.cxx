@@ -3,12 +3,12 @@
 /// trap geometry Electrons are generated isotropically throughout the trap and
 /// the trapping condition checked
 
-#include "Antennas/HalfWaveDipole.h"
-#include "BasicCore/Constants.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "SignalProcessing/InducedVoltage.h"
-#include "SignalProcessing/Signal.h"
+#include "physics/Antennas/HalfWaveDipole.h"
+#include "utilities/BasicCore/Constants.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/SignalProcessing/InducedVoltage.h"
+#include "physics/SignalProcessing/Signal.h"
 
 // STL includes
 #include <getopt.h>
