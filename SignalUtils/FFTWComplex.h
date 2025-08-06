@@ -1,10 +1,9 @@
 #ifndef FFTWCOMPLEX_H
 #define FFTWCOMPLEX_H
 
+#include <cmath>
 #include <complex>
 #include <ostream>
-
-#include "TMath.h"
 
 //!  This is a wrapper class for a complex number
 /*!
@@ -13,8 +12,8 @@
 namespace rad {
 class FFTWComplex {
  public:
-  FFTWComplex() : re(0), im(0){};  ///< Default constructor
-  ~FFTWComplex(){};                ///< Destructor
+  FFTWComplex() : re(0), im(0) {};  ///< Default constructor
+  ~FFTWComplex() {};                ///< Destructor
 
   double re;  ///< The real part
   double im;  ///< The imaginary part
@@ -29,8 +28,8 @@ class FFTWComplex {
   }
 
   inline FFTWComplex &operator*=(const FFTWComplex &rhs) {
-    Double_t newRe = re * rhs.re - im * rhs.im;
-    Double_t newIm = im * rhs.re + re * rhs.im;
+    double newRe = re * rhs.re - im * rhs.im;
+    double newIm = im * rhs.re + re * rhs.im;
     re = newRe;
     im = newIm;
     return *this;
@@ -61,7 +60,7 @@ class FFTWComplex {
   }
 
   inline FFTWComplex &operator/=(const FFTWComplex &rhs) {
-    Double_t norm = rhs.getAbsSq();
+    double norm = rhs.getAbsSq();
     (*this) *= rhs.conj();
     re /= norm;
     im /= norm;
@@ -69,15 +68,15 @@ class FFTWComplex {
   }
 
   inline void setMagPhase(double mag, double phase) {
-    re = mag * TMath::Cos(phase);
-    im = mag * TMath::Sin(phase);
+    re = mag * cos(phase);
+    im = mag * sin(phase);
   }
 
-  inline double getAbs() const { return TMath::Sqrt(re * re + im * im); }
+  inline double getAbs() const { return sqrt(re * re + im * im); }
 
   inline double getAbsSq() const { return (re * re + im * im); }
 
-  inline double getPhase() const { return TMath::ATan2(im, re); }
+  inline double getPhase() const { return atan2(im, re); }
 
   operator std::complex<double>() { return std::complex<double>(re, im); }
 
