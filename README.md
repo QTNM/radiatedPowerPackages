@@ -13,6 +13,7 @@ The core code requires C++20, built with CMake (3.18+) with the following extern
 | Antennas | | x | |
 | Electron Dynamics | x | x | | 
 | Scattering | x | | |
+| Waveguides | x | x | |
 
 HDF5 libraries are also required for some executables purely for I/O.
 
