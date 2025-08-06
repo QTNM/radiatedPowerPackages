@@ -5,31 +5,30 @@ Designed to offer easy calculation of EM fields and the associated voltage signa
 
 The core code requires C++20, built with CMake (3.18+) with the following external dependencies for each package:
 
-|   | BOOST (1.73+) | ROOT (6.14+) | libRootFftwWrapper(*)|
-|:-:|:-------------:|:------------:|:--------------------:|
-| Basic Functions | | x | x |
-| Field Classes | | x | x |
-| Signal Processing | | x | x
-| Antennas | | x | |
-| Electron Dynamics | x | x | |
-| Scattering | x | | |
+|   | BOOST (1.73+) | ROOT (6.14+) | 
+|:-:|:-------------:|:------------:|
+| Basic Functions | | x |
+| Field Classes | | x |
+| Signal Processing | | x | 
+| Antennas | | x | 
+| Electron Dynamics | x | x | 
+| Scattering | x | | 
 
 HDF5 libraries are also required for some executables purely for I/O.
 
-(*) libRootFftwWrapper available at: https://github.com/nichol77/libRootFftwWrapper. Requires an existing FFTW install.
-
 There are also inter-dependencies between the individual packages:
 
-|   | Basic Functions | Field Classes | Signal Processing | Antennas | Electron Dynamics | Scattering |
-|:-:|:---------------:|:-------------:|:-----------------:|:--------:|:-----------------:|:----------:|
-| Basic Functions | | | | | |
-| Field Classes | x | | | | |
-| Signal Processing | x | x | | x | |
-| Antennas | x | | | | |
-| Electron Dynamics | x | | | | |
-| Scattering | | | | | |
+|   | Basic Functions | Field Classes | Signal Processing | Antennas | Electron Dynamics | Scattering | Waveguides |
+|:-:|:---------------:|:-------------:|:-----------------:|:--------:|:-----------------:|:----------:|:----------:|
+| Basic Functions | | | | | | | |
+| Field Classes | x | | | | | | |
+| Signal Processing | x | x | | x | | | x |
+| Antennas | x | | | | | | |
+| Electron Dynamics | x | | | | | | x |
+| Scattering | | | | | | | |
+| Waveguides | x | | | | | | |
 
-Dependencies are listed row by row, for example the Signal Processing package requires the Basic Functions, Field Classes and Antennas packages.
+Dependencies are listed row by row, for example the Signal Processing package requires the Basic Functions, Field Classes, Antennas and Waveguides packages.
 
 There are also a set of example programs (radiatedPowerPackages/executables) for which we recommend installing all packages.
 
@@ -69,17 +68,6 @@ $ tar --bzip2 -xf boost_1_73_0.tar.bz2
 $ cd "boost_1_73_0/"
 $ ./bootstrap.sh --prefix=/usr/local --with-libraries=program_options
 $ ./b2 install
-```
-
-### libROOTFFTW
-```
-$ git clone https://github.com/nichol77/libRootFftwWrapper.git
-$ cd "libRootFftwWrapper"
-$ mkdir build
-$ cd build
-$ cmake .. 
-$ make 
-$ make install
 ```
 
 ### HDF5
