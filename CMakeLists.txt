@@ -33,6 +33,8 @@ add_subdirectory(BasicCore)
 
 add_subdirectory(SignalUtils)
 
+add_subdirectory(ROOTUtils)
+
 add_subdirectory(BasicFunctions)
 
 add_subdirectory(FieldClasses)

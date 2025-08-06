@@ -1,0 +1,138 @@
+/// PureFunctions.h - Pure mathematical functions without ROOT dependencies
+#ifndef PURE_FUNCTIONS_H
+#define PURE_FUNCTIONS_H
+
+#include <vector>
+#include <iostream>
+
+#include "BasicCore/Constants.h"
+
+namespace rad {
+
+/// @brief Get particle speed from kinetic energy
+/// @param T Particle kinetic energy in eV
+/// @param particleMass Particle mass in kg
+/// @return Speed in m/s  
+double GetSpeedFromKE(double T, double particleMass);
+
+/// @brief Implements band pass filter on vectors of values
+/// @param xVals Vector of equally spaced time values
+/// @param yVals Vector of corresponding y values  
+/// @param minFreq Lower cutoff frequency in Hz
+/// @param maxFreq Upper cutoff frequency in Hz
+/// @return Vector of filtered y values
+std::vector<double> BandPassFilter(std::vector<double> xVals,
+                                   std::vector<double> yVals, double minFreq,
+                                   double maxFreq);
+
+/// @brief Given 4 (x,y) values, interpolate using 3rd order Lagrange polynomial
+/// @param xVals Vector of 4 x values (not necessarily evenly spaced)
+/// @param yVals Vector of 4 corresponding y values
+/// @param xInterp The x value at which to interpolate
+/// @return Interpolated y value
+template <typename T>
+T CubicInterpolation(std::vector<T> &xVals, std::vector<T> &yVals, T xInterp) {
+  // Check we have the right number of values
+  if (xVals.size() != 4 || yVals.size() != 4) {
+    std::cout << "Invalid interpolation input size! Require 4 values.\\n";
+    return 0;
+  }
+  // Check that we have monotonically increasing x values
+  for (unsigned int i{1}; i < xVals.size(); i++) {
+    if (xVals.at(i) - xVals.at(i - 1) <= 0) {
+      std::cout
+          << "x values (for interpolation) do not increase monotonically!\\n";
+      return 0;
+    }
+  }
+
+  // Calculate the Lagrange interpolating basis functions
+  T l0{(xInterp - xVals[1]) * (xInterp - xVals[2]) * (xInterp - xVals[3]) /
+       ((xVals[0] - xVals[1]) * (xVals[0] - xVals[2]) * (xVals[0] - xVals[3]))};
+  T l1{(xInterp - xVals[0]) * (xInterp - xVals[2]) * (xInterp - xVals[3]) /
+       ((xVals[1] - xVals[0]) * (xVals[1] - xVals[2]) * (xVals[1] - xVals[3]))};
+  T l2{(xInterp - xVals[0]) * (xInterp - xVals[1]) * (xInterp - xVals[3]) /
+       ((xVals[2] - xVals[0]) * (xVals[2] - xVals[1]) * (xVals[2] - xVals[3]))};
+  T l3{(xInterp - xVals[0]) * (xInterp - xVals[1]) * (xInterp - xVals[2]) /
+       ((xVals[3] - xVals[0]) * (xVals[3] - xVals[1]) * (xVals[3] - xVals[2]))};
+
+  return l0 * yVals[0] + l1 * yVals[1] + l2 * yVals[2] + l3 * yVals[3];
+}
+
+/// @brief PDF of the Rayleigh distribution
+/// @param x
+/// @param sigma Scale parameter of the distribution
+/// @return Probability density at x
+double RayleighPDF(double x, double sigma);
+
+/// @brief PDF of the Rayleigh distribution using long double
+/// @param x
+/// @param sigma Scale parameter of the distribution
+/// @return Probability density at x
+long double RayleighPDF(long double x, long double sigma);
+
+/// @brief CDF for the Rayleigh distribution
+/// @param x
+/// @param sigma Scale parameter of the distribution
+/// @return Cumulative distribution at x
+double RayleighCDF(double x, double sigma);
+
+/// @brief CDF for the Rayleigh distribution using long double
+/// @param x
+/// @param sigma Scale parameter of the distribution
+/// @return Cumulative distribution at x
+long double RayleighCDF(long double x, long double sigma);
+
+/// @brief Rayleigh PDF function wrapper for ROOT TF1
+/// @param x Input variable array
+/// @param par Parameter array
+/// @return PDF value
+double RayleighPDFFunc(double *x, double *par);
+
+/// @brief Rayleigh CDF function wrapper for ROOT TF1
+/// @param x Input variable array
+/// @param par Parameter array
+/// @return CDF value
+double RayleighCDFFunc(double *x, double *par);
+
+/// @brief Heaviside step function
+/// @param x Input parameter
+/// @return 0 for x <= 0, 1 for x > 0
+double HeavisideFunc(double x);
+
+/// @brief Get zeros of the derivative of Bessel functions
+/// @param n Order of the Bessel function being differentiated
+/// @param m The zero of the derived function (must be > 0)
+/// @return The specified root of the derivative of the nth Bessel function
+double GetBesselPrimeZero(unsigned int n, unsigned int m);
+
+/// @brief Distribution for a skewed gaussian
+/// @param x Point at which to evaluate the gaussian
+/// @param A Scale factor
+/// @param mu Centre of gaussian
+/// @param sigma Width of gaussian
+/// @param alpha Skewness
+/// @return f(x) evaluated at x
+double SkewedGaussian(double x, double A, double mu, double sigma,
+                      double alpha);
+
+/// @brief Function for a chirp signal
+/// @param A Signal amplitude
+/// @param t Time at which to generate signal [s]
+/// @param phi0 Initial phase [radians]
+/// @param f0 Initial frequency [Hz]
+/// @param c Chirp rate [Hz s^-1]
+/// @return The chirp function at the supplied time
+double ChirpSignal(double A, double t, double phi0, double f0, double c);
+
+/// @brief Larmor radiated power
+/// @param ke Kinetic energy in eV
+/// @param B Magnetic field strength in tesla
+/// @param theta Pitch angle in radians
+/// @param m Particle mass in kg
+/// @return Larmor power in Watts
+double CalcLarmorPower(double ke, double B, double theta, double m = ME);
+
+}  // namespace rad
+
+#endif
