@@ -31,6 +31,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # Add libraries
 add_subdirectory(BasicCore)
 
+add_subdirectory(SignalUtils)
+
 add_subdirectory(BasicFunctions)
 
 add_subdirectory(FieldClasses)

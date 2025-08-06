@@ -9,7 +9,7 @@
 
 #include <fftw3.h>
 
-#include "BasicFunctions/FFTWComplex.h"
+#include "SignalUtils/FFTWComplex.h"
 
 namespace rad {
 /// @brief Computes an FFT of an array of real numbers

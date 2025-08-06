@@ -5,8 +5,8 @@
 #include <vector>
 
 #include "BasicCore/Constants.h"
-#include "BasicFunctions/FFTWComplex.h"
-#include "BasicFunctions/FourierTransforms.h"
+#include "SignalUtils/FFTWComplex.h"
+#include "SignalUtils/FourierTransforms.h"
 #include "Math/Point3D.h"
 #include "Math/Vector3D.h"
 #include "TGraph.h"

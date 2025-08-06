@@ -2,7 +2,7 @@
   ButterworthFilter.cxx
 */
 
-#include "BasicFunctions/ButterworthFilter.h"
+#include "SignalUtils/ButterworthFilter.h"
 
 rad::ButterworthFilter::ButterworthFilter(unsigned int order, double cutoffFreq,
                                           double sampleRate)

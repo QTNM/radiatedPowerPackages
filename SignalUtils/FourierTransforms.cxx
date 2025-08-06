@@ -2,7 +2,7 @@
   FourierTransforms.cxx
 */
 
-#include "BasicFunctions/FourierTransforms.h"
+#include "SignalUtils/FourierTransforms.h"
 
 namespace rad {
 FFTWComplex *doFFT(int length, double *theInput) {
