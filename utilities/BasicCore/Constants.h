@@ -25,7 +25,7 @@ inline constexpr double MU0{1.25663706212e-6};
 inline constexpr double ME{9.1093837015e-31};
 
 // Electron rest mass in eV
-inline constexpr double ME_EV{510998.95000}; // Computed: ME * C^2 / QE
+inline constexpr double ME_EV{510998.95000};  // Computed: ME * C^2 / QE
 
 // Classical electron radius in metres
 inline constexpr double R_E{2.8179403227e-15};
@@ -44,6 +44,9 @@ inline constexpr double RYDBERG_EV{13.605693122994};
 
 // Ionisation energy of tritium in eV
 inline constexpr double TRITIUM_I{13.603};
+
+// Boltzmann constant in Joules/Kelving
+inline constexpr double K_B{1.380649e-23};
 
 }  // namespace rad
 
