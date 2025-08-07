@@ -15,18 +15,18 @@
 #include <iostream>
 #include <string>
 
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
 #include "H5Cpp.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/Signal.h"
 #include "TSystem.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
 #include "physics/Waveguides/CircularWaveguide.h"
 #include "physics/Waveguides/IWaveguide.h"
 #include "physics/Waveguides/Probe.h"
 #include "physics/Waveguides/RectangularWaveguide.h"
 #include "physics/Waveguides/WaveguideMode.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
 
 /// @brief Function for generating a random file string
 /// @return A unique string which can be used for file names
