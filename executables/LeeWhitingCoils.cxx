@@ -8,9 +8,6 @@
 
 #include <boost/math/special_functions/legendre.hpp>
 
-#include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "physics/ElectronDynamics/QTNMFields.h"
 #include "TCanvas.h"
 #include "TF1.h"
 #include "TFile.h"
@@ -18,6 +15,10 @@
 #include "TLine.h"
 #include "TMultiGraph.h"
 #include "TString.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/HistogramUtils.h"
 
 using namespace rad;
 

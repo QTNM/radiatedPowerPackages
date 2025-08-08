@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include "physics/Antennas/HalfWaveDipole.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
+
 #include "physics/SignalProcessing/InducedVoltage.h"
 #include "physics/SignalProcessing/LocalOscillator.h"
 #include "physics/SignalProcessing/NoiseFunc.h"

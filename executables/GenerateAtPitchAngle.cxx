@@ -20,7 +20,7 @@
 #include <string>
 
 #include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
+
 #include "physics/ElectronDynamics/BorisSolver.h"
 #include "physics/ElectronDynamics/QTNMFields.h"
 #include "physics/ElectronDynamics/TrajectoryGen.h"

@@ -5,7 +5,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "utilities/BasicFunctions/BasicFunctions.h"
+
 #include "utilities/BasicCore/Constants.h"
 #include "physics/ElectronDynamics/QTNMFields.h"
 #include "physics/ElectronDynamics/TrajectoryGen.h"

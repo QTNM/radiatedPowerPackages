@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
+
 #include "utilities/BasicFunctions/TritiumSpectrum.h"
 #include "physics/ElectronDynamics/BorisSolver.h"
 #include "physics/ElectronDynamics/QTNMFields.h"

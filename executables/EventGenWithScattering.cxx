@@ -18,7 +18,7 @@
 #include <random>
 #include <string>
 
-#include "utilities/BasicFunctions/BasicFunctions.h"
+
 #include "utilities/BasicCore/Constants.h"
 #include "physics/ElectronDynamics/BorisSolver.h"
 #include "physics/ElectronDynamics/QTNMFields.h"

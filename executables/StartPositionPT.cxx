@@ -7,14 +7,15 @@
 
 #include <memory>
 
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "physics/ElectronDynamics/PenningTraps.h"
-#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TString.h"
 #include "TTree.h"
+#include "physics/ElectronDynamics/PenningTraps.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -30,8 +31,7 @@ int main() {
   const double z0{0.15};      // m
   const double rho0{0.05};    // m
   auto trap = new IdealPenningTrap(BFieldMag, v0, rho0, z0);
-  const double fZ{(1 / (2 * PI)) *
-                  sqrt(-QE * v0 / (ME * z0 * z0))};
+  const double fZ{(1 / (2 * PI)) * sqrt(-QE * v0 / (ME * z0 * z0))};
   std::cout << "Axial frequency = " << fZ / 1e6 << " MHz\n";
 
   // Electron kinematics
@@ -137,11 +137,9 @@ int main() {
   //////////////////////////////////////////////////////////////////////////////
   const double theta{88 * PI / 180};
   TVector3 startVel88(eSpeed * sin(theta), 0, -eSpeed * cos(theta) * 1.0339054);
-  double ke88{(1 / sqrt(1 - pow(eSpeed / C, 2)) - 1) * ME *
-              C * C};
+  double ke88{(1 / sqrt(1 - pow(eSpeed / C, 2)) - 1) * ME * C * C};
   TVector3 startVel90(eSpeed * sin(theta) * 1.000041899, 0, 0);
-  double ke90{(1 / sqrt(1 - pow(eSpeed * sin(theta) / C, 2)) - 1) *
-              ME * C * C};
+  double ke90{(1 / sqrt(1 - pow(eSpeed * sin(theta) / C, 2)) - 1) * ME * C * C};
 
   const double z0_2{0.15};
   const double rho0_2{0.18};
@@ -208,8 +206,7 @@ int main() {
     const double timeShift{27e-9 - 1.2e-11 + 17e-9};
     grX88->SetPoint(i, time88 + timeShift, xPos88 * 100);
     grZ88->SetPoint(i, time88 + timeShift, zPos88 * 100);
-    double beta{sqrt(xVel88 * xVel88 + yVel88 * yVel88 + zVel88 * zVel88) /
-                C};
+    double beta{sqrt(xVel88 * xVel88 + yVel88 * yVel88 + zVel88 * zVel88) / C};
     double T{(1 / sqrt(1 - beta * beta) - 1) * ME * pow(C, 2)};
     grKE88->SetPoint(i, time88 + timeShift, T / QE);
 
@@ -264,13 +261,11 @@ int main() {
     tr90->GetEntry(i);
     grX90->SetPoint(i, time90, xPos90 * 100);
     grZ90->SetPoint(i, time90, zPos90 * 100);
-    double beta{sqrt(xVel90 * xVel90 + yVel90 * yVel90 + zVel90 * zVel90) /
-                C};
+    double beta{sqrt(xVel90 * xVel90 + yVel90 * yVel90 + zVel90 * zVel90) / C};
     double T{(1 / sqrt(1 - beta * beta) - 1) * ME * pow(C, 2)};
     grKE90->SetPoint(i, time90, T / QE);
 
-    grVr90->SetPoint(i, time90,
-                     sqrt(xVel90 * xVel90 + yVel90 * yVel90) / C);
+    grVr90->SetPoint(i, time90, sqrt(xVel90 * xVel90 + yVel90 * yVel90) / C);
     grVz90->SetPoint(i, time90, zVel90 / C);
   }
   delete tr90;

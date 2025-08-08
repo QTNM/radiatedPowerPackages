@@ -4,14 +4,14 @@
 
 #include <memory>
 
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "physics/ElectronDynamics/PenningTraps.h"
-#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TGraph2D.h"
 #include "TString.h"
 #include "TTree.h"
+#include "physics/ElectronDynamics/PenningTraps.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 
@@ -100,9 +100,8 @@ int main(int argc, char *argv[]) {
     tr->GetEntry(e);
     grZ->SetPoint(e, time, zPos);
     grRho->SetPoint(e, time, sqrt(xPos * xPos + yPos * yPos));
-    grPitch->SetPoint(
-        e, time,
-        atan2(sqrt(xVel * xVel + yVel * yVel), zVel) * 180 / PI);
+    grPitch->SetPoint(e, time,
+                      atan2(sqrt(xVel * xVel + yVel * yVel), zVel) * 180 / PI);
     grHelix->SetPoint(e, xPos, yPos, zPos);
 
     double speed{sqrt(xVel * xVel + yVel * yVel + zVel * zVel)};

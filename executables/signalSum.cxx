@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include "physics/Antennas/HertzianDipole.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
+
 #include "physics/SignalProcessing/LocalOscillator.h"
 #include "physics/SignalProcessing/NoiseFunc.h"
 #include "physics/SignalProcessing/Signal.h"

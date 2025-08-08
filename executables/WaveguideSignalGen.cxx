@@ -19,7 +19,7 @@
 #include <random>
 #include <string>
 
-#include "utilities/BasicFunctions/BasicFunctions.h"
+
 #include "utilities/BasicCore/Constants.h"
 #include "utilities/BasicCore/NuFitValues.h"
 #include "utilities/BasicFunctions/TritiumSpectrum.h"

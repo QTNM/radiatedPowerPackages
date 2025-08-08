@@ -8,15 +8,17 @@
 
 #include <iostream>
 
-#include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "physics/ElectronDynamics/QTNMFields.h"
-#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TString.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 using std::cout;
@@ -55,8 +57,7 @@ int main(int argc, char *argv[]) {
   const int nPnts{2};
   const double simTime{1e-6};
   const double simStepSize{1e-12};
-  cout << "Min. pitch angle = " << trapAngleMin * 180 / PI
-       << " degrees\n";
+  cout << "Min. pitch angle = " << trapAngleMin * 180 / PI << " degrees\n";
 
   // Electron kinematics
   const double electronKE{18600};  // eV

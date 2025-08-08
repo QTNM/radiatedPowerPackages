@@ -9,7 +9,7 @@
 
 #include "physics/Antennas/HalfWaveDipole.h"
 #include "physics/Antennas/IAntenna.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
+
 #include "utilities/BasicCore/Constants.h"
 #include "physics/ElectronDynamics/ComsolFields.h"
 #include "physics/ElectronDynamics/QTNMFields.h"

@@ -10,17 +10,18 @@
 #include <iostream>
 #include <string>
 
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "utilities/BasicCore/Constants.h"
-#include "physics/ElectronDynamics/BorisSolver.h"
-#include "physics/ElectronDynamics/QTNMFields.h"
-#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"
 #include "TString.h"
 #include "TTree.h"
 #include "TTreeReader.h"
 #include "TTreeReaderValue.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "physics/Waveguides/CircularCavity.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -73,9 +74,8 @@ int main(int argc, char *argv[]) {
   // Define the cavity
   const double cavityRadius{5e-3};  // metres
   const double p11Prime{GetBesselPrimeZero(1, 1)};
-  const double cavityLength{PI /
-                            sqrt(pow((2 * PI) * cycFreq / C, 2) -
-                                 pow(p11Prime / cavityRadius, 2))};
+  const double cavityLength{PI / sqrt(pow((2 * PI) * cycFreq / C, 2) -
+                                      pow(p11Prime / cavityRadius, 2))};
   std::cout << "Cavity length = " << cavityLength * 1e3 << " mm\n";
   TVector3 probePosition(0.5 * cavityRadius, 0, 0);
   auto cavity = new CircularCavity(cavityRadius, cavityLength, probePosition);

@@ -10,14 +10,16 @@
 
 #include <iostream>
 
-#include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "physics/ElectronDynamics/QTNMFields.h"
-#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"
 #include "TString.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 using std::cout;
@@ -31,8 +33,7 @@ int main(int argc, char *argv[]) {
   const double dThetaMax{asin(trapFraction)};
   const double trapAngleMin{PI / 2 - dThetaMax};
   cout << "dThetaMax = " << dThetaMax * 180 / PI << "degrees\n";
-  cout << "Min. pitch angle = " << trapAngleMin * 180 / PI
-       << " degrees\n";
+  cout << "Min. pitch angle = " << trapAngleMin * 180 / PI << " degrees\n";
 
   const double bkgBMin{1};
   const double bkgBMax{1.0};

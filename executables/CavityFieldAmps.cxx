@@ -6,17 +6,19 @@
 
 #include <iostream>
 
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "utilities/BasicCore/Constants.h"
-#include "physics/ElectronDynamics/QTNMFields.h"
-#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TSpline.h"
 #include "TString.h"
 #include "TTreeReader.h"
 #include "TTreeReaderValue.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "physics/Waveguides/CircularCavity.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -50,9 +52,8 @@ int main() {
   std::cout << "Mode resonant frequency = " << modeFreq / 1e9 << " GHz\n";
   const double cavityRadius{5e-3};  // metres
   const double p11Prime{GetBesselPrimeZero(1, 1)};
-  const double cavityLength{
-      PI / sqrt(pow((2 * PI) * modeFreq / C, 2) -
-                         pow(p11Prime / cavityRadius, 2))};
+  const double cavityLength{PI / sqrt(pow((2 * PI) * modeFreq / C, 2) -
+                                      pow(p11Prime / cavityRadius, 2))};
   std::cout << "Cavity length = " << cavityLength * 1e3 << " mm\n";
   // Define the actual cavity
   TVector3 probePosition(cavityRadius, 0, 0);

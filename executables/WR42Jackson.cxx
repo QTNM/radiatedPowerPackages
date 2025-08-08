@@ -4,18 +4,19 @@
 #include <iostream>
 #include <memory>
 
-#include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "utilities/BasicFunctions/ComplexVector3.h"
-#include "physics/ElectronDynamics/QTNMFields.h"
-#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TString.h"
 #include "TTree.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "physics/Waveguides/Probe.h"
 #include "physics/Waveguides/RectangularWaveguide.h"
 #include "physics/Waveguides/WaveguideMode.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/ComplexVector3.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -80,11 +81,9 @@ std::complex<double> GetPositiveAmp(RectangularWaveguide *wv, int m, int n,
   TVector3 j{-QE * vel};
   ComplexVector3 jComplex{j};
 
-  ComplexVector3 eTrans{
-      wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
+  ComplexVector3 eTrans{wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
   eTrans.SetZ(std::complex<double>{0.0, 0.0});
-  ComplexVector3 eAxial{
-      wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
+  ComplexVector3 eAxial{wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
   eAxial.SetX(std::complex<double>{0.0, 0.0});
   eAxial.SetY(std::complex<double>{0.0, 0.0});
   ComplexVector3 subVec{eTrans - eAxial};
@@ -100,11 +99,9 @@ std::complex<double> GetNegativeAmp(RectangularWaveguide *wv, int m, int n,
   TVector3 j{-QE * vel};
   ComplexVector3 jComplex{j};
 
-  ComplexVector3 eTrans{
-      wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
+  ComplexVector3 eTrans{wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
   eTrans.SetZ(std::complex<double>{0.0, 0.0});
-  ComplexVector3 eAxial{
-      wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
+  ComplexVector3 eAxial{wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
   eAxial.SetX(std::complex<double>{0.0, 0.0});
   eAxial.SetY(std::complex<double>{0.0, 0.0});
   ComplexVector3 subVec{eTrans + eAxial};
@@ -165,9 +162,8 @@ int main(int argc, char *argv[]) {
   std::cout << "Central frequency = " << centralFreq / 1e9 << " GHz\n"
             << std::endl;
 
-  const double ke{
-      (QE * centralBField / (2 * PI * centralFreq) - ME) *
-      pow(C, 2) / QE};
+  const double ke{(QE * centralBField / (2 * PI * centralFreq) - ME) *
+                  pow(C, 2) / QE};
   std::cout << "KE = " << ke << std::endl;
   const double speed{GetSpeedFromKE(ke, ME)};
   const TVector3 velocity{speed, 0, 0};
@@ -188,8 +184,7 @@ int main(int argc, char *argv[]) {
   double integralE{GetEModeNormFactor(WR42, 1, 0, centralFreq, nSurfPnts)};
   double integralH{GetHModeNormFactor(WR42, 1, 0, centralFreq, nSurfPnts)};
   WaveguideMode modeTE10(1, 0, kTE);
-  double waveImp{
-      WR42->GetModeImpedance(modeTE10, centralFreq * 2 * PI)};
+  double waveImp{WR42->GetModeImpedance(modeTE10, centralFreq * 2 * PI)};
   std::cout << "Integral E = " << integralE << std::endl;  // Should be 1
   std::cout << "Integral H = " << integralH
             << std::endl;  // Should equal to the below

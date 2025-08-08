@@ -11,7 +11,7 @@
 
 #include "physics/Antennas/HalfWaveDipole.h"
 #include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
+
 #include "physics/ElectronDynamics/QTNMFields.h"
 #include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "physics/SignalProcessing/InducedVoltage.h"

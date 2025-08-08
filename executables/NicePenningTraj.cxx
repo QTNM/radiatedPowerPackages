@@ -7,7 +7,7 @@
 #include <iostream>
 
 #include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
+
 #include "physics/ElectronDynamics/PenningTraps.h"
 #include "physics/ElectronDynamics/QTNMFields.h"
 #include "physics/ElectronDynamics/TrajectoryGen.h"

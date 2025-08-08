@@ -14,7 +14,8 @@
 #include "physics/ElectronDynamics/PenningTraps.h"
 #include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 
@@ -110,8 +111,8 @@ int main(int argc, char *argv[]) {
   auto trap = new IdealPenningTrap(BFieldMag, v0, rho0, z0);
 
   // Calculate minimum pitch angle
-  const double thetaBot{acos(sqrt(-QE * v0 / (eKE * QE))) *
-                        180 / PI};  // degrees
+  const double thetaBot{acos(sqrt(-QE * v0 / (eKE * QE))) * 180 /
+                        PI};  // degrees
   std::cout << "Minimum trap angle = " << thetaBot << " degrees\n";
 
   // Set up angle scan

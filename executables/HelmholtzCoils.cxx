@@ -6,15 +6,16 @@
 
 #include <iostream>
 
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "utilities/BasicCore/Constants.h"
-#include "physics/ElectronDynamics/QTNMFields.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TH2.h"
 #include "TLine.h"
 #include "TMultiGraph.h"
 #include "TString.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/HistogramUtils.h"
 
 using namespace rad;
 
