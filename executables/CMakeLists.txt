@@ -63,7 +63,7 @@ add_executable(StartPositionPT StartPositionPT.cxx)
 target_link_libraries(StartPositionPT PRIVATE ElectronDynamics ${ROOT_LIBRARIES})
 
 add_executable(NicePenningTraj NicePenningTraj.cxx)
-target_link_libraries(NicePenningTraj PRIVATE ElectronDynamics ${ROOT_LIBRARIES})
+target_link_libraries(NicePenningTraj PRIVATE BasicCore ElectronDynamics ${ROOT_LIBRARIES})
 
 add_executable(Project8CCA Project8CCA.cxx)
 target_link_libraries(Project8CCA PRIVATE BasicCore ROOTUtils Waveguides ${ROOT_LIBRARIES})
@@ -72,7 +72,7 @@ add_executable(CRESDA0Cavity CRESDA0Cavity.cxx)
 target_link_libraries(CRESDA0Cavity PRIVATE BasicCore ROOTUtils Waveguides ${ROOT_LIBRARIES})
 
 add_executable(CavityFieldAmps CavityFieldAmps.cxx)
-target_link_libraries(CavityFieldAmps PRIVATE Waveguides ElectronDynamics ${ROOT_LIBRARIES})
+target_link_libraries(CavityFieldAmps PRIVATE BasicCore ROOTUtils Waveguides ElectronDynamics ${ROOT_LIBRARIES})
 
 add_executable(ScatteringCheck ScatteringCheck.cxx)
 target_link_libraries(ScatteringCheck PRIVATE ElectronDynamics Scattering ${ROOT_LIBRARIES})
@@ -112,7 +112,7 @@ add_executable(EventRate EventRate.cxx)
 target_link_libraries(EventRate PRIVATE BasicCore BasicFunctions ${ROOT_LIBRARIES})
 
 add_executable(LargeVolumeCavityP8 LargeVolumeCavityP8.cxx)
-target_link_libraries(LargeVolumeCavityP8 PRIVATE Waveguides ${ROOT_LIBRARIES})
+target_link_libraries(LargeVolumeCavityP8 PRIVATE Waveguides ROOTUtils ${ROOT_LIBRARIES})
 
 add_executable(SyntheticSignals SyntheticSignals.cxx)
 target_link_libraries(SyntheticSignals PRIVATE Antennas ElectronDynamics FieldClasses ${ROOT_LIBRARIES})
