@@ -23,9 +23,9 @@
 #include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "physics/FieldClasses/FieldClasses.h"
 #include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
 #include "utilities/ROOTUtils/HistogramUtils.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -97,7 +97,9 @@ int main(int argc, char *argv[]) {
             << " fW\n";
 
   auto field = new UniformField(bField);
-  const double r_g{GetGyroradius(vel, TVector3(0, 0, bField), ME)};
+  double velArr[3] = {vel.X(), vel.Y(), vel.Z()};
+  double bFieldArr[3] = {0, 0, bField};
+  const double r_g{GetGyroradius(velArr, bFieldArr, ME)};
   TVector3 x0(0, -r_g, 0);
   const double simTime{1e-7};       // seconds
   const double simStepSize{2e-12};  // seconds

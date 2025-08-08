@@ -16,6 +16,7 @@
 #include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "physics/Waveguides/CircularCavity.h"
 #include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 #include "utilities/ROOTUtils/FFTAnalysis.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
 #include "utilities/ROOTUtils/SignalAnalysis.h"
@@ -97,8 +98,11 @@ int main() {
   const double pitchAngleDeg{89};
   const double pitchAngleRad{pitchAngleDeg * PI / 180};
   TVector3 eVel(eSpeed * sin(pitchAngleRad), 0, eSpeed * cos(pitchAngleRad));
-  const double gyroradius{GetGyroradius(
-      eVel, field->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
+  double eVelArr[3] = {eVel.X(), eVel.Y(), eVel.Z()};
+  TVector3 centralField{field->evaluate_field_at_point(TVector3(0, 0, 0))};
+  double centralFieldArr[3] = {centralField.X(), centralField.Y(),
+                               centralField.Z()};
+  const double gyroradius{GetGyroradius(eVelArr, centralFieldArr, ME)};
   std::cout << "Gyroradius = " << gyroradius * 1e3 << " mm\n";
   TVector3 initPos(0, gyroradius, 0);
   TString trackFile{

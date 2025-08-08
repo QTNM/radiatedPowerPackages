@@ -14,8 +14,8 @@
 #include "TTree.h"
 #include "physics/ElectronDynamics/PenningTraps.h"
 #include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicCore/Physics.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -42,8 +42,11 @@ int main() {
   // Initial velocity vector
   TVector3 initVel(eSpeed * sin(pitchAngle), 0, -eSpeed * cos(pitchAngle));
   // Gyroradius
-  const double rg{GetGyroradius(
-      initVel, trap->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
+  TVector3 centralField{trap->evaluate_field_at_point(TVector3(0, 0, 0))};
+  double centralFieldArr[3] = {centralField.X(), centralField.Y(),
+                               centralField.Z()};
+  double initVelArr[3] = {initVel.X(), initVel.Y(), initVel.Z()};
+  const double rg{GetGyroradius(initVelArr, centralFieldArr, ME)};
 
   // Now scan through various positions and measure the axial frequency
   const double zMax{0.12};

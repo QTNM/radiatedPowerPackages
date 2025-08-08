@@ -19,7 +19,7 @@
 #include "physics/Waveguides/Probe.h"
 #include "physics/Waveguides/WaveguideMode.h"
 #include "utilities/BasicCore/Constants.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
+#include "utilities/BasicCore/Physics.h"
 
 using namespace rad;
 
@@ -44,7 +44,9 @@ int main() {
   const double pitchAngleDeg{87.8};
   const double pitchAngleRad{pitchAngleDeg * M_PI / 180};
   TVector3 eVel(eSpeed * sin(pitchAngleRad), 0, eSpeed * cos(pitchAngleRad));
-  const double rg{GetGyroradius(eVel, centralB, ME)};
+  double velArr[3] = {eVel.X(), eVel.Y(), eVel.Z()};
+  double bFieldArr[3] = {centralB.X(), centralB.Y(), centralB.Z()};
+  const double rg{GetGyroradius(velArr, bFieldArr, ME)};
   TVector3 ePos(0, rg, 0);
 
   TString trackFile{

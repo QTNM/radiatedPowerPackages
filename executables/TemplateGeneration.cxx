@@ -37,7 +37,7 @@
 #include "physics/Waveguides/Probe.h"
 #include "physics/Waveguides/WaveguideMode.h"
 #include "utilities/BasicCore/Constants.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
+#include "utilities/BasicCore/Physics.h"
 
 using namespace rad;
 using std::cout;
@@ -261,7 +261,9 @@ int main(int argc, char* argv[]) {
       TVector3 initialVel(sin(pitchAngle), 0, cos(pitchAngle));
       double initialSpeed{GetSpeedFromKE(kineticEnergy, ME)};
       initialVel *= initialSpeed;
-      const double gyroradius{GetGyroradius(initialVel, centralField, ME)};
+      double velArr[3] = {initialVel.X(), initialVel.Y(), initialVel.Z()};
+      double bFieldArr[3] = {centralField.X(), centralField.Y(), centralField.Z()};
+      const double gyroradius{GetGyroradius(velArr, bFieldArr, ME)};
       const double zGen{0};  // metres
       TVector3 startPos{rho, 0, zGen};
       double xStart{startPos.X()};

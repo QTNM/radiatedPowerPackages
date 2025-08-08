@@ -14,9 +14,9 @@
 #include "physics/Waveguides/RectangularWaveguide.h"
 #include "physics/Waveguides/WaveguideMode.h"
 #include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 #include "utilities/BasicFunctions/ComplexVector3.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -167,8 +167,10 @@ int main(int argc, char *argv[]) {
   std::cout << "KE = " << ke << std::endl;
   const double speed{GetSpeedFromKE(ke, ME)};
   const TVector3 velocity{speed, 0, 0};
-  const double gyroradius{GetGyroradius(
-      velocity, field->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
+  double velArr[3] = {velocity.X(), velocity.Y(), velocity.Z()};
+  TVector3 centralField = field->evaluate_field_at_point(TVector3(0, 0, 0));
+  double bFieldArr[3] = {centralField.X(), centralField.Y(), centralField.Z()};
+  const double gyroradius{GetGyroradius(velArr, bFieldArr, ME)};
   std::cout << "Gyroradius = " << gyroradius * 1e3 << " mm" << std::endl;
 
   // Project 8 WR42 waveguide used the TE10 mode

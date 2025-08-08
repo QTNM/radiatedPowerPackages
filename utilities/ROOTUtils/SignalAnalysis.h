@@ -55,13 +55,6 @@ double CalcTimeFromRetardedTime(ROOT::Math::XYZPoint fieldPoint,
 double CalcTimeFromRetardedTime(TVector3 fieldPoint, TVector3 ePosition,
                                 double tRet);
 
-/// @brief Calculate gyroradius/Larmor radius of charged particle
-/// @param velocity Velocity vector in m/s
-/// @param bField Magnetic field vector in Tesla
-/// @param particleMass Particle mass in kg
-/// @return Gyroradius in meters
-double GetGyroradius(TVector3 velocity, TVector3 bField, double particleMass);
-
 }  // namespace rad
 
 #endif

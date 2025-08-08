@@ -23,8 +23,8 @@
 #include "physics/SignalProcessing/Signal.h"
 #include "physics/Waveguides/CircularWaveguide.h"
 #include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -91,7 +91,9 @@ int main(int argc, char* argv[]) {
   const double beta{eSpeed / C};
   std::cout << "Beta = " << beta << std::endl;
   const double gamma{1 / sqrt(1 - beta * beta)};
-  const double rg{GetGyroradius(TVector3(eSpeed, 0, 0), centralField, ME)};
+  double eVelArr[3] = {eSpeed, 0, 0};
+  double bFieldArr[3] = {centralField.X(), centralField.Y(), centralField.Z()};
+  const double rg{GetGyroradius(eVelArr, bFieldArr, ME)};
   TVector3 x0(0, rg, 0);
   std::cout << "x0 = " << x0.Y() * 1e3 << " mm\n";
 

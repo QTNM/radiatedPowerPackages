@@ -15,8 +15,8 @@
 #include "physics/FieldClasses/FieldPointNR.h"
 #include "physics/SignalProcessing/InducedVoltage.h"
 #include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 using std::cout;
@@ -39,7 +39,9 @@ int main(int argc, char *argv[]) {
   const double electronSpeed{GetSpeedFromKE(electronKE, ME)};
   const double tau{2 * R_E / (3 * C)};
   TVector3 vel0(electronSpeed, 0, 0);
-  const double gyroradius{GetGyroradius(vel0, centralField, ME)};  // metres
+  double velArr[3] = {vel0.X(), vel0.Y(), vel0.Z()};
+  double bFieldArr[3] = {centralField.X(), centralField.Y(), centralField.Z()};
+  const double gyroradius{GetGyroradius(velArr, bFieldArr, ME)};  // metres
   TVector3 pos0(0, -gyroradius, 0);
   const double centralFreq{CalcCyclotronFreq(electronKE, centralField.Mag())};
   const double acc0{electronSpeed * 2 * PI * centralFreq};

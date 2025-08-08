@@ -18,8 +18,8 @@
 #include "physics/Waveguides/CircularWaveguide.h"
 #include "physics/Waveguides/RectangularWaveguide.h"
 #include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -59,8 +59,10 @@ int main() {
   const double simTime{0.5e-6};  // seconds
 
   // Electron gyroradius in metres
-  const double gyroradius{GetGyroradius(
-      eVel, field->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
+  double velArr[3] = {eVel.X(), eVel.Y(), eVel.Z()};
+  TVector3 centralField = field->evaluate_field_at_point(TVector3(0, 0, 0));
+  double bFieldArr[3] = {centralField.X(), centralField.Y(), centralField.Z()};
+  const double gyroradius{GetGyroradius(velArr, bFieldArr, ME)};
   const double xMin{-4.5e-3};  // metres
   const double xMax{4.5e-3};   // metres
   const uint nXPnts{31};

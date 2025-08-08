@@ -20,7 +20,7 @@
 #include "physics/SignalProcessing/NoiseFunc.h"
 #include "physics/SignalProcessing/Signal.h"
 #include "utilities/BasicCore/Constants.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
+#include "utilities/BasicCore/Physics.h"
 
 using namespace rad;
 
@@ -118,8 +118,10 @@ int main(int argc, char *argv[]) {
   const double electronSpeed{GetSpeedFromKE(electronKE, ME)};
   const double tau = 2 * R_E / (3 * C);
   TVector3 v0(electronSpeed, 0, 0);
-  const double gyroradius{GetGyroradius(
-      v0, harm->evaluate_field_at_point(TVector3(0, 0.001, 0)), ME)};
+  double velArr[3] = {v0.X(), v0.Y(), v0.Z()};
+  TVector3 fieldAtPoint = harm->evaluate_field_at_point(TVector3(0, 0.001, 0));
+  double bFieldArr[3] = {fieldAtPoint.X(), fieldAtPoint.Y(), fieldAtPoint.Z()};
+  const double gyroradius{GetGyroradius(velArr, bFieldArr, ME)};
   TVector3 x0(0, -gyroradius, 0);
 
   TFile *fout = new TFile(

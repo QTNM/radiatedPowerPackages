@@ -20,8 +20,8 @@
 #include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "physics/Waveguides/CircularCavity.h"
 #include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -64,7 +64,9 @@ int main(int argc, char *argv[]) {
   const double ke{18.6e3};  // eV
   const double speed{GetSpeedFromKE(ke, ME)};
   TVector3 initVel(speed, 0, 0);
-  const double gyroradius{GetGyroradius(initVel, centreField, ME)};
+  double velArr[3] = {initVel.X(), initVel.Y(), initVel.Z()};
+  double bFieldArr[3] = {centreField.X(), centreField.Y(), centreField.Z()};
+  const double gyroradius{GetGyroradius(velArr, bFieldArr, ME)};
   TVector3 initPos(0, gyroradius, 0);
 
   // Calculate cyclotron frequency

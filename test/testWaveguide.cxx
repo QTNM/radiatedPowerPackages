@@ -26,7 +26,6 @@
 #include "physics/Waveguides/Probe.h"
 #include "physics/Waveguides/RectangularWaveguide.h"
 #include "physics/Waveguides/WaveguideMode.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
 
 /// @brief Function for generating a random file string
 /// @return A unique string which can be used for file names
@@ -108,8 +107,12 @@ int main(int argc, char *argv[]) {
   const double eKE{18.6e3};  // eV
   const double eSpeed{rad::GetSpeedFromKE(eKE, rad::ME)};
   const TVector3 eVel(eSpeed, 0, 0);
-  const double gyroradius{rad::GetGyroradius(
-      eVel, field->evaluate_field_at_point(TVector3(0, 0, 0)), rad::ME)};
+  double eVelArr[3] = {eVel.X(), eVel.Y(), eVel.Z()};
+  TVector3 centralField{field->evaluate_field_at_point(TVector3(0, 0, 0))};
+  double centralFieldArr[3] = {centralField.X(), centralField.Y(),
+                               centralField.Z()};
+  const double gyroradius{
+      rad::GetGyroradius(eVelArr, centralFieldArr, rad::ME)};
   const double cyclotronFreq{rad::CalcCyclotronFreq(eKE, bField)};  // Hertz
   // Calculate the free space radiated power
   const double freeSpacePower{rad::CalcLarmorPower(eKE, bField, M_PI / 2)};

@@ -30,7 +30,7 @@ add_executable(WR42Jackson WR42Jackson.cxx)
 target_link_libraries(WR42Jackson PUBLIC ElectronDynamics Waveguides ${ROOT_LIBRARIES})
 
 add_executable(PhasedArrayVariableField PhasedArrayVariableField.cxx)
-target_link_libraries(PhasedArrayVariableField PUBLIC Antennas SignalProcessing ElectronDynamics ${ROOT_LIBRARIES})
+target_link_libraries(PhasedArrayVariableField PUBLIC BasicCore Antennas SignalProcessing ElectronDynamics ${ROOT_LIBRARIES})
 
 add_executable(RFBandwidth RFBandwidth.cxx)
 target_link_libraries(RFBandwidth PRIVATE ElectronDynamics ${ROOT_LIBRARIES})

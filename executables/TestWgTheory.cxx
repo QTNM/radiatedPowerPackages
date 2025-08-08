@@ -33,8 +33,8 @@
 #include "physics/Waveguides/RectangularWaveguide.h"
 #include "physics/Waveguides/WaveguideMode.h"
 #include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 using std::cout;
@@ -114,9 +114,10 @@ int main(int argc, char* argv[]) {
 
   auto wg{new RectangularWaveguide(wr42Width, wr42Height, 10e-2)};
   const double eSpeed{GetSpeedFromKE(energy, ME)};
-  const double gyroradius{
-      GetGyroradius(TVector3(eSpeed, 0, 0),
-                    field->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
+  double eVelArr[3] = {eSpeed, 0, 0};
+  TVector3 centralField = field->evaluate_field_at_point(TVector3(0, 0, 0));
+  double bFieldArr[3] = {centralField.X(), centralField.Y(), centralField.Z()};
+  const double gyroradius{GetGyroradius(eVelArr, bFieldArr, ME)};
 
   auto grPower{new TGraph()};
   auto grPowerSignal{new TGraph()};

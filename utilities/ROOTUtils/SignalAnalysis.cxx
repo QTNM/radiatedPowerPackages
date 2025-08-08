@@ -2,6 +2,7 @@
 #include "utilities/ROOTUtils/SignalAnalysis.h"
 
 #include <cmath>
+
 #include "utilities/BasicCore/Constants.h"
 
 using namespace rad;
@@ -31,16 +32,14 @@ double rad::CalcAlHertzianDipole(const double wavelength,
 double rad::CalcRetardedTime(const ROOT::Math::XYZPoint fieldPoint,
                              const ROOT::Math::XYZPoint ePosition,
                              const double labTime) {
-  double time =
-      labTime - std::sqrt((ePosition - fieldPoint).Mag2()) / C;
+  double time = labTime - std::sqrt((ePosition - fieldPoint).Mag2()) / C;
   return time;
 }
 
 double rad::CalcTimeFromRetardedTime(ROOT::Math::XYZPoint fieldPoint,
                                      ROOT::Math::XYZPoint ePosition,
                                      double tRet) {
-  double time =
-      tRet + std::sqrt((ePosition - fieldPoint).Mag2()) / C;
+  double time = tRet + std::sqrt((ePosition - fieldPoint).Mag2()) / C;
   return time;
 }
 
@@ -48,13 +47,4 @@ double rad::CalcTimeFromRetardedTime(TVector3 fieldPoint, TVector3 ePosition,
                                      double tRet) {
   double time = tRet + ((ePosition - fieldPoint).Mag() / C);
   return time;
-}
-
-double rad::GetGyroradius(TVector3 velocity, TVector3 bField,
-                          double particleMass) {
-  double gamma{1 /
-               sqrt(1 - velocity.Dot(velocity) / (C * C))};
-  TVector3 vPerp{velocity - (velocity.Dot(bField.Unit()) * bField)};
-  double rg{gamma * particleMass * vPerp.Mag() / (QE * bField.Mag())};
-  return rg;
 }

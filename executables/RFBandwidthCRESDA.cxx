@@ -16,9 +16,9 @@
 #include "physics/ElectronDynamics/QTNMFields.h"
 #include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 #include "utilities/ROOTUtils/FFTAnalysis.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 using std::cout;
@@ -80,8 +80,11 @@ int main(int argc, char *argv[]) {
                                            double(iPnt) / double(nPnts - 1)};
     TVector3 V0(electronSpeed * sin(thisAngle), 0,
                 electronSpeed * cos(thisAngle));
-    const double gyroradius{GetGyroradius(
-        V0, field->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
+    double V0Arr[3] = {V0.X(), V0.Y(), V0.Z()};
+    TVector3 centralField{field->evaluate_field_at_point(TVector3(0, 0, 0))};
+    double centralFieldArr[3] = {centralField.X(), centralField.Y(),
+                                 centralField.Z()};
+    const double gyroradius{GetGyroradius(V0Arr, centralFieldArr, ME)};
     TVector3 X0(0, -gyroradius, 0);
 
     TString trackFile{Form(
