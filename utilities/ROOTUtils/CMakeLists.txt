@@ -2,7 +2,6 @@ add_library(ROOTUtils
     GraphUtils.cxx 
     HistogramUtils.cxx 
     FFTAnalysis.cxx 
-    SignalAnalysis.cxx
     CorrelationAnalysis.cxx
 )
 

@@ -10,7 +10,7 @@
 #include "Math/Vector3D.h"
 #include "ROOTUtils/FFTAnalysis.h"
 #include "ROOTUtils/GraphUtils.h"
-#include "ROOTUtils/SignalAnalysis.h"
+#include "utilities/BasicCore/Physics.h"
 #include "TAxis.h"
 #include "TFile.h"
 #include "TGraph.h"
@@ -238,8 +238,10 @@ void rad::FieldPoint::GenerateFields(const double minTime,
     pos[1]->SetPoint(pos[1]->GetN(), time, yPos);
     pos[2]->SetPoint(pos[2]->GetN(), time, zPos);
 
+    double antPosArr[3] = {antennaPoint.X(), antennaPoint.Y(), antennaPoint.Z()};
+    double ePosArr[3] = {ePos.X(), ePos.Y(), ePos.Z()};
     tPrime->SetPoint(tPrime->GetN(),
-                     CalcTimeFromRetardedTime(antennaPoint, ePos, time), time);
+                     CalcTimeFromRetardedTime(antPosArr, ePosArr, time), time);
   }
 
   delete tree;

@@ -7,7 +7,6 @@
 #include "utilities/ROOTUtils/FFTAnalysis.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
 #include "utilities/ROOTUtils/HistogramUtils.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 // Legacy includes for backward compatibility
 #include "Math/Point3D.h"

@@ -19,7 +19,6 @@
 #include "utilities/BasicCore/Physics.h"
 #include "utilities/ROOTUtils/FFTAnalysis.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
-#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -156,8 +155,10 @@ int main() {
     en2 *= J.Dot(eField2) / denom;
     grEn1Real->SetPoint(grEn1Real->GetN(), *time, en1.real());
     grEn2Real->SetPoint(grEn2Real->GetN(), *time, en2.real());
+    double readoutPosArr[3] = {readoutPos.X(), readoutPos.Y(), readoutPos.Z()};
+    double r0Arr[3] = {r0.X(), r0.Y(), r0.Z()};
     grTTRet->SetPoint(grTTRet->GetN(),
-                      CalcTimeFromRetardedTime(readoutPos, r0, *time), *time);
+                      CalcTimeFromRetardedTime(readoutPosArr, r0Arr, *time), *time);
   }
   fTrack.Close();
 

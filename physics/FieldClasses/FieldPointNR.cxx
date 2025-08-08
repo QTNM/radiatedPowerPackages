@@ -1,6 +1,6 @@
 #include "physics/FieldClasses/FieldPointNR.h"
 
-#include "ROOTUtils/SignalAnalysis.h"
+#include "utilities/BasicCore/Physics.h"
 #include "TTree.h"
 
 // From an input TFile generate the E and B fields for a given time
@@ -81,8 +81,10 @@ void rad::FieldPointNR::GenerateFields(const double minTime,
     pos[1]->SetPoint(pos[1]->GetN(), time, yPos);
     pos[2]->SetPoint(pos[2]->GetN(), time, zPos);
 
+    double antPosArr[3] = {antennaPoint.X(), antennaPoint.Y(), antennaPoint.Z()};
+    double ePosArr[3] = {ePos.X(), ePos.Y(), ePos.Z()};
     tPrime->SetPoint(tPrime->GetN(),
-                     CalcTimeFromRetardedTime(antennaPoint, ePos, time), time);
+                     CalcTimeFromRetardedTime(antPosArr, ePosArr, time), time);
   }
 
   delete tree;
