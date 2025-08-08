@@ -5,21 +5,21 @@
 #include <cmath>
 #include <iostream>
 
-
-#include "utilities/BasicCore/Constants.h"
-#include "physics/ElectronDynamics/QTNMFields.h"
-#include "physics/ElectronDynamics/TrajectoryGen.h"
-#include "physics/SignalProcessing/LocalOscillator.h"
-#include "physics/SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TString.h"
 #include "TTreeReader.h"
 #include "TTreeReaderValue.h"
 #include "TVector3.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
 #include "physics/Waveguides/CircularWaveguide.h"
 #include "physics/Waveguides/Probe.h"
 #include "physics/Waveguides/WaveguideMode.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 

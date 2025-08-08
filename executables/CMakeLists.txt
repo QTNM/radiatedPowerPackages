@@ -2,9 +2,6 @@
 add_executable(sineTest sineTest.cxx)
 target_link_libraries(sineTest PRIVATE ROOTUtils BasicCore ${ROOT_LIBRARIES})
 
-add_executable(normTest normTest.cxx)
-target_link_libraries(normTest PRIVATE BasicCore ROOTUtils FieldClasses ${ROOT_LIBRARIES})
-
 add_executable(noiseTests noiseTests.cxx)
 target_link_libraries(noiseTests PRIVATE Antennas BasicCore ROOTUtils SignalProcessing ${ROOT_LIBRARIES})
 

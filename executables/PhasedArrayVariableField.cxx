@@ -9,20 +9,20 @@
 #include <cmath>
 #include <iostream>
 
+#include "TFile.h"
+#include "TGraph.h"
+#include "TString.h"
+#include "TTree.h"
+#include "TVector3.h"
 #include "physics/Antennas/HalfWaveDipole.h"
-#include "utilities/BasicCore/Constants.h"
-
 #include "physics/ElectronDynamics/QTNMFields.h"
 #include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "physics/SignalProcessing/InducedVoltage.h"
 #include "physics/SignalProcessing/LocalOscillator.h"
 #include "physics/SignalProcessing/NoiseFunc.h"
 #include "physics/SignalProcessing/Signal.h"
-#include "TFile.h"
-#include "TGraph.h"
-#include "TString.h"
-#include "TTree.h"
-#include "TVector3.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -79,8 +79,8 @@ int main(int argc, char *argv[]) {
 
   const double thetaBot{asin(
       sqrt(1.0 - trapDepth / (trapDepth + bField)))};  // Minimum trapping angle
-  std::cout << "Minimum trapping pitch angle = "
-            << thetaBot * 180.0 / PI << " degrees" << std::endl;
+  std::cout << "Minimum trapping pitch angle = " << thetaBot * 180.0 / PI
+            << " degrees" << std::endl;
 
   // Electron kinematics
   const double electronKE{18600};  // eV
@@ -112,8 +112,7 @@ int main(int argc, char *argv[]) {
   const double antennaSize{(centralLambda / 2.0) + 1e-2};
   std::cout << "Antennas have a physical size of " << antennaSize * 1e3 << " mm"
             << std::endl;
-  const int nAntennas{
-      int(floor((PI * antennaZoneDiameter) / antennaSize))};
+  const int nAntennas{int(floor((PI * antennaZoneDiameter) / antennaSize))};
   std::cout << "We have " << nAntennas << " antennas" << std::endl;
 
   std::vector<IAntenna *> antennaArray;
@@ -122,8 +121,7 @@ int main(int argc, char *argv[]) {
   for (int iAnt = 0; iAnt < nAntennas; iAnt++) {
     double antennaAngle{2 * PI * double(iAnt) / double(nAntennas)};
     double timeShift{centralPeriod * (1.0 - double(iAnt) / double(nAntennas))};
-    std::cout << "Dipole " << iAnt
-              << ": Angle = " << antennaAngle * 180 / PI
+    std::cout << "Dipole " << iAnt << ": Angle = " << antennaAngle * 180 / PI
               << " degrees. Required time shift is " << timeShift * 1e12
               << " ps" << std::endl;
     TVector3 antennaPoint(antennaZoneRadius * cos(antennaAngle),

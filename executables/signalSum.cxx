@@ -1,14 +1,15 @@
 // signalSum.cxx
 
 #include <cmath>
-#include "physics/Antennas/HertzianDipole.h"
 
-#include "physics/SignalProcessing/LocalOscillator.h"
-#include "physics/SignalProcessing/NoiseFunc.h"
-#include "physics/SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TVector3.h"
+#include "physics/Antennas/HertzianDipole.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/NoiseFunc.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
 
 using namespace rad;
 
@@ -22,20 +23,18 @@ int main() {
   const double antennaAngle2 = 10.0 * PI / 180;
   TVector3 antennaPoint2(0.05 * std::cos(antennaAngle2),
                          0.05 * std::sin(antennaAngle2), 0.0);
-  TVector3 dipoleDirZ2(std::sin(antennaAngle2), std::cos(antennaAngle2),
+  TVector3 dipoleDirZ2(std::sin(antennaAngle2), std::cos(antennaAngle2), 0.0);
+  TVector3 dipoleDirX2(std::cos(antennaAngle2), -1 * std::sin(antennaAngle2),
                        0.0);
-  TVector3 dipoleDirX2(std::cos(antennaAngle2),
-                       -1 * std::sin(antennaAngle2), 0.0);
   HertzianDipole* antenna2 =
       new HertzianDipole(antennaPoint2, dipoleDirX2, dipoleDirZ2, 27.01e9);
 
   const double antennaAngle3 = -10.0 * PI / 180;
   TVector3 antennaPoint3(0.05 * std::cos(antennaAngle3),
                          0.05 * std::sin(antennaAngle3), 0.0);
-  TVector3 dipoleDirZ3(std::sin(antennaAngle3), std::cos(antennaAngle3),
+  TVector3 dipoleDirZ3(std::sin(antennaAngle3), std::cos(antennaAngle3), 0.0);
+  TVector3 dipoleDirX3(std::cos(antennaAngle3), -1 * std::sin(antennaAngle3),
                        0.0);
-  TVector3 dipoleDirX3(std::cos(antennaAngle3),
-                       -1 * std::sin(antennaAngle3), 0.0);
   HertzianDipole* antenna3 =
       new HertzianDipole(antennaPoint3, dipoleDirX3, dipoleDirZ3, 27.01e9);
 

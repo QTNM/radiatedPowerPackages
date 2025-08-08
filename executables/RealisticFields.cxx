@@ -5,10 +5,13 @@
 #include <iostream>
 #include <string>
 
+#include "TFile.h"
+#include "TGraph.h"
+#include "TString.h"
+#include "TTree.h"
+#include "TVector3.h"
 #include "physics/Antennas/HalfWaveDipole.h"
 #include "physics/Antennas/IAntenna.h"
-#include "utilities/BasicCore/Constants.h"
-
 #include "physics/ElectronDynamics/ComsolFields.h"
 #include "physics/ElectronDynamics/QTNMFields.h"
 #include "physics/ElectronDynamics/TrajectoryGen.h"
@@ -16,11 +19,8 @@
 #include "physics/SignalProcessing/LocalOscillator.h"
 #include "physics/SignalProcessing/NoiseFunc.h"
 #include "physics/SignalProcessing/Signal.h"
-#include "TFile.h"
-#include "TGraph.h"
-#include "TString.h"
-#include "TTree.h"
-#include "TVector3.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -143,8 +143,7 @@ int main(int argc, char *argv[]) {
   for (int iAnt = 0; iAnt < nAntennas; iAnt++) {
     double antennaAngle{2 * PI * double(iAnt) / double(nAntennas)};
     double timeShift{centralPeriod * (1.0 - double(iAnt) / double(nAntennas))};
-    std::cout << "Dipole " << iAnt
-              << ": Angle = " << antennaAngle * 180 / PI
+    std::cout << "Dipole " << iAnt << ": Angle = " << antennaAngle * 180 / PI
               << " degrees. Required time shift is " << timeShift * 1e12
               << " ps" << std::endl;
     TVector3 antennaPoint(antennaRadius * cos(antennaAngle),

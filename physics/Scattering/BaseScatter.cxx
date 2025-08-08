@@ -33,7 +33,7 @@ TVector3 rad::BaseScatter::GetScatteredVector(TVector3 vel, double outKE,
 
   // Calculate outgoing speed from kinetic energy
   const double speed{C * sqrt((pow(ME_EV + outKE, 2) - ME_EV * ME_EV) /
-                                       pow(ME_EV + outKE, 2))};
+                              pow(ME_EV + outKE, 2))};
 
   // Distribute azimuthal angle uniformly
   std::uniform_real_distribution<double> uni(0, 1);

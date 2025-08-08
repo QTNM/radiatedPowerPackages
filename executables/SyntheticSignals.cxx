@@ -11,12 +11,6 @@
 #include <iostream>
 #include <string>
 
-#include "physics/Antennas/IsotropicAntenna.h"
-#include "utilities/BasicCore/Constants.h"
-
-#include "physics/ElectronDynamics/QTNMFields.h"
-#include "physics/ElectronDynamics/TrajectoryGen.h"
-#include "physics/FieldClasses/FieldClasses.h"
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TH2.h"
@@ -24,6 +18,14 @@
 #include "TStyle.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "physics/Antennas/IsotropicAntenna.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/FieldClasses/FieldClasses.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/HistogramUtils.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -31,8 +33,7 @@ TVector3 EFieldMagneticDipole(double r, double theta, double phi, double t,
                               double f, double phase = 0, double m0 = 1) {
   const double omega{2 * M_PI * f};
   const double prefac{MU0 * m0 * sin(theta) / (4 * M_PI * r)};
-  const double ePhi{(omega * omega / C) *
-                        cos(omega * (t - r / C)) +
+  const double ePhi{(omega * omega / C) * cos(omega * (t - r / C)) +
                     (omega / r) * sin(omega * (t - r / C))};
   return prefac * TVector3(-ePhi * sin(phi), ePhi * cos(phi), 0);
 }

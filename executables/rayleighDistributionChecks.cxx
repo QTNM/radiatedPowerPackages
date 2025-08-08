@@ -1,17 +1,20 @@
 // rayleighDistributionChecks.cxx
 
 #include <cmath>
-#include "physics/Antennas/HalfWaveDipole.h"
 
-#include "physics/SignalProcessing/InducedVoltage.h"
-#include "physics/SignalProcessing/LocalOscillator.h"
-#include "physics/SignalProcessing/NoiseFunc.h"
-#include "physics/SignalProcessing/Signal.h"
 #include "TAxis.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TH1.h"
+#include "physics/Antennas/HalfWaveDipole.h"
+#include "physics/SignalProcessing/InducedVoltage.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/NoiseFunc.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/HistogramUtils.h"
 
 using namespace rad;
 

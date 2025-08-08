@@ -4,26 +4,25 @@
   Measurement of the power collected by a single dipole antenna
 */
 
+#include "TFile.h"
+#include "TGraph.h"
+#include "TString.h"
+#include "TVector3.h"
 #include "physics/Antennas/HalfWaveDipole.h"
-#include "utilities/BasicCore/Constants.h"
-
 #include "physics/ElectronDynamics/QTNMFields.h"
 #include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "physics/FieldClasses/FieldClasses.h"
 #include "physics/FieldClasses/FieldPointNR.h"
 #include "physics/SignalProcessing/InducedVoltage.h"
-#include "TFile.h"
-#include "TGraph.h"
-#include "TString.h"
-#include "TVector3.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 using std::cout;
 using std::endl;
 
-double LarmorPowerNR(double a) {
-  return MU0 * pow(QE * a, 2) / (6 * PI * C);
-}
+double LarmorPowerNR(double a) { return MU0 * pow(QE * a, 2) / (6 * PI * C); }
 
 int main(int argc, char *argv[]) {
   TString outputFile{argv[1]};
@@ -46,10 +45,9 @@ int main(int argc, char *argv[]) {
   const double acc0{electronSpeed * 2 * PI * centralFreq};
   const double gamma{1 / sqrt(1 - pow(electronSpeed / C, 2))};
 
-  const double radiatedPower{
-      MU0 *
-      pow(QE * 2 * PI * centralFreq * electronSpeed, 2) *
-      pow(gamma, 4) / (6 * PI * C)};
+  const double radiatedPower{MU0 *
+                             pow(QE * 2 * PI * centralFreq * electronSpeed, 2) *
+                             pow(gamma, 4) / (6 * PI * C)};
   const double radiatedPowerNR{LarmorPowerNR(acc0)};
   cout << "Radiated power (R, NR) = " << radiatedPower * 1e15 << " fW,\t"
        << radiatedPowerNR << " fW\n";

@@ -1,2 +1,8 @@
 add_library(SignalProcessing NoiseFunc.cxx LocalOscillator.cxx Signal.cxx InducedVoltage.cxx)
-target_link_libraries(SignalProcessing PUBLIC ${ROOT_LIBRARIES} BasicFunctions SignalUtils FieldClasses Antennas Waveguides)
+target_link_libraries(SignalProcessing PUBLIC 
+  ${ROOT_LIBRARIES} 
+  SignalUtils 
+  FieldClasses 
+  Antennas 
+  Waveguides
+)

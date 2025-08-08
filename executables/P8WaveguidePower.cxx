@@ -7,18 +7,19 @@
 #include <cmath>
 #include <iostream>
 
-
-#include "utilities/BasicCore/Constants.h"
-#include "physics/ElectronDynamics/QTNMFields.h"
-#include "physics/ElectronDynamics/TrajectoryGen.h"
-#include "physics/SignalProcessing/LocalOscillator.h"
-#include "physics/SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TString.h"
 #include "TVector3.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
 #include "physics/Waveguides/CircularWaveguide.h"
 #include "physics/Waveguides/RectangularWaveguide.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 
@@ -32,9 +33,7 @@ int main() {
   const double eSpeed{GetSpeedFromKE(eKE, ME)};  // metres per second
   TVector3 eVel(eSpeed, 0, 0);
   // Determine appropriate magnetic field
-  const double bMag{2 * M_PI * centralFreq *
-                    (ME + eKE * QE / pow(C, 2)) /
-                    QE};
+  const double bMag{2 * M_PI * centralFreq * (ME + eKE * QE / pow(C, 2)) / QE};
   std::cout << "Required magnetic field = " << bMag << " T\n";
 
   // Calculate radiated power

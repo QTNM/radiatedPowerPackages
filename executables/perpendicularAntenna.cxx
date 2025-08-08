@@ -8,16 +8,18 @@
 #include <iostream>
 #include <vector>
 
-#include "physics/Antennas/HalfWaveDipole.h"
-
-#include "physics/SignalProcessing/LocalOscillator.h"
-#include "physics/SignalProcessing/NoiseFunc.h"
-#include "physics/SignalProcessing/Signal.h"
 #include "TArrow.h"
 #include "TAxis.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TString.h"
+#include "physics/Antennas/HalfWaveDipole.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/NoiseFunc.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "utilities/ROOTUtils/CorrelationAnalysis.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 
@@ -34,19 +36,17 @@ int main(int argc, char** argv) {
 
   TVector3 antennaPoint1(antennaRadius * std::cos(antennaAngle1),
                          antennaRadius * std::sin(antennaAngle1), 0.0);
-  TVector3 antennaDirZ1(-1 * std::sin(antennaAngle1),
-                        std::cos(antennaAngle1), 0.0);
-  TVector3 antennaDirX1(std::cos(antennaAngle1), std::sin(antennaAngle1),
+  TVector3 antennaDirZ1(-1 * std::sin(antennaAngle1), std::cos(antennaAngle1),
                         0.0);
+  TVector3 antennaDirX1(std::cos(antennaAngle1), std::sin(antennaAngle1), 0.0);
   HalfWaveDipole* antenna1 =
       new HalfWaveDipole(antennaPoint1, antennaDirX1, antennaDirZ1, 27.01e9);
 
   TVector3 antennaPoint2(antennaRadius * std::cos(antennaAngle2),
                          antennaRadius * std::sin(antennaAngle2), 0.0);
-  TVector3 antennaDirZ2(-1 * std::sin(antennaAngle2),
-                        std::cos(antennaAngle2), 0.0);
-  TVector3 antennaDirX2(std::cos(antennaAngle2), std::sin(antennaAngle2),
+  TVector3 antennaDirZ2(-1 * std::sin(antennaAngle2), std::cos(antennaAngle2),
                         0.0);
+  TVector3 antennaDirX2(std::cos(antennaAngle2), std::sin(antennaAngle2), 0.0);
   HalfWaveDipole* antenna2 =
       new HalfWaveDipole(antennaPoint2, antennaDirX2, antennaDirZ2, 27.01e9);
 

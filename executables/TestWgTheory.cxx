@@ -16,24 +16,25 @@
 #include <random>
 #include <string>
 
-#include "utilities/BasicCore/Constants.h"
-
-#include "physics/ElectronDynamics/QTNMFields.h"
-#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "H5Cpp.h"
-#include "physics/Scattering/ElasticScatter.h"
-#include "physics/Scattering/InelasticScatter.h"
-#include "physics/SignalProcessing/LocalOscillator.h"
-#include "physics/SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TString.h"
 #include "TSystem.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/Scattering/ElasticScatter.h"
+#include "physics/Scattering/InelasticScatter.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
 #include "physics/Waveguides/CircularWaveguide.h"
 #include "physics/Waveguides/Probe.h"
 #include "physics/Waveguides/RectangularWaveguide.h"
 #include "physics/Waveguides/WaveguideMode.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/SignalAnalysis.h"
 
 using namespace rad;
 using std::cout;

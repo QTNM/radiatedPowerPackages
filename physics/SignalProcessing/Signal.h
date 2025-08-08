@@ -27,7 +27,6 @@
 #include "physics/Waveguides/WaveguideMode.h"
 #include "utilities/BasicCore/Constants.h"
 #include "utilities/BasicCore/MathUtils.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
 #include "utilities/BasicFunctions/ComplexVector3.h"
 #include "utilities/BasicFunctions/EMFunctions.h"
 #include "utilities/SignalUtils/ButterworthFilter.h"

@@ -5,16 +5,6 @@
 #include <cmath>
 #include <iostream>
 
-#include "physics/Antennas/HalfWaveDipole.h"
-#include "physics/Antennas/IAntenna.h"
-#include "utilities/BasicCore/Constants.h"
-#include "physics/ElectronDynamics/BorisSolver.h"
-#include "physics/ElectronDynamics/QTNMFields.h"
-#include "physics/ElectronDynamics/TrajectoryGen.h"
-#include "physics/SignalProcessing/InducedVoltage.h"
-#include "physics/SignalProcessing/LocalOscillator.h"
-#include "physics/SignalProcessing/NoiseFunc.h"
-#include "physics/SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TMultiGraph.h"
@@ -23,6 +13,17 @@
 #include "TString.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "physics/Antennas/HalfWaveDipole.h"
+#include "physics/Antennas/IAntenna.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/SignalProcessing/InducedVoltage.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/NoiseFunc.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 
@@ -111,8 +112,7 @@ int main(int argc, char* argv[]) {
   std::cout << "Central frequency = " << centralFrequency << " Hz" << std::endl;
 
   TVector3 vInitial(V0 * sin(pitchAngleRad), 0, V0 * cos(pitchAngleRad));
-  const double gyroradius =
-      gamma * ME * vInitial.X() / (QE * centralField);
+  const double gyroradius = gamma * ME * vInitial.X() / (QE * centralField);
   TVector3 X0(0, gyroradius + radialOffset, 0);
   std::cout << "Gyroradius = " << (gyroradius * 1000) << " mm" << std::endl;
 
@@ -139,16 +139,15 @@ int main(int argc, char* argv[]) {
   for (int iDip = 0; iDip < nDipoles; iDip++) {
     double antennaAngle1 = 2 * PI * double(iDip) / double(nDipoles);
     double reqShift = centralPeriod * double(iDip) / double(nDipoles);
-    std::cout << "Dipole " << iDip
-              << ": Angle = " << (antennaAngle1 * 180 / PI)
+    std::cout << "Dipole " << iDip << ": Angle = " << (antennaAngle1 * 180 / PI)
               << " degrees. Required time shift is " << reqShift * 1e12 << " ps"
               << std::endl;
 
     // Antenna specifications
     TVector3 antennaPoint1(antennaRadius * std::cos(antennaAngle1),
                            antennaRadius * std::sin(antennaAngle1), 0.0);
-    TVector3 antennaDirZ1(-1 * std::sin(antennaAngle1),
-                          std::cos(antennaAngle1), 0.0);
+    TVector3 antennaDirZ1(-1 * std::sin(antennaAngle1), std::cos(antennaAngle1),
+                          0.0);
     TVector3 antennaDirX1(std::cos(antennaAngle1), std::sin(antennaAngle1),
                           0.0);
     HalfWaveDipole* antenna = new HalfWaveDipole(

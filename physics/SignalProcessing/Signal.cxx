@@ -4,6 +4,9 @@
 
 #include "physics/SignalProcessing/Signal.h"
 
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+
 using namespace rad;
 
 rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
@@ -317,8 +320,7 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
   // First things first, we need to figure out a rough frequency our electron is
   // radiating at
   const double omega{CalcInitialFreq() * (2 * PI)};
-  std::cout << "Calculated frequency = " << omega * 1e-9 / (2 * PI)
-            << " GHz\n";
+  std::cout << "Calculated frequency = " << omega * 1e-9 / (2 * PI) << " GHz\n";
 
   // Now need to check if the mode our probe is reading out propagates
   WaveguideMode wm{pr.GetMode()};
@@ -913,8 +915,8 @@ void rad::Signal::AddNewTimes(long double time, TVector3 ePos) {
 
   // Now calculate advanced time for each antenna point
   for (size_t i{0}; i < antenna.size(); i++) {
-    long double ta{time + (ePos - antenna.at(i)->GetAntennaPosition()).Mag() /
-                              C};
+    long double ta{time +
+                   (ePos - antenna.at(i)->GetAntennaPosition()).Mag() / C};
     advancedTimeVec.at(i).push_back(ta);
   }
 

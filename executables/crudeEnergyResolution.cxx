@@ -4,11 +4,12 @@
 /// the trapping condition checked
 
 #include "physics/Antennas/HalfWaveDipole.h"
-#include "utilities/BasicCore/Constants.h"
 #include "physics/ElectronDynamics/BorisSolver.h"
 #include "physics/ElectronDynamics/QTNMFields.h"
 #include "physics/SignalProcessing/InducedVoltage.h"
 #include "physics/SignalProcessing/Signal.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/HistogramUtils.h"
 
 // STL includes
 #include <getopt.h>
@@ -23,6 +24,8 @@
 
 // ROOT includes
 #include "TFile.h"
+#include "TH1.h"
+#include "TH2.h"
 #include "TRandom3.h"
 #include "TSystem.h"
 #include "TTree.h"
@@ -157,10 +160,9 @@ int main(int argc, char* argv[]) {
   const double antennaAngle2 = 90 * PI / 180;
   TVector3 antennaPoint1(antennaRadius * std::cos(antennaAngle1),
                          antennaRadius * std::sin(antennaAngle1), 0.0);
-  TVector3 antennaDirZ1(-1 * std::sin(antennaAngle1),
-                        std::cos(antennaAngle1), 0.0);
-  TVector3 antennaDirX1(std::cos(antennaAngle1), std::sin(antennaAngle1),
+  TVector3 antennaDirZ1(-1 * std::sin(antennaAngle1), std::cos(antennaAngle1),
                         0.0);
+  TVector3 antennaDirX1(std::cos(antennaAngle1), std::sin(antennaAngle1), 0.0);
   HalfWaveDipole* antenna1 =
       new HalfWaveDipole(antennaPoint1, antennaDirX1, antennaDirZ1, 27.01e9);
   const double antennaLowerBandwidth = 26.95e9;
@@ -278,8 +280,8 @@ int main(int argc, char* argv[]) {
     pitchAngle = abs(atan(RVel / velVec.Z()));  // Initial value
 
     std::cout << "Initial angle (degrees), rPos, zPos = "
-              << (initialAngle * 180 / PI) << ", " << radialPosGen
-              << " m, " << zPosGen << " m" << std::endl;
+              << (initialAngle * 180 / PI) << ", " << radialPosGen << " m, "
+              << zPosGen << " m" << std::endl;
 
     // Set up the solver
     BorisSolver solver(bathtubField, -QE, ME, tau);

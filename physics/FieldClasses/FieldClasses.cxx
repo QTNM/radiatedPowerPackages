@@ -6,17 +6,19 @@
 #include <cmath>
 #include <vector>
 
-#include "physics/Antennas/IAntenna.h"
-#include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
 #include "Math/Point3D.h"
 #include "Math/Vector3D.h"
+#include "ROOTUtils/FFTAnalysis.h"
+#include "ROOTUtils/GraphUtils.h"
+#include "ROOTUtils/SignalAnalysis.h"
 #include "TAxis.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TSpline.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "physics/Antennas/IAntenna.h"
+#include "utilities/BasicCore/Constants.h"
 
 rad::FieldPoint::~FieldPoint() {
   delete EField[0];
