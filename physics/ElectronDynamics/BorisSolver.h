@@ -8,14 +8,15 @@
 #ifndef BORIS_SOLVER_H
 #define BORIS_SOLVER_H
 
+#include <iostream>
 #include <tuple>
 
-#include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "physics/ElectronDynamics/BaseField.h"
-#include "TMath.h"
 #include "TVector3.h"
+#include "physics/ElectronDynamics/BaseField.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
 #include "physics/Waveguides/CircularCavity.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 
 namespace rad {
 class BorisSolver {
@@ -37,6 +38,17 @@ class BorisSolver {
 
   // Maximum Purcell factor
   double FpMax{1};
+
+  /// @brief Calculate relativistic cyclotron frequency
+  /// @param BField Magnetic field vector in Tesla
+  /// @param charge Particle charge in Coulombs (default: electron)
+  /// @param energy Kinetic energy in eV
+  /// @param mass Particle mass in kg (default: electron)
+  /// @return Angular frequency vector in rad/s
+  TVector3 calculate_omega(const TVector3 BField,
+                           double charge = -QE,  // electron charge
+                           double energy = 0.0,
+                           double mass = ME);  // electron mass
 
   /// @brief Calculate omega as a function of position
   /// @param pos Position of charge

@@ -4,16 +4,6 @@
 
 #include "physics/SignalProcessing/Signal.h"
 
-#include <iostream>
-
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "utilities/BasicFunctions/ComplexVector3.h"
-#include "utilities/BasicFunctions/EMFunctions.h"
-#include "TMath.h"
-#include "TTreeReader.h"
-#include "TTreeReaderValue.h"
-#include "TVector3.h"
-
 rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
                     LocalOscillator lo, double sRate,
                     std::vector<GaussianNoise> noiseTerms, double tAcq)

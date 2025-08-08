@@ -7,8 +7,6 @@
 
 #include <iostream>
 
-#include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TLatex.h"
@@ -17,6 +15,10 @@
 #include "TString.h"
 #include "TText.h"
 #include "physics/Waveguides/CircularCavity.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/HistogramUtils.h"
 
 using namespace rad;
 

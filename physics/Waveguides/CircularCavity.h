@@ -7,8 +7,10 @@
 #ifndef CIRCULAR_CAVITY_H
 #define CIRCULAR_CAVITY_H
 
-#include "TMath.h"
 #include "physics/Waveguides/ICavity.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/MathUtils.h"
+#include "utilities/BasicFunctions/ComplexVector3.h"
 
 namespace rad {
 class CircularCavity : public ICavity {
@@ -33,7 +35,7 @@ class CircularCavity : public ICavity {
 
   /// @brief Calculate cavity volue
   /// @return Cavity volume in m^3
-  double GetVolume() { return TMath::Pi() * a * a * d; }
+  double GetVolume() { return PI * a * a * d; }
 
   /// @brief Calculate resonant frequency of given mode
   /// @param modeType TE or TM

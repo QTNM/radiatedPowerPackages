@@ -8,20 +8,29 @@
 #define SIGNAL_H
 
 #include <deque>
+#include <iostream>
 #include <memory>
 #include <vector>
 
-#include "physics/Antennas/IAntenna.h"
-#include "utilities/SignalUtils/ButterworthFilter.h"
-#include "physics/SignalProcessing/LocalOscillator.h"
-#include "physics/SignalProcessing/NoiseFunc.h"
 #include "TFile.h"
 #include "TGraph.h"
+#include "TMath.h"
 #include "TTree.h"
+#include "TTreeReader.h"
+#include "TTreeReaderValue.h"
+#include "TVector3.h"
+#include "physics/Antennas/IAntenna.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/NoiseFunc.h"
 #include "physics/Waveguides/ICavity.h"
 #include "physics/Waveguides/IWaveguide.h"
 #include "physics/Waveguides/Probe.h"
 #include "physics/Waveguides/WaveguideMode.h"
+#include "utilities/BasicCore/MathUtils.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "utilities/BasicFunctions/ComplexVector3.h"
+#include "utilities/BasicFunctions/EMFunctions.h"
+#include "utilities/SignalUtils/ButterworthFilter.h"
 
 namespace rad {
 class Signal {

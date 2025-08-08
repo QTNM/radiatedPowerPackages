@@ -8,9 +8,10 @@
 #include <complex>
 #include <iostream>
 
-#include "utilities/BasicFunctions/BasicFunctions.h"
 #include "TMath.h"
 #include "TVector3.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/MathUtils.h"
 
 rad::CircularWaveguide::CircularWaveguide(double radius, double length)
     : a(radius), d(radius) {}

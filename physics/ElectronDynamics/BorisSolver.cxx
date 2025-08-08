@@ -6,15 +6,8 @@
 
 #include "physics/ElectronDynamics/BorisSolver.h"
 
-#include <tuple>
-
-#include "physics/ElectronDynamics/BaseField.h"
-#include "physics/ElectronDynamics/QTNMFields.h"
-#include "TMath.h"
-#include "TVector3.h"
-
 rad::BorisSolver::BorisSolver()
-    : mass(ME), charge(-TMath::Qe()), tau(0), field(new UniformField(1.0)) {}
+    : mass(ME), charge(-QE), tau(0), field(new UniformField(1.0)) {}
 
 rad::BorisSolver::BorisSolver(BaseField* field_v, const double charge_v,
                               const double mass_v, const double tau_v,
@@ -31,7 +24,7 @@ rad::BorisSolver::BorisSolver(BaseField* field_v, const double charge_v,
     for (unsigned int iRho{0}; iRho < nScanPnts; iRho++) {
       double rho{double(iRho) * cav->GetRadius() / double(nScanPnts - 1)};
       for (unsigned int iPhi{0}; iPhi < nScanPnts; iPhi++) {
-        double phi{double(iPhi) * TMath::TwoPi() / double(nScanPnts - 1)};
+        double phi{double(iPhi) * 2 * PI / double(nScanPnts - 1)};
         for (unsigned int iZ{0}; iZ < nScanPnts; iZ++) {
           double z{-cav->GetLength() +
                    cav->GetLength() * double(iZ) / double(nScanPnts - 1)};
@@ -58,7 +51,7 @@ rad::BorisSolver::BorisSolver(BaseField* field_v, const double charge_v,
     // Now calculate the effective volume of the cavity
     // Integrate field over cavity volume
     const double dRho{cav->GetRadius() / double(nScanPnts)};
-    const double dPhi{TMath::TwoPi() / double(nScanPnts)};
+    const double dPhi{2 * PI / double(nScanPnts)};
     const double dZ{cav->GetLength() / double(nScanPnts)};
     for (unsigned int iRho{0}; iRho < nScanPnts; iRho++) {
       double rho{dRho / 2 + double(iRho) * dRho};
@@ -88,10 +81,18 @@ rad::BorisSolver::BorisSolver(BaseField* field_v, const double charge_v,
     // Get resonant frequency
     const double cavQ{200};
     const double fTE111{cav->GetResonantModeF(CircularCavity::kTE, 1, 1, 1)};
-    const double lTE111{TMath::C() / fTE111};
-    FpMax = 3 * cavQ * pow(lTE111, 3) / (pow(TMath::TwoPi(), 2) * vEff);
+    const double lTE111{C / fTE111};
+    FpMax = 3 * cavQ * pow(lTE111, 3) / (pow(2 * PI, 2) * vEff);
     std::cout << "Maximum Purcell factor = " << FpMax << std::endl;
   }
+}
+
+TVector3 rad::BorisSolver::calculate_omega(const TVector3 BField,
+                                           const double charge,
+                                           const double energy,
+                                           const double mass) {
+  double gamma_m0{mass + energy * TMath::Qe() / pow(TMath::C(), 2)};
+  return (charge * BField * (1.0 / gamma_m0));
 }
 
 TVector3 rad::BorisSolver::get_omega(const TVector3 pos) {
@@ -116,8 +117,8 @@ TVector3 rad::BorisSolver::radiation_acceleration(const TVector3 pos,
     // Start by getting the mode resonant frequency
     double fRes{cav->GetResonantModeF(CircularCavity::kTE, 1, 1, 1)};
     // Now get the instantaneous magnetic field at this point
-    double gamma{1 / sqrt(1 - pow(vel.Mag() / TMath::C(), 2))};
-    double ke{(gamma - 1) * ME * TMath::C() * TMath::C() / TMath::Qe()};
+    double gamma{1 / sqrt(1 - pow(vel.Mag() / C, 2))};
+    double ke{(gamma - 1) * ME * C * C / QE};
     double f{CalcCyclotronFreq(ke, calc_b_field(pos).Mag())};
     double deltaFRes{fRes / 200};
 
@@ -164,7 +165,7 @@ TVector3 rad::BorisSolver::acc(const TVector3 pos, const TVector3 vel) {
 
 std::tuple<TVector3, TVector3> rad::BorisSolver::advance_step(
     const double time_step, const TVector3 x0, const TVector3 v0) {
-  double gamma_n{1.0 / sqrt(1 - v0.Dot(v0) / pow(TMath::C(), 2))};
+  double gamma_n{1.0 / sqrt(1 - v0.Dot(v0) / pow(C, 2))};
   TVector3 u_n{v0 * gamma_n};
   TVector3 x_n{x0};
   TVector3 v_n{v0};
@@ -177,7 +178,7 @@ std::tuple<TVector3, TVector3> rad::BorisSolver::advance_step(
   TVector3 E_tot_minus{E_nplushalf + radiation_acceleration(x_nplushalf, u_n) *
                                          (mass / charge)};
   TVector3 u_minus{u_n + (time_step * charge / (2 * mass)) * E_tot_minus};
-  double gamma_minus{sqrt(1.0 + u_n.Dot(u_n) / pow(TMath::C(), 2))};
+  double gamma_minus{sqrt(1.0 + u_n.Dot(u_n) / pow(C, 2))};
 
   // Rotation step
   TVector3 B_nplushalf{calc_b_field(x_nplushalf)};
@@ -193,7 +194,7 @@ std::tuple<TVector3, TVector3> rad::BorisSolver::advance_step(
   TVector3 u_nplus1{u_plus + (time_step * charge / (2 * mass)) * E_tot_plus};
 
   // Now update position
-  double gamma_nplus1{sqrt(1 + pow(u_nplus1.Mag() / TMath::C(), 2))};
+  double gamma_nplus1{sqrt(1 + pow(u_nplus1.Mag() / C, 2))};
   TVector3 v_nplus1{u_nplus1 * (1 / gamma_nplus1)};
   TVector3 x_nplus1{x_nplushalf + v_nplus1 * (time_step / 2.0)};
 

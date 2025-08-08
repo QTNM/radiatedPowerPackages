@@ -2,15 +2,12 @@
 #ifndef BASIC_FUNCTIONS_H
 #define BASIC_FUNCTIONS_H
 
-// Include pure mathematical functions (no external dependencies)
-#include "utilities/BasicFunctions/PureFunctions.h"
-
 // Include ROOT-based utilities (requires ROOT)
+#include "utilities/ROOTUtils/CorrelationAnalysis.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
 #include "utilities/ROOTUtils/HistogramUtils.h"
-#include "utilities/ROOTUtils/FFTAnalysis.h"
 #include "utilities/ROOTUtils/SignalAnalysis.h"
-#include "utilities/ROOTUtils/CorrelationAnalysis.h"
 
 // Legacy includes for backward compatibility
 #include "Math/Point3D.h"

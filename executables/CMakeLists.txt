@@ -42,7 +42,7 @@ add_executable(SingleAntennaPower SingleAntennaPower.cxx)
 target_link_libraries(SingleAntennaPower PRIVATE ElectronDynamics BasicFunctions Antennas SignalProcessing FieldClasses ${ROOT_LIBRARIES})
 
 add_executable(RadialEnergyResolution RadialEnergyResolution.cxx)
-target_link_libraries(RadialEnergyResolution PRIVATE ElectronDynamics BasicFunctions ${ROOT_LIBRARIES})
+target_link_libraries(RadialEnergyResolution PRIVATE ElectronDynamics BasicCore ROOTUtils ${ROOT_LIBRARIES})
 
 add_executable(RealisticFields RealisticFields.cxx)
 target_link_libraries(RealisticFields PUBLIC Antennas SignalProcessing ElectronDynamics BasicFunctions ${ROOT_LIBRARIES})
@@ -51,10 +51,10 @@ add_executable(RFBandwidthCRESDA RFBandwidthCRESDA.cxx)
 target_link_libraries(RFBandwidthCRESDA PRIVATE ElectronDynamics BasicFunctions ${ROOT_LIBRARIES})
 
 add_executable(SignalRequirements SignalRequirements.cxx)
-target_link_libraries(SignalRequirements PRIVATE BasicFunctions ${ROOT_LIBRARIES})
+target_link_libraries(SignalRequirements PRIVATE BasicCore ROOTUtils ${ROOT_LIBRARIES})
 
 add_executable(FakeTrackGen FakeTrackGen.cxx)
-target_link_libraries(FakeTrackGen PRIVATE BasicFunctions ${ROOT_LIBRARIES})
+target_link_libraries(FakeTrackGen PRIVATE BasicCore ROOTUtils ${ROOT_LIBRARIES})
 
 add_executable(PenningTrapTraj PenningTrapTraj.cxx)
 target_link_libraries(PenningTrapTraj PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
@@ -69,10 +69,10 @@ add_executable(NicePenningTraj NicePenningTraj.cxx)
 target_link_libraries(NicePenningTraj PRIVATE BasicFunctions ElectronDynamics ${ROOT_LIBRARIES})
 
 add_executable(Project8CCA Project8CCA.cxx)
-target_link_libraries(Project8CCA PRIVATE BasicFunctions Waveguides ${ROOT_LIBRARIES})
+target_link_libraries(Project8CCA PRIVATE BasicCore ROOTUtils Waveguides ${ROOT_LIBRARIES})
 
 add_executable(CRESDA0Cavity CRESDA0Cavity.cxx)
-target_link_libraries(CRESDA0Cavity PRIVATE BasicFunctions Waveguides ${ROOT_LIBRARIES})
+target_link_libraries(CRESDA0Cavity PRIVATE BasicCore ROOTUtils Waveguides ${ROOT_LIBRARIES})
 
 add_executable(CavityFieldAmps CavityFieldAmps.cxx)
 target_link_libraries(CavityFieldAmps PRIVATE BasicFunctions Waveguides ElectronDynamics ${ROOT_LIBRARIES})

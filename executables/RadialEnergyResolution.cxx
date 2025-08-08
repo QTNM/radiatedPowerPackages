@@ -7,10 +7,6 @@
 #include <iostream>
 #include <memory>
 
-#include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "physics/ElectronDynamics/ComsolFields.h"
-#include "physics/ElectronDynamics/QTNMFields.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TGraph.h"
@@ -20,6 +16,12 @@
 #include "TRandom3.h"
 #include "TString.h"
 #include "TVector3.h"
+#include "physics/ElectronDynamics/ComsolFields.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/MathUtils.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/HistogramUtils.h"
 
 using namespace rad;
 using std::unique_ptr;

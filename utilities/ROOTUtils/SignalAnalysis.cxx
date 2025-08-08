@@ -1,8 +1,8 @@
 /// SignalAnalysis.cxx - ROOT-based signal analysis functions
 #include "utilities/ROOTUtils/SignalAnalysis.h"
 
-#include "utilities/BasicCore/Constants.h"
 #include "TMath.h"
+#include "utilities/BasicCore/Constants.h"
 
 double rad::CalcAeHertzianDipole(const double wavelength,
                                  const ROOT::Math::XYZVector dipoleDir,
@@ -48,13 +48,6 @@ double rad::CalcTimeFromRetardedTime(TVector3 fieldPoint, TVector3 ePosition,
   return time;
 }
 
-double rad::GetSpeedFromKE(double T, double particleMass) {
-  double gamma = T * TMath::Qe() / (ME * TMath::C() * TMath::C()) + 1;
-  double betaSq = 1 - 1 / pow(gamma, 2);
-  double speed = sqrt(betaSq) * TMath::C();
-  return speed;
-}
-
 double rad::GetGyroradius(TVector3 velocity, TVector3 bField,
                           double particleMass) {
   double gamma{1 /
@@ -62,16 +55,4 @@ double rad::GetGyroradius(TVector3 velocity, TVector3 bField,
   TVector3 vPerp{velocity - (velocity.Dot(bField.Unit()) * bField)};
   double rg{gamma * particleMass * vPerp.Mag() / (TMath::Qe() * bField.Mag())};
   return rg;
-}
-
-TVector3 rad::calculate_omega(const TVector3 BField, const double charge,
-                              const double energy, const double mass) {
-  double gamma_m0 = mass + energy * TMath::Qe() / pow(TMath::C(), 2);
-  return (charge * BField * (1.0 / gamma_m0));
-}
-
-double rad::CalcCyclotronFreq(const double KE, const double B) {
-  double freq =
-      TMath::Qe() * B / (ME + (KE * TMath::Qe() / pow(TMath::C(), 2)));
-  return freq / (2 * TMath::Pi());
 }

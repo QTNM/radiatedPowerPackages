@@ -8,9 +8,9 @@
 
 #include <random>
 
-#include "utilities/BasicFunctions/BasicFunctions.h"
 #include "utilities/BasicCore/Constants.h"
-#include "TMath.h"
+#include "utilities/BasicCore/Physics.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
 
 double rad::BaseScatter::GetMeanFreePath(double N) {
   double xsec{GetTotalXSec()};

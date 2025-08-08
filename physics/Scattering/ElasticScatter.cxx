@@ -10,8 +10,7 @@
 #include <iostream>
 #include <random>
 
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "TMath.h"
+#include "utilities/BasicCore/Constants.h"
 
 rad::ElasticScatter::ElasticScatter(double incidentKE, unsigned int aNum,
                                     unsigned int aMass)
@@ -25,15 +24,14 @@ rad::ElasticScatter::ElasticScatter(double incidentKE, unsigned int aNum,
 double rad::ElasticScatter::TotalRutherfordXSec() {
   double ke_keV{GetIncidentKE() / 1e3};
   double alpha{3.4e-3 * pow(Z, 2 / 3) / ke_keV};
-  return 5.21e-25 * pow(Z / ke_keV, 2) * 4 * TMath::Pi() *
+  return 5.21e-25 * pow(Z / ke_keV, 2) * 4 * PI *
          pow((ke_keV + ME_EV / 1e3) / (ke_keV + 2 * ME_EV / 1e3), 2) /
          (alpha * (1 + alpha));
 }
 
 double rad::ElasticScatter::RutherfordDCS(double theta) {
-  const double chargeFac{
-      Z * pow(TMath::Qe(), 2) /
-      pow(16 * M_PI * EPSILON0 * GetIncidentKE() * TMath::Qe(), 2)};
+  const double chargeFac{Z * pow(TMath::Qe(), 2) /
+                         pow(16 * M_PI * EPSILON0 * GetIncidentKE() * QE, 2)};
   if (theta == 0) {
     return 0;
   } else {
@@ -44,7 +42,7 @@ double rad::ElasticScatter::RutherfordDCS(double theta) {
 double rad::ElasticScatter::Calcq(double theta) {
   const double gamma{1 + GetIncidentKE() / ME_EV};
   const double beta{sqrt(1 - 1 / pow(gamma, 2))};
-  const double p{gamma * beta * ME * TMath::C()};
+  const double p{gamma * beta * ME * C};
   return 2 * p * sin(theta / 2);
 }
 
@@ -156,13 +154,11 @@ double rad::ElasticScatter::GetRandomScatteringAngle() {
 
 double rad::ElasticScatter::GetEnergyAfterScatter(double theta) {
   // Calculate incident momentum
-  const double Ei_Joules{GetIncidentKE() * TMath::Qe() +
-                         ME * pow(TMath::C(), 2)};
+  const double Ei_Joules{GetIncidentKE() * QE + ME * pow(C, 2)};
   const double pi{sqrt(pow(Ei_Joules, 2) - pow(ME * pow(TMath::C(), 2), 2)) /
                   TMath::C()};
   // Now calculate the final momentum
   const double pf{pi - Calcq(theta)};
-  const double Ef{
-      sqrt(pow(pf * TMath::C(), 2) + pow(ME * pow(TMath::C(), 2), 2))};
-  return (Ef - ME * pow(TMath::C(), 2)) / TMath::Qe();
+  const double Ef{sqrt(pow(pf * C, 2) + pow(ME * pow(C, 2), 2))};
+  return (Ef - ME * pow(C, 2)) / QE;
 }

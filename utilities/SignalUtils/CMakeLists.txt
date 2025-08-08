@@ -1,5 +1,10 @@
 # SignalUtils - Signal processing utilities with FFTW and Boost dependencies
-add_library(SignalUtils FFTWComplex.cxx FourierTransforms.cxx ButterworthFilter.cxx)
+add_library(SignalUtils 
+    FFTWComplex.cxx 
+    FourierTransforms.cxx 
+    BandpassFilter.cxx 
+    ButterworthFilter.cxx
+)
 
 # Link to required external libraries
 target_link_libraries(SignalUtils PUBLIC ${FFTW3_LIBRARIES} ${Boost_MATH_LIBRARY})
