@@ -4,6 +4,7 @@ add_library(SignalUtils
     FourierTransforms.cxx 
     BandpassFilter.cxx 
     ButterworthFilter.cxx
+    SpectrumAnalysis.cxx
 )
 
 # Link to required external libraries

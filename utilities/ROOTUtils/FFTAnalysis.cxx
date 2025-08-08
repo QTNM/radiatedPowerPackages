@@ -1,189 +1,117 @@
-/// FFTAnalysis.cxx - ROOT-based FFT and frequency domain analysis
+/// FFTAnalysis.cxx - ROOT-based FFT and frequency domain analysis (using SignalUtils internally)
 #include "utilities/ROOTUtils/FFTAnalysis.h"
 
 #include "utilities/BasicCore/Constants.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
-#include "utilities/SignalUtils/FourierTransforms.h"
-#include "utilities/SignalUtils/FFTWComplex.h"
+#include "utilities/SignalUtils/SpectrumAnalysis.h"
 #include <cmath>
 #include "TF1.h"
 #include "TRandom3.h"
 
 using namespace rad;
 
-// Very similar to the FFTtools implementation but without the scaling of the x
-// axis the MHz
 TGraph *rad::MakePowerSpectrumNorm(const TGraph *grWave) {
-  double *oldY = grWave->GetY();
-  double *oldX = grWave->GetX();
-  double deltaT = oldX[1] - oldX[0];
-  int length = grWave->GetN();
-  FFTWComplex *theFFT = doFFT(length, oldY);
-
-  int newLength = (length / 2) + 1;
-  double *newY = new double[newLength];
-  double *newX = new double[newLength];
-
-  double deltaF = 1 / (deltaT * length);
-
-  double tempF = 0;
-  for (int i = 0; i < newLength; i++) {
-    float power = pow(getAbs(theFFT[i]), 2);
-    if (i > 0 && i < newLength - 1) power *= 2;  // account for symmetry
-    power *= deltaT / (length);  // For time-integral squared amplitude
-    power /= deltaF;             // Just to normalise bin-widths
-    // Ends up the same as dt^2, need to integrate the power (multiply by df)
-    // to get a meaningful number out.
-    newX[i] = tempF;
-    newY[i] = power;
-    tempF += deltaF;
-  }
-
-  TGraph *grPower = new TGraph(newLength, newX, newY);
-  setGraphAttr(grPower);
-  delete[] theFFT;
-  delete[] newY;
-  delete[] newX;
-  return grPower;
+  // Extract data from TGraph
+  double *timeData = grWave->GetY();
+  double *xData = grWave->GetX();
+  int n = grWave->GetN();
+  double deltaT = xData[1] - xData[0];
+  
+  // Convert to vector and process using SignalUtils
+  std::vector<double> timeVec(timeData, timeData + n);
+  auto spectrum = rad::MakePowerSpectrumNorm(timeVec, deltaT);
+  
+  // Convert back to TGraph
+  TGraph *result = new TGraph(spectrum.first.size(), spectrum.first.data(), spectrum.second.data());
+  setGraphAttr(result);
+  return result;
 }
 
 TGraph *rad::MakePowerSpectrumPeriodogram(const TGraph *grWave) {
-  double *oldY = grWave->GetY();
-  double *oldX = grWave->GetX();
-  double deltaT = oldX[1] - oldX[0];
-  int length = grWave->GetN();
-  FFTWComplex *theFFT = doFFT(length, oldY);
-  double lengthDub = (double)length;
-  int newLength = (length / 2) + 1;
-  double *newY = new double[newLength];
-  double *newX = new double[newLength];
-
-  double deltaF = 1 / (deltaT * length);
-
-  double tempF = 0;
-  for (int i = 0; i < newLength; i++) {
-    float power = pow(getAbs(theFFT[i]), 2);
-    if (i > 0 && i < newLength - 1) power *= 2;  // account for symmetry
-    double scale = lengthDub * lengthDub;
-    power /= scale;
-    newX[i] = tempF;
-    newY[i] = power;
-    tempF += deltaF;
-  }
-
-  TGraph *grPower = new TGraph(newLength, newX, newY);
-  setGraphAttr(grPower);
-  grPower->GetXaxis()->SetTitle("Frequency [Hz]");
-  delete[] theFFT;
-  delete[] newY;
-  delete[] newX;
-  return grPower;
+  // Extract data from TGraph
+  double *timeData = grWave->GetY();
+  double *xData = grWave->GetX();
+  int n = grWave->GetN();
+  double deltaT = xData[1] - xData[0];
+  
+  // Convert to vector and process using SignalUtils
+  std::vector<double> timeVec(timeData, timeData + n);
+  auto spectrum = rad::MakePowerSpectrumPeriodogram(timeVec, deltaT);
+  
+  // Convert back to TGraph
+  TGraph *result = new TGraph(spectrum.first.size(), spectrum.first.data(), spectrum.second.data());
+  setGraphAttr(result);
+  result->GetXaxis()->SetTitle("Frequency [Hz]");
+  return result;
 }
 
 TGraph rad::MakePowerSpectrumPeriodogram(const TGraph &grWave) {
-  double *oldY = grWave.GetY();
-  double *oldX = grWave.GetX();
-  double deltaT = oldX[1] - oldX[0];
-  int length = grWave.GetN();
-  FFTWComplex *theFFT = doFFT(length, oldY);
-  double lengthDub = (double)length;
-  int newLength = (length / 2) + 1;
-  double *newY = new double[newLength];
-  double *newX = new double[newLength];
-
-  double deltaF = 1 / (deltaT * length);
-
-  double tempF = 0;
-  for (int i = 0; i < newLength; i++) {
-    float power = pow(getAbs(theFFT[i]), 2);
-    if (i > 0 && i < newLength - 1) power *= 2;  // account for symmetry
-    double scale = lengthDub * lengthDub;
-    power /= scale;
-    newX[i] = tempF;
-    newY[i] = power;
-    tempF += deltaF;
-  }
-
-  TGraph grPower(newLength, newX, newY);
-  setGraphAttr(grPower);
-  grPower.GetXaxis()->SetTitle("Frequency [Hz]");
-  delete[] theFFT;
-  delete[] newY;
-  delete[] newX;
-  return grPower;
+  // Extract data from TGraph
+  double *timeData = grWave.GetY();
+  double *xData = grWave.GetX();
+  int n = grWave.GetN();
+  double deltaT = xData[1] - xData[0];
+  
+  // Convert to vector and process using SignalUtils
+  std::vector<double> timeVec(timeData, timeData + n);
+  auto spectrum = rad::MakePowerSpectrumPeriodogram(timeVec, deltaT);
+  
+  // Convert back to TGraph
+  TGraph result(spectrum.first.size(), spectrum.first.data(), spectrum.second.data());
+  setGraphAttr(result);
+  result.GetXaxis()->SetTitle("Frequency [Hz]");
+  return result;
 }
 
 double rad::IntegratePowerNorm(const TGraph *grFFT, Int_t firstBin,
                                Int_t lastBin) {
-  double integral{0};
-  double freq{}, power{};
-  // Multiply by frequency bin width
-  double deltaF = grFFT->GetPointX(1) - grFFT->GetPointX(0);
-  for (int i = firstBin; i <= lastBin; i++) {
-    integral += grFFT->GetPointY(i) * deltaF;
-  }
-  integral *= deltaF;
-  return integral;
+  // Extract data from TGraph
+  double *freqData = grFFT->GetX();
+  double *powerData = grFFT->GetY();
+  int n = grFFT->GetN();
+  
+  // Handle default values
+  if (firstBin < 0) firstBin = 0;
+  if (lastBin < 0) lastBin = n - 1;
+  
+  // Convert to vectors
+  std::vector<double> freqVec(freqData, freqData + n);
+  std::vector<double> powerVec(powerData, powerData + n);
+  
+  return rad::IntegratePowerNorm(freqVec, powerVec, firstBin, lastBin);
 }
 
-// Re-implementation of the filter from FFTtools but without the conversion
-// factors
 TGraph *rad::BandPassFilter(const TGraph *grWave, const double minFreq,
                             const double maxFreq) {
-  double *oldY = grWave->GetY();
-  double *oldX = grWave->GetX();
-  double deltaT = oldX[1] - oldX[0];
-  int length = grWave->GetN();
-  FFTWComplex *theFFT = doFFT(length, oldY);
-
-  int newLength = (length / 2) + 1;
-  double deltaF = 1 / (deltaT * length);  // Hz
-
-  double tempF = 0;
-  for (int i = 0; i < newLength; i++) {
-    if (tempF < minFreq || tempF > maxFreq) {
-      theFFT[i].re = 0;
-      theFFT[i].im = 0;
-    }
-    tempF += deltaF;
-  }
-
-  double *filteredVals = doInverseFFT(length, theFFT);
-
-  TGraph *grFiltered = new TGraph(length, oldX, filteredVals);
-  delete[] theFFT;
-  delete[] filteredVals;
-  return grFiltered;
+  // Extract data from TGraph
+  double *timeData = grWave->GetY();
+  double *xData = grWave->GetX();
+  int n = grWave->GetN();
+  double deltaT = xData[1] - xData[0];
+  
+  // Convert to vector and process using SignalUtils
+  std::vector<double> timeVec(timeData, timeData + n);
+  auto filteredData = rad::BandPassFilterSpectrum(timeVec, deltaT, minFreq, maxFreq);
+  
+  // Convert back to TGraph
+  return new TGraph(n, xData, filteredData.data());
 }
 
 TGraph *rad::MakeFFTMagGraph(TGraph *grInput) {
-  double *oldY = grInput->GetY();
-  double *oldX = grInput->GetX();
-  double deltaT = oldX[1] - oldX[0];
-  int length = grInput->GetN();
-  FFTWComplex *theFFT = doFFT(length, oldY);
-  double lengthDub = (double)length;
-  int newLength = (length / 2) + 1;
-  double *newY = new double[newLength];
-  double *newX = new double[newLength];
-
-  double deltaF = 1 / (deltaT * length);
-
-  double tempF = 0;
-  for (int i = 0; i < newLength; i++) {
-    float mag = getAbs(theFFT[i]);
-    newX[i] = tempF;
-    newY[i] = mag;
-    tempF += deltaF;
-  }
-
-  TGraph *grMag = new TGraph(newLength, newX, newY);
-  setGraphAttr(grMag);
-
-  delete[] theFFT;
-  delete[] newY;
-  delete[] newX;
-  return grMag;
+  // Extract data from TGraph
+  double *timeData = grInput->GetY();
+  double *xData = grInput->GetX();
+  int n = grInput->GetN();
+  double deltaT = xData[1] - xData[0];
+  
+  // Convert to vector and process using SignalUtils
+  std::vector<double> timeVec(timeData, timeData + n);
+  auto spectrum = rad::MakeFFTMagnitude(timeVec, deltaT);
+  
+  // Convert back to TGraph
+  TGraph *result = new TGraph(spectrum.first.size(), spectrum.first.data(), spectrum.second.data());
+  setGraphAttr(result);
+  return result;
 }
 
 /// PDF for Rayleigh distribution
@@ -197,20 +125,17 @@ double RayleighPDFFunc(double *x, double *par) {
 
 void rad::AddWhiteNoiseFrequencyDomainPowerNorm(TGraph *grIn, const double Teff,
                                                 const int seed) {
-  gRandom->SetSeed(seed);
-  const double sampleRate = 2 * grIn->GetPointX(grIn->GetN() - 1);
-  const double deltaT = 1.0 / sampleRate;
-  const double deltaF = grIn->GetPointX(1) - grIn->GetPointX(0);
-  const double sigma = std::sqrt(K_B * Teff * sampleRate);
-  TF1 *f1 = new TF1("f1", RayleighPDFFunc, 0, 4 * sigma, 1);
-  f1->SetParameter(0, sigma);
-
-  // Now loop through the bins of the graph and add the noise
-  for (int i = 0; i < grIn->GetN(); i++) {
-    double noise =
-        pow(f1->GetRandom() * sqrt(0.5), 2) * (1 / deltaF) * (deltaT);
-    grIn->SetPointY(i, grIn->GetPointY(i) + noise);
+  // Extract data from TGraph
+  double *powerData = grIn->GetY();
+  int n = grIn->GetN();
+  double deltaF = grIn->GetPointX(1) - grIn->GetPointX(0);
+  
+  // Convert to vector and process using SignalUtils
+  std::vector<double> powerVec(powerData, powerData + n);
+  rad::AddWhiteNoiseFrequencyDomain(powerVec, deltaF, Teff, seed);
+  
+  // Update TGraph with modified data
+  for (int i = 0; i < n; i++) {
+    grIn->SetPointY(i, powerVec[i]);
   }
-
-  delete f1;
 }
