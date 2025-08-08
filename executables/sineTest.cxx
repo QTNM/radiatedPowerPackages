@@ -11,7 +11,7 @@
 #include "TRandom3.h"
 #include "physics/FieldClasses/FieldClasses.h"
 #include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
 
 int main() {
   double totalTime1 = 500.0;
