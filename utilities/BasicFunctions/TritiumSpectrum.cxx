@@ -2,9 +2,10 @@
 
 #include "utilities/BasicFunctions/TritiumSpectrum.h"
 
+#include <cmath>
+
 #include "utilities/BasicCore/Constants.h"
 #include "utilities/BasicCore/NuFitValues.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
 
 double rad::TritiumDecayRate(double electronT, double m1, double m2, double m3,
                              double endpointE) {
