@@ -85,6 +85,30 @@ inline double CalcCyclotronFreq(double KE, double B = 1.0) {
   return freq / (2 * PI);
 }
 
+/// @brief Calculate gyroradius/Larmor radius of charged particle
+/// @param velocity Velocity 3-vector in m/s
+/// @param bField Magnetic field 3-vector in Tesla
+/// @param particleMass Particle mass in kg
+/// @return Gyroradius in meters
+inline double GetGyroradius(const double velocity[3], const double bField[3],
+                            double particleMass) {
+  const double bMag{sqrt(bField[0] * bField[0] + bField[1] * bField[1] +
+                         bField[2] * bField[2])};
+  const double vSq{velocity[0] * velocity[0] + velocity[1] * velocity[1] +
+                   velocity[2] * velocity[2]};
+  const double gamma{1 / sqrt(1 - vSq / (C * C))};
+  const double vDotBUnit{(velocity[0] * bField[0] + velocity[1] * bField[1] +
+                          velocity[2] * bField[2]) /
+                         bMag};
+  double vPerpX{velocity[0] - vDotBUnit * bField[0]};
+  double vPerpY{velocity[1] - vDotBUnit * bField[1]};
+  double vPerpZ{velocity[2] - vDotBUnit * bField[2]};
+  const double vPerpMag{
+      sqrt(vPerpX * vPerpX + vPerpY * vPerpY + vPerpZ * vPerpZ)};
+  double rg{gamma * particleMass * vPerpMag / (QE * bMag)};
+  return rg;
+}
+
 }  // namespace rad
 
 #endif
