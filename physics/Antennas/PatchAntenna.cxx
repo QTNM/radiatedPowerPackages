@@ -5,9 +5,12 @@
 #include <cassert>
 #include <iostream>
 
-#include "TMath.h"
+#include <cmath>
 #include "TVector3.h"
+#include "utilities/BasicCore/Constants.h"
 #include "boost/math/special_functions/sinc.hpp"
+
+using namespace rad;
 
 rad::PatchAntenna::PatchAntenna(TVector3 antPos, TVector3 antXAx,
                                 TVector3 antYAx, double width, double height,
@@ -34,7 +37,7 @@ rad::PatchAntenna::PatchAntenna(TVector3 antPos, TVector3 antXAx,
   double epEff{((permittivity + 1.0) / 2.0) +
                ((permittivity - 1.0) / 2.0) * pow(1.0 + 12.0 * H / W, -0.5)};
   // Then calculate the effective length
-  LEff = TMath::C() / (2 * f0 * sqrt(epEff));
+  LEff = C / (2 * f0 * sqrt(epEff));
   // From this, we can calculate the actual length of the patch
   double deltaL{0.412 * H * (epEff + 0.3) * (W / H + 0.264) /
                 ((epEff - 0.258) * (W / H + 0.8))};
@@ -60,10 +63,10 @@ TVector3 rad::PatchAntenna::GetEPhi(const TVector3 electronPosition) {
 }
 
 double rad::PatchAntenna::GetETheta(double theta, double phi) {
-  if (theta > TMath::Pi() / 2) {
+  if (theta > PI / 2) {
     return 0;
   } else {
-    double k{2 * TMath::Pi() * GetCentralFrequency() / TMath::C()};
+    double k{2 * PI * GetCentralFrequency() / C};
     double F1{boost::math::sinc_pi(k * H * sin(theta) * cos(theta) / 2.0) *
               boost::math::sinc_pi(k * W * sin(theta) * sin(phi) / 2.0)};
     double F2{2.0 * cos(k * L * sin(theta) * cos(phi) / 2.0)};
@@ -73,10 +76,10 @@ double rad::PatchAntenna::GetETheta(double theta, double phi) {
 }
 
 double rad::PatchAntenna::GetEPhi(double theta, double phi) {
-  if (theta > TMath::Pi() / 2) {
+  if (theta > PI / 2) {
     return 0;
   } else {
-    double k{2 * TMath::Pi() * GetCentralFrequency() / TMath::C()};
+    double k{2 * PI * GetCentralFrequency() / C};
     double F1{boost::math::sinc_pi(k * H * sin(theta) * cos(theta) / 2.0) *
               boost::math::sinc_pi(k * W * sin(theta) * sin(phi) / 2.0)};
     double F2{2.0 * cos(k * L * sin(theta) * cos(phi) / 2.0)};
@@ -88,23 +91,23 @@ double rad::PatchAntenna::GetEPhi(double theta, double phi) {
 double rad::PatchAntenna::GetHEff(TVector3 ePos) {
   double theta{GetTheta(ePos)};
   double phi{GetPhi(ePos)};
-  double gain{4 * TMath::Pi() *
+  double gain{4 * PI *
               (GetETheta(theta, phi) * GetETheta(theta, phi) +
                GetEPhi(theta, phi) * GetEPhi(theta, phi)) /
               PRad};
   double imp{50};  // Assume we can match to 50 Ohm load
-  double lambda{TMath::C() / GetCentralFrequency()};
-  return sqrt(imp * lambda * lambda * gain / (480 * TMath::Pi() * TMath::Pi()));
+  double lambda{C / GetCentralFrequency()};
+  return sqrt(imp * lambda * lambda * gain / (480 * PI * PI));
 }
 
 double rad::PatchAntenna::GetAEff(TVector3 ePos) {
   double theta{GetTheta(ePos)};
   double phi{GetPhi(ePos)};
-  double gain{4 * TMath::Pi() *
+  double gain{4 * PI *
               (GetETheta(theta, phi) * GetETheta(theta, phi) +
                GetEPhi(theta, phi) * GetEPhi(theta, phi)) /
               PRad};
-  return pow(TMath::C() / GetCentralFrequency(), 2) * gain / (4 * TMath::Pi());
+  return pow(C / GetCentralFrequency(), 2) * gain / (4 * PI);
 }
 
 double rad::PatchAntenna::GetImpedance() {
@@ -113,7 +116,7 @@ double rad::PatchAntenna::GetImpedance() {
 }
 
 double rad::PatchAntenna::GetBandwidth() {
-  double lambda{TMath::C() / GetCentralFrequency()};
+  double lambda{C / GetCentralFrequency()};
   double bw{GetCentralFrequency() * 3.77 * W * H *
             (relativePerm - 1 / pow(relativePerm, 2)) / (L * lambda)};
   return bw;
@@ -122,15 +125,15 @@ double rad::PatchAntenna::GetBandwidth() {
 double rad::PatchAntenna::GetAEffTheta(TVector3 ePos) {
   double theta{GetTheta(ePos)};
   double phi{GetPhi(ePos)};
-  double gain{4 * TMath::Pi() * GetETheta(theta, phi) * GetETheta(theta, phi) /
+  double gain{4 * PI * GetETheta(theta, phi) * GetETheta(theta, phi) /
               PRad};
-  return pow(TMath::C() / GetCentralFrequency(), 2) * gain / (4 * TMath::Pi());
+  return pow(C / GetCentralFrequency(), 2) * gain / (4 * PI);
 }
 
 double rad::PatchAntenna::GetAEffPhi(TVector3 ePos) {
   double theta{GetTheta(ePos)};
   double phi{GetPhi(ePos)};
-  double gain{4 * TMath::Pi() * GetEPhi(theta, phi) * GetEPhi(theta, phi) /
+  double gain{4 * PI * GetEPhi(theta, phi) * GetEPhi(theta, phi) /
               PRad};
-  return pow(TMath::C() / GetCentralFrequency(), 2) * gain / (4 * TMath::Pi());
+  return pow(C / GetCentralFrequency(), 2) * gain / (4 * PI);
 }

@@ -7,7 +7,6 @@
 #include "physics/SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
-#include "TMath.h"
 #include "TString.h"
 
 using namespace rad;
@@ -21,7 +20,7 @@ int main() {
 
   const double loadResistance = 70.0;
   const double noiseTemp = 0.001;
-  LocalOscillator myLO(26.75e9 * 2 * TMath::Pi());
+  LocalOscillator myLO(26.75e9 * 2 * PI);
   GaussianNoise noise1(noiseTemp, loadResistance);
   std::vector<GaussianNoise> noiseTerms;
   noiseTerms.push_back(noise1);

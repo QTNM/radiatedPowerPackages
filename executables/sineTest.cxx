@@ -5,13 +5,13 @@
 #include <iostream>
 
 // ROOT includes
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "physics/FieldClasses/FieldClasses.h"
 #include "TAxis.h"
 #include "TFile.h"
 #include "TGraph.h"
-#include "TMath.h"
 #include "TRandom3.h"
+#include "physics/FieldClasses/FieldClasses.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
 
 int main() {
   double totalTime1 = 500.0;
@@ -26,9 +26,9 @@ int main() {
   TGraph* gr1 = new TGraph();
   for (int n = 0; n < nSteps1; n++) {
     double time = n * stepSize1;
-    double amp = TMath::Sin(2 * TMath::Pi() * 1.0 * time) +
-                 0.2 * TMath::Sin(2 * TMath::Pi() * 5.0 * time + 1.0) +
-                 0.3 * TMath::Sin(2 * TMath::Pi() * 7.0 * time + 1.5) +
+    double amp = std::sin(2 * rad::PI * 1.0 * time) +
+                 0.2 * std::sin(2 * rad::PI * 5.0 * time + 1.0) +
+                 0.3 * std::sin(2 * rad::PI * 7.0 * time + 1.5) +
                  randomNum->Gaus(0, 0.05);
     gr1->SetPoint(gr1->GetN(), time, amp);
   }
@@ -36,9 +36,9 @@ int main() {
   TGraph* gr2 = new TGraph();
   for (int n = 0; n < nSteps2; n++) {
     double time = n * stepSize2;
-    double amp = TMath::Sin(2 * TMath::Pi() * 1.0 * time) +
-                 0.2 * TMath::Sin(2 * TMath::Pi() * 5.0 * time + 1.0) +
-                 0.3 * TMath::Sin(2 * TMath::Pi() * 7.0 * time + 1.5) +
+    double amp = std::sin(2 * rad::PI * 1.0 * time) +
+                 0.2 * std::sin(2 * rad::PI * 5.0 * time + 1.0) +
+                 0.3 * std::sin(2 * rad::PI * 7.0 * time + 1.5) +
                  randomNum->Gaus(0, 0.05);
     gr2->SetPoint(gr2->GetN(), time, amp);
   }

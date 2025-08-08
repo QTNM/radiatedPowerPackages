@@ -1,5 +1,6 @@
 // signalSum.cxx
 
+#include <cmath>
 #include "physics/Antennas/HertzianDipole.h"
 #include "utilities/BasicFunctions/BasicFunctions.h"
 #include "physics/SignalProcessing/LocalOscillator.h"
@@ -7,7 +8,6 @@
 #include "physics/SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
-#include "TMath.h"
 #include "TVector3.h"
 
 using namespace rad;
@@ -19,29 +19,29 @@ int main() {
   HertzianDipole* antenna1 =
       new HertzianDipole(antennaPoint1, dipoleDirX1, dipoleDirZ1, 27.01e9);
 
-  const double antennaAngle2 = 10.0 * TMath::Pi() / 180;
-  TVector3 antennaPoint2(0.05 * TMath::Cos(antennaAngle2),
-                         0.05 * TMath::Sin(antennaAngle2), 0.0);
-  TVector3 dipoleDirZ2(TMath::Sin(antennaAngle2), TMath::Cos(antennaAngle2),
+  const double antennaAngle2 = 10.0 * PI / 180;
+  TVector3 antennaPoint2(0.05 * std::cos(antennaAngle2),
+                         0.05 * std::sin(antennaAngle2), 0.0);
+  TVector3 dipoleDirZ2(std::sin(antennaAngle2), std::cos(antennaAngle2),
                        0.0);
-  TVector3 dipoleDirX2(TMath::Cos(antennaAngle2),
-                       -1 * TMath::Sin(antennaAngle2), 0.0);
+  TVector3 dipoleDirX2(std::cos(antennaAngle2),
+                       -1 * std::sin(antennaAngle2), 0.0);
   HertzianDipole* antenna2 =
       new HertzianDipole(antennaPoint2, dipoleDirX2, dipoleDirZ2, 27.01e9);
 
-  const double antennaAngle3 = -10.0 * TMath::Pi() / 180;
-  TVector3 antennaPoint3(0.05 * TMath::Cos(antennaAngle3),
-                         0.05 * TMath::Sin(antennaAngle3), 0.0);
-  TVector3 dipoleDirZ3(TMath::Sin(antennaAngle3), TMath::Cos(antennaAngle3),
+  const double antennaAngle3 = -10.0 * PI / 180;
+  TVector3 antennaPoint3(0.05 * std::cos(antennaAngle3),
+                         0.05 * std::sin(antennaAngle3), 0.0);
+  TVector3 dipoleDirZ3(std::sin(antennaAngle3), std::cos(antennaAngle3),
                        0.0);
-  TVector3 dipoleDirX3(TMath::Cos(antennaAngle3),
-                       -1 * TMath::Sin(antennaAngle3), 0.0);
+  TVector3 dipoleDirX3(std::cos(antennaAngle3),
+                       -1 * std::sin(antennaAngle3), 0.0);
   HertzianDipole* antenna3 =
       new HertzianDipole(antennaPoint3, dipoleDirX3, dipoleDirZ3, 27.01e9);
 
   const double loadResistance = 70.0;
   const double noiseTemp = 0.0005;
-  LocalOscillator myLO(26.75e9 * 2 * TMath::Pi());
+  LocalOscillator myLO(26.75e9 * 2 * PI);
   GaussianNoise noise1(noiseTemp, loadResistance);
   std::vector<GaussianNoise> noiseTerms;
   noiseTerms.push_back(noise1);

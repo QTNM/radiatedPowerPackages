@@ -59,8 +59,8 @@ TVector3 GenDecayVelocity(pld &p, std::mt19937 &mt) {
 
   // Get a random direction
   std::uniform_real_distribution<double> uniDist(0, 1);
-  double phiGen{uniDist(mt) * TMath::TwoPi()};
-  double thetaGen{uniDist(mt) * TMath::Pi()};
+  double phiGen{uniDist(mt) * (2 * PI)};
+  double thetaGen{uniDist(mt) * PI};
 
   return TVector3(v * cos(phiGen) * sin(thetaGen),
                   v * sin(phiGen) * sin(thetaGen), v * cos(thetaGen));
@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
     TVector3 pos(0, 0, 0);  // metres
     TVector3 vel{GenDecayVelocity(spec, gen)};
     // Recover the electron kinetic energy
-    double gamma{1 / sqrt(1 - pow(vel.Mag() / TMath::C(), 2))};
+    double gamma{1 / sqrt(1 - pow(vel.Mag() / C, 2))};
     double ke{(gamma - 1) * ME_EV};
 
     cout << "Electron " << i + 1 << ": E_i = " << ke / 1e3 << " keV\n";
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
     bool isTrapped{true};
     const double keCutoff{1};       // eV
     const double timeCutoff{1e-3};  // s
-    const double tau{2 * R_E / (3 * TMath::C())};
+    const double tau{2 * R_E / (3 * C)};
 
     // Variables used in the tree
     totalTime = 0;  // s
@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
       // Propagate the particle up to its next scatter
       // Make sure to check that it has not exited the trap
       double simStepTime{5e-12};  // seconds
-      BorisSolver solver(field, -TMath::Qe(), ME, tau);
+      BorisSolver solver(field, -QE, ME, tau);
 
       double nTimeSteps{std::round(pathTimeStep / simStepTime)};
       for (int iStep{0}; iStep < nTimeSteps; iStep++) {
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) {
       if (isTrapped) {
         // Now figure out kinematics of the scatter
         // Calculate the current kinetic energy
-        gamma = 1 / sqrt(1 - pow(vel.Mag() / TMath::C(), 2));
+        gamma = 1 / sqrt(1 - pow(vel.Mag() / C, 2));
         ke = (gamma - 1) * ME_EV;
 
         // Recalculate the cross sections based on the cross-sections
@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
         scatterAng.at(nScatters) = scatAngle;
         scatterELoss.at(nScatters) = eLoss;
 
-        cout << "Scattering angle = " << scatAngle * 180 / TMath::Pi()
+        cout << "Scattering angle = " << scatAngle * 180 / PI
              << " degrees\t New KE = " << ke / 1e3
              << " keV\t Energy loss = " << eLoss << " eV\n";
 

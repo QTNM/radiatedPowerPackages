@@ -12,6 +12,7 @@
 #include <iostream>
 #include <string>
 
+#include "utilities/BasicCore/Constants.h"
 #include "utilities/BasicFunctions/BasicFunctions.h"
 #include "physics/Scattering/ElasticScatter.h"
 #include "physics/Scattering/InelasticScatter.h"
@@ -324,7 +325,7 @@ int main(int argc, char* argv[]) {
 
   const double gamma{1 + EIncident / ME_EV};
   const double beta{sqrt(1 - 1 / pow(gamma, 2))};
-  const double pIncident{gamma * beta * ME * TMath::C()};
+  const double pIncident{gamma * beta * ME * C};
 
   const double thetaMin{1e-5};
   const double thetaMax{179 * M_PI / 180};

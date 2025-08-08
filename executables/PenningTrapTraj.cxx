@@ -10,7 +10,6 @@
 #include "TFile.h"
 #include "TGraph.h"
 #include "TGraph2D.h"
-#include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
 
@@ -24,7 +23,7 @@ int main(int argc, char *argv[]) {
   const double eKE{18.6e3};
   const double eSpeed{GetSpeedFromKE(eKE, ME)};
   const double pitchAngleDeg{88};
-  const double pitchAngle{pitchAngleDeg * TMath::Pi() / 180};
+  const double pitchAngle{pitchAngleDeg * PI / 180};
   TVector3 initVel(eSpeed * sin(pitchAngle), 0, eSpeed * cos(pitchAngle));
   TVector3 initPos(0, 0, 0);
 
@@ -36,16 +35,16 @@ int main(int argc, char *argv[]) {
   auto trap = new IdealPenningTrap(BFieldMag, v0, rho0, z0);
 
   // Calculate trap frequencies
-  const double omegaZ{sqrt(-TMath::Qe() * v0 / (ME * z0 * z0))};
-  const double fZ{omegaZ / (2 * TMath::Pi())};
+  const double omegaZ{sqrt(-QE * v0 / (ME * z0 * z0))};
+  const double fZ{omegaZ / (2 * PI)};
   const double fCFree{CalcCyclotronFreq(eKE, BFieldMag)};
-  const double omegaC{2 * TMath::Pi() * fCFree};
+  const double omegaC{2 * PI * fCFree};
   const double omegaPlus{
       0.5 * (omegaC + sqrt(omegaC * omegaC - 2 * omegaZ * omegaZ))};
-  const double fPlus{omegaPlus / (2 * TMath::Pi())};
+  const double fPlus{omegaPlus / (2 * PI)};
   const double omegaMinus{
       0.5 * (omegaC - sqrt(omegaC * omegaC - 2 * omegaZ * omegaZ))};
-  const double fMinus{omegaMinus / (2 * TMath::Pi())};
+  const double fMinus{omegaMinus / (2 * PI)};
 
   std::cout << "Free cyclotron frequency = " << fCFree / 1e9 << " GHz\n";
   std::cout << "Axial frequency = " << fZ / 1e6 << " MHz\n";
@@ -103,16 +102,16 @@ int main(int argc, char *argv[]) {
     grRho->SetPoint(e, time, sqrt(xPos * xPos + yPos * yPos));
     grPitch->SetPoint(
         e, time,
-        atan2(sqrt(xVel * xVel + yVel * yVel), zVel) * 180 / TMath::Pi());
+        atan2(sqrt(xVel * xVel + yVel * yVel), zVel) * 180 / PI);
     grHelix->SetPoint(e, xPos, yPos, zPos);
 
     double speed{sqrt(xVel * xVel + yVel * yVel + zVel * zVel)};
-    double gamma{1 / sqrt(1 - pow(speed / TMath::C(), 2))};
-    double KE{(gamma - 1) * ME * TMath::C() * TMath::C()};
+    double gamma{1 / sqrt(1 - pow(speed / C, 2))};
+    double KE{(gamma - 1) * ME * C * C};
     double speedPerp{sqrt(xVel * xVel + yVel * yVel)};
-    grKE->SetPoint(e, time, KE / TMath::Qe());
-    grKEPar->SetPoint(e, time, 0.5 * ME * zVel * zVel / TMath::Qe());
-    grKEPerp->SetPoint(e, time, 0.5 * ME * speedPerp * speedPerp / TMath::Qe());
+    grKE->SetPoint(e, time, KE / QE);
+    grKEPar->SetPoint(e, time, 0.5 * ME * zVel * zVel / QE);
+    grKEPerp->SetPoint(e, time, 0.5 * ME * speedPerp * speedPerp / QE);
   }
   delete tr;
   tFile->Close();

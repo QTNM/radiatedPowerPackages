@@ -48,6 +48,9 @@ inline constexpr double TRITIUM_I{13.603};
 // Boltzmann constant in Joules/Kelving
 inline constexpr double K_B{1.380649e-23};
 
+// Reduced Planck constant in J⋅s
+inline constexpr double HBAR{1.0545718176461565e-34};
+
 }  // namespace rad
 
 #endif

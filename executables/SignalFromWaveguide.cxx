@@ -69,7 +69,7 @@ int main() {
   const double sampleRate{1e9};
   const double loFreq{cycFreq - 220e6};
   std::cout << "Local oscillator frequency = " << loFreq / 1e9 << " GHz\n";
-  LocalOscillator lo(loFreq * TMath::TwoPi());
+  LocalOscillator lo(loFreq * (2 * PI));
   Signal sig1(trackFile, wg1, lo, sampleRate, probe1);
   std::cout << "Finished generating first signal\n";
   Signal sig2(trackFile, wg2, lo, sampleRate, probe2);

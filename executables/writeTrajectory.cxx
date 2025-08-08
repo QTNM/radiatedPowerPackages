@@ -16,7 +16,6 @@
 #include "physics/ElectronDynamics/BorisSolver.h"
 #include "physics/ElectronDynamics/QTNMFields.h"
 #include "TFile.h"
-#include "TMath.h"
 #include "TTree.h"
 
 using namespace rad;
@@ -102,15 +101,15 @@ int main(int argc, char* argv[]) {
 
   const clock_t begin_time = clock();  // Start timing
 
-  const double pitchAngleRad = pitchAngle * TMath::Pi() / 180;
+  const double pitchAngleRad = pitchAngle * PI / 180;
   const double TElec = 18600;  // eV
-  const double gamma = TElec * TMath::Qe() / (ME * TMath::C() * TMath::C()) + 1;
+  const double gamma = TElec * QE / (ME * C * C) + 1;
   const double betaSq = 1 - 1 / pow(gamma, 2);
-  const double V0 = sqrt(betaSq) * TMath::C();
+  const double V0 = sqrt(betaSq) * C;
   const TVector3 B0(0, 0, 1.0);  // Background 1T field in Z direction
   double tau = 0.0;
 
-  if (energyLoss) tau = 2 * R_E / (3 * TMath::C());
+  if (energyLoss) tau = 2 * R_E / (3 * C);
 
   TVector3 X0(0, -0.000460441, 0);
   TVector3 vInitial(V0 * sin(pitchAngleRad), 0, V0 * cos(pitchAngleRad));
@@ -159,7 +158,7 @@ int main(int argc, char* argv[]) {
             << std::endl;
 
   // Set up the Boris solver
-  BorisSolver solver(bathtub, -TMath::Qe(), ME, tau);
+  BorisSolver solver(bathtub, -QE, ME, tau);
 
   // Open the output ROOT file
   TFile* fout = new TFile(outputFile.data(), "RECREATE");

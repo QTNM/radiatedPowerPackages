@@ -7,8 +7,10 @@
 #include "utilities/BasicCore/Constants.h"
 #include "utilities/ROOTUtils/HistogramUtils.h"
 #include "utilities/ROOTUtils/FFTAnalysis.h"
-#include "TMath.h"
+#include <cmath>
 #include "TH1D.h"
+
+using namespace rad;
 
 void rad::setGraphAttr(TGraph *gr) {
   gr->GetXaxis()->SetTitleSize(0.05);
@@ -44,7 +46,7 @@ TGraph *rad::DownmixInPhase(TGraph *grInput, const double freq) {
     double time = grInput->GetPointX(i);
     grOut->SetPoint(
         i, time,
-        grInput->GetPointY(i) * TMath::Cos(2 * TMath::Pi() * freq * time));
+        grInput->GetPointY(i) * std::cos(2 * PI * freq * time));
   }
   return grOut;
 }
@@ -56,7 +58,7 @@ TGraph *rad::DownmixQuadrature(TGraph *grInput, const double freq) {
     double time = grInput->GetPointX(i);
     grOut->SetPoint(
         i, time,
-        grInput->GetPointY(i) * TMath::Sin(2 * TMath::Pi() * freq * time));
+        grInput->GetPointY(i) * std::sin(2 * PI * freq * time));
   }
   return grOut;
 }

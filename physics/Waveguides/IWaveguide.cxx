@@ -3,13 +3,16 @@
 #include "physics/Waveguides/IWaveguide.h"
 
 #include <iostream>
+#include <cmath>
 
 #include "utilities/BasicCore/Constants.h"
+
+using namespace rad;
 
 double rad::IWaveguide::GetModeImpedance(WaveguideMode mode, double omega) {
   double Z{-1.0};
   double k_c{GetCutoffWavenumber(mode)};
-  double k{omega / TMath::C()};
+  double k{omega / C};
   double beta{sqrt(k * k - k_c * k_c)};
 
   if (mode.GetModeType() == ModeType::kTE) {
@@ -35,18 +38,18 @@ bool rad::IWaveguide::ModePropagates(WaveguideMode mode, double f) {
 
 double rad::IWaveguide::GetPhaseVelocity(WaveguideMode mode, double f) {
   const double f_c{GetCutoffFrequency(mode)};
-  return TMath::C() / sqrt(1 - pow(f_c / f, 2));
+  return C / sqrt(1 - pow(f_c / f, 2));
 }
 
 double rad::IWaveguide::GetGroupVelocity(WaveguideMode mode, double f) {
   const double f_c{GetCutoffFrequency(mode)};
-  return TMath::C() * sqrt(1 - pow(f_c / f, 2));
+  return C * sqrt(1 - pow(f_c / f, 2));
 }
 
 double rad::IWaveguide::GetFieldAmp(WaveguideMode mode, double omega,
                                     TVector3 ePos, TVector3 eVel, double norm,
                                     bool state, bool isPositive) {
-  TVector3 j{-TMath::Qe() * eVel};
+  TVector3 j{-QE * eVel};
   TVector3 eTrans{GetModeEField(ePos, mode, norm, omega, state)};
   eTrans.SetZ(0);
   TVector3 eAxial{GetModeEField(ePos, mode, norm, omega, state)};

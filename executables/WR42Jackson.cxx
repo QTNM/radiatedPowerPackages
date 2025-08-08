@@ -11,7 +11,6 @@
 #include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TF1.h"
 #include "TFile.h"
-#include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
 #include "physics/Waveguides/Probe.h"
@@ -37,7 +36,7 @@ double GetEModeNormFactor(RectangularWaveguide *wv, int m, int n, double freq,
       TVector3 surfacePos{thisx, thisy, 0.0};
       WaveguideMode mode(m, n, kTE);
       ComplexVector3 eTransReal{
-          wv->GetModeEField(surfacePos, mode, 1, freq * 2 * TMath::Pi(), true)};
+          wv->GetModeEField(surfacePos, mode, 1, freq * 2 * PI, true)};
       eTransReal.SetZ(0.0);
       sum += (eTransReal.Dot(eTransReal)).real() * area;
     }  // Loop over y points
@@ -63,7 +62,7 @@ double GetHModeNormFactor(RectangularWaveguide *wv, int m, int n, double freq,
       TVector3 surfacePos{thisx, thisy, 0.0};
       WaveguideMode mode(m, n, kTE);
       ComplexVector3 hTransReal{
-          wv->GetModeHField(surfacePos, mode, 1, freq * 2 * TMath::Pi(), true)};
+          wv->GetModeHField(surfacePos, mode, 1, freq * 2 * PI, true)};
       hTransReal.SetZ(0.0);
       sum += (hTransReal.Dot(hTransReal)).real() * area;
     }  // Loop over y points
@@ -77,15 +76,15 @@ double GetHModeNormFactor(RectangularWaveguide *wv, int m, int n, double freq,
 std::complex<double> GetPositiveAmp(RectangularWaveguide *wv, int m, int n,
                                     double freq, TVector3 pos, TVector3 vel) {
   WaveguideMode mode(m, n, kTE);
-  double waveImp{wv->GetModeImpedance(mode, freq * 2 * TMath::Pi())};
-  TVector3 j{-TMath::Qe() * vel};
+  double waveImp{wv->GetModeImpedance(mode, freq * 2 * PI)};
+  TVector3 j{-QE * vel};
   ComplexVector3 jComplex{j};
 
   ComplexVector3 eTrans{
-      wv->GetModeEField(pos, mode, 1, freq * 2 * TMath::Pi(), true)};
+      wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
   eTrans.SetZ(std::complex<double>{0.0, 0.0});
   ComplexVector3 eAxial{
-      wv->GetModeEField(pos, mode, 1, freq * 2 * TMath::Pi(), true)};
+      wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
   eAxial.SetX(std::complex<double>{0.0, 0.0});
   eAxial.SetY(std::complex<double>{0.0, 0.0});
   ComplexVector3 subVec{eTrans - eAxial};
@@ -97,15 +96,15 @@ std::complex<double> GetPositiveAmp(RectangularWaveguide *wv, int m, int n,
 std::complex<double> GetNegativeAmp(RectangularWaveguide *wv, int m, int n,
                                     double freq, TVector3 pos, TVector3 vel) {
   WaveguideMode mode(m, n, kTE);
-  double waveImp{wv->GetModeImpedance(mode, freq * 2 * TMath::Pi())};
-  TVector3 j{-TMath::Qe() * vel};
+  double waveImp{wv->GetModeImpedance(mode, freq * 2 * PI)};
+  TVector3 j{-QE * vel};
   ComplexVector3 jComplex{j};
 
   ComplexVector3 eTrans{
-      wv->GetModeEField(pos, mode, 1, freq * 2 * TMath::Pi(), true)};
+      wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
   eTrans.SetZ(std::complex<double>{0.0, 0.0});
   ComplexVector3 eAxial{
-      wv->GetModeEField(pos, mode, 1, freq * 2 * TMath::Pi(), true)};
+      wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
   eAxial.SetX(std::complex<double>{0.0, 0.0});
   eAxial.SetY(std::complex<double>{0.0, 0.0});
   ComplexVector3 subVec{eTrans + eAxial};
@@ -135,10 +134,10 @@ double CalculatePowerPlus(RectangularWaveguide *wv, int m, int n, double freq,
 
       WaveguideMode mode(m, n, kTE);
       ComplexVector3 ETotal{
-          wv->GetModeEField(surfacePos, mode, 1, freq * 2 * TMath::Pi(), true)};
+          wv->GetModeEField(surfacePos, mode, 1, freq * 2 * PI, true)};
       ETotal *= aPlus;
       ComplexVector3 HTotal{
-          wv->GetModeHField(surfacePos, mode, 1, freq * 2 * TMath::Pi(), true)};
+          wv->GetModeHField(surfacePos, mode, 1, freq * 2 * PI, true)};
       HTotal *= aPlus;
 
       totalPowerPlus += (ETotal.Cross(HTotal.Conj())).Z().real() * area;
@@ -167,8 +166,8 @@ int main(int argc, char *argv[]) {
             << std::endl;
 
   const double ke{
-      (TMath::Qe() * centralBField / (2 * TMath::Pi() * centralFreq) - ME) *
-      pow(TMath::C(), 2) / TMath::Qe()};
+      (QE * centralBField / (2 * PI * centralFreq) - ME) *
+      pow(C, 2) / QE};
   std::cout << "KE = " << ke << std::endl;
   const double speed{GetSpeedFromKE(ke, ME)};
   const TVector3 velocity{speed, 0, 0};
@@ -190,7 +189,7 @@ int main(int argc, char *argv[]) {
   double integralH{GetHModeNormFactor(WR42, 1, 0, centralFreq, nSurfPnts)};
   WaveguideMode modeTE10(1, 0, kTE);
   double waveImp{
-      WR42->GetModeImpedance(modeTE10, centralFreq * 2 * TMath::Pi())};
+      WR42->GetModeImpedance(modeTE10, centralFreq * 2 * PI)};
   std::cout << "Integral E = " << integralE << std::endl;  // Should be 1
   std::cout << "Integral H = " << integralH
             << std::endl;  // Should equal to the below
@@ -272,9 +271,9 @@ int main(int argc, char *argv[]) {
       TVector3 thePos{xPos, yPos, zPos};
       TVector3 theVel{xVel, yVel, zVel};
 
-      double beta{theVel.Mag() / TMath::C()};
+      double beta{theVel.Mag() / C};
       double gamma{1.0 / sqrt(1 - beta * beta)};
-      double thiske{(gamma - 1.0) * ME * TMath::C() * TMath::C()};
+      double thiske{(gamma - 1.0) * ME * C * C};
       grEnergy->SetPoint(iE, time, thiske);
 
       std::complex<double> ampPlus{

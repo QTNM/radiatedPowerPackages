@@ -3,7 +3,7 @@
 
 #include "utilities/SignalUtils/FourierTransforms.h"
 #include "utilities/SignalUtils/FFTWComplex.h" 
-#include "TMath.h"
+#include <cmath>
 
 double *rad::GetCorrelation(int length, double *oldY1, double *oldY2) {
   double *newY1 = new double[length];
@@ -34,8 +34,8 @@ TGraph *rad::GetCorrelationGraph(const TGraph *gr1, const TGraph *gr2,
   int length = gr1->GetN();
   int length2 = gr2->GetN();
 
-  int N = int(TMath::Power(2, int(TMath::Log2(length)) + 2));
-  if (N < length2) N = int(TMath::Power(2, int(TMath::Log2(length2)) + 2));
+  int N = int(std::pow(2, int(std::log2(length)) + 2));
+  if (N < length2) N = int(std::pow(2, int(std::log2(length2)) + 2));
 
   // Will really assume that N's are equal for now
   int firstRealSamp = (N - length) / 2;
@@ -109,8 +109,8 @@ TGraph *rad::GetNormalisedCorrelationGraph(const TGraph *gr1, const TGraph *gr2,
   Double_t *y2{gr2->GetY()};
   Double_t denom{gr1->GetRMS(2) * gr2->GetRMS(2)};
 
-  int N = int(TMath::Power(2, int(TMath::Log2(length)) + 2));
-  if (N < length2) N = int(TMath::Power(2, int(TMath::Log2(length2)) + 2));
+  int N = int(std::pow(2, int(std::log2(length)) + 2));
+  if (N < length2) N = int(std::pow(2, int(std::log2(length2)) + 2));
 
   // Will really assume that N's are equal for now
   int firstRealSamp = 1 + (N - 2 * length) / 2;
@@ -171,9 +171,9 @@ TGraph *rad::GetNormalisedCorrelationGraphTimeDomain(
   int minDtIndex = 0;
   int maxDtIndex = N - 1;
   if (useDtRange) {
-    minDtIndex = TMath::Floor((dtMin - waveOffset) / deltaT) + (N / 2);
+    minDtIndex = std::floor((dtMin - waveOffset) / deltaT) + (N / 2);
     if (minDtIndex < 0) minDtIndex = 0;
-    maxDtIndex = TMath::Ceil((dtMax - waveOffset) / deltaT) + (N / 2);
+    maxDtIndex = std::ceil((dtMax - waveOffset) / deltaT) + (N / 2);
     if (maxDtIndex < 0) maxDtIndex = 0;
   }
 

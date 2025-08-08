@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
   const double frequency{26e9};  // 26 GHz
   const double energy{18.6e3};   // 30 keV
   const double gamma{energy / ME_EV + 1};
-  const double reqBField{2 * M_PI * frequency * ME * gamma / TMath::Qe()};
+  const double reqBField{2 * M_PI * frequency * ME * gamma / QE};
   cout << "Required B field = " << reqBField << " Tesla\n";
   const double freeSpacePower{CalcLarmorPower(energy, reqBField, M_PI / 2)};
   cout << "Free space power = " << freeSpacePower * 1e15 << " fW\n";
@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
     const double modeImp{wg->GetModeImpedance(modeTE10, 2 * M_PI * frequency)};
     const double k_c{wg->GetCutoffWavenumber(modeTE10)};
     const double omega{2 * M_PI * frequency};
-    const double beta{sqrt(pow(omega / TMath::C(), 2) - k_c * k_c)};
+    const double beta{sqrt(pow(omega / C, 2) - k_c * k_c)};
     const double modePn{M_PI * M_PI * beta * MU0 * omega *
                         (wr42Height * wr42Height) /
                         (2 * wr42Height * wr42Width * pow(k_c, 4))};
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
       TVector3 modeField{wg->GetModeEField(thePos, modeTE10, normPlus,
                                            2 * M_PI * frequency, true)};
 
-      TVector3 J{-TMath::Qe() * theVel};
+      TVector3 J{-QE * theVel};
       const double ATE10{-1 / modePn * modeField.Dot(J)};
       const double ampJackson{
           -modeImp / 2 *

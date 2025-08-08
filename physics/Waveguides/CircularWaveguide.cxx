@@ -8,10 +8,11 @@
 #include <complex>
 #include <iostream>
 
-#include "TMath.h"
 #include "TVector3.h"
 #include "utilities/BasicCore/Constants.h"
 #include "utilities/BasicCore/MathUtils.h"
+
+using namespace rad;
 
 rad::CircularWaveguide::CircularWaveguide(double radius, double length)
     : a(radius), d(radius) {}
@@ -53,7 +54,7 @@ TVector3 rad::CircularWaveguide::GetModeEField(TVector3 pos, WaveguideMode mode,
     // We have a TM mode
     double Xnm{boost::math::cyl_bessel_j_zero(double(n), m)};
     double k_c{Xnm / a};
-    double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
+    double betaSq{pow(omega / C, 2) - k_c * k_c};
     double beta{sqrt(betaSq)};
     EZ = A * boost::math::cyl_bessel_j(n, k_c * rho);
     ERho = (-A * beta * Xnm / (a * k_c * k_c)) *
@@ -100,7 +101,7 @@ TVector3 rad::CircularWaveguide::GetModeHField(TVector3 pos, WaveguideMode mode,
     // We have a TE mode
     double XnmPrime{GetBesselPrimeZero(n, m)};
     double k_c{XnmPrime / a};
-    double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
+    double betaSq{pow(omega / C, 2) - k_c * k_c};
     double beta{sqrt(betaSq)};
     HZ = -A * k_c * k_c * boost::math::cyl_bessel_j(n, k_c * rho) /
          (omega * MU0);
@@ -121,7 +122,7 @@ TVector3 rad::CircularWaveguide::GetModeHField(TVector3 pos, WaveguideMode mode,
     // We have a TM mode
     double Xnm{boost::math::cyl_bessel_j_zero(double(n), m)};
     double k_c{Xnm / a};
-    double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
+    double betaSq{pow(omega / C, 2) - k_c * k_c};
     double beta{sqrt(betaSq)};
     HRho = A * EPSILON0 * double(n) * boost::math::cyl_bessel_j(n, k_c * rho) /
            (rho * MU0);
@@ -155,12 +156,12 @@ double rad::CircularWaveguide::GetCutoffFrequency(WaveguideMode mode) {
     if (mt == ModeType::kTE) {
       double pnmPrime{GetBesselPrimeZero(n, m)};
       double k_c{pnmPrime / a};
-      double f_c{k_c * TMath::C() / (2 * TMath::Pi())};
+      double f_c{k_c * C / (2 * PI)};
       return f_c;
     } else if (mt == ModeType::kTM) {
       double pnm{boost::math::cyl_bessel_j_zero(double(n), m)};
       double k_c{pnm / a};
-      double f_c{k_c * TMath::C() / (2 * TMath::Pi())};
+      double f_c{k_c * C / (2 * PI)};
       return f_c;
     } else {
       return -1;
@@ -198,15 +199,15 @@ double rad::CircularWaveguide::GetEFieldIntegral(WaveguideMode mode,
                                                  int nSurfPnts, bool state) {
   double integral{0};
   const double dRho{a / double(nSurfPnts)};
-  const double dPhi{TMath::TwoPi() / double(nSurfPnts)};
+  const double dPhi{(2 * PI) / double(nSurfPnts)};
 
   for (unsigned int iRho{0}; iRho < nSurfPnts; iRho++) {
     double thisRho{a / (2.0 * double(nSurfPnts)) +
                    a * double(iRho) / double(nSurfPnts)};
     const double area{thisRho * dRho * dPhi};
     for (unsigned int iPhi{0}; iPhi < nSurfPnts; iPhi++) {
-      double thisPhi{TMath::TwoPi() / (2.0 * double(nSurfPnts)) +
-                     TMath::TwoPi() * double(iPhi) / double(nSurfPnts)};
+      double thisPhi{(2 * PI) / (2.0 * double(nSurfPnts)) +
+                     (2 * PI) * double(iPhi) / double(nSurfPnts)};
 
       TVector3 surfacePos{thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0.0};
       TVector3 eTrans{GetModeEField(surfacePos, mode, A, omega, state)};
@@ -226,15 +227,15 @@ double rad::CircularWaveguide::GetHFieldIntegral(WaveguideMode mode,
                                                  double omega, double A,
                                                  double B, int nSurfPnts) {
   const double dRho{a / double(nSurfPnts)};
-  const double dPhi{TMath::TwoPi() / double(nSurfPnts)};
+  const double dPhi{(2 * PI) / double(nSurfPnts)};
   double integral{0};
   for (unsigned int iRho{0}; iRho < nSurfPnts; iRho++) {
     double thisRho{a / (2.0 * double(nSurfPnts)) +
                    a * double(iRho) / double(nSurfPnts)};
     const double area{thisRho * dRho * dPhi};
     for (unsigned int iPhi{0}; iPhi < nSurfPnts; iPhi++) {
-      double thisPhi{TMath::TwoPi() / (2.0 * double(nSurfPnts)) +
-                     TMath::TwoPi() * double(iPhi) / double(nSurfPnts)};
+      double thisPhi{(2 * PI) / (2.0 * double(nSurfPnts)) +
+                     (2 * PI) * double(iPhi) / double(nSurfPnts)};
 
       TVector3 surfacePos{thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0.0};
       ComplexVector3 hTrans{GetModeHField(surfacePos, mode, A, omega, true)};
@@ -254,10 +255,10 @@ void rad::CircularWaveguide::CalculatePn(WaveguideMode mode, double omega,
     double thisRho{GetInnerRadius() / (2 * double(nSurfPnts)) +
                    GetInnerRadius() * double(iRho) / double(nSurfPnts)};
     const double elArea{thisRho * (GetInnerRadius() / double(nSurfPnts)) *
-                        (TMath::TwoPi() / double(nSurfPnts))};
+                        ((2 * PI) / double(nSurfPnts))};
     for (unsigned int iPhi{0}; iPhi < nSurfPnts; iPhi++) {
-      double thisPhi{TMath::TwoPi() / (2 * double(nSurfPnts)) +
-                     TMath::TwoPi() * double(iPhi) / double(nSurfPnts)};
+      double thisPhi{2 * PI / (2 * double(nSurfPnts)) +
+                     (2 * PI) * double(iPhi) / double(nSurfPnts)};
       TVector3 surfacePos(thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0);
 
       // Get transverse E and H components

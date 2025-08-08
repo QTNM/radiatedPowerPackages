@@ -33,8 +33,8 @@ int main() {
   TVector3 eVel(eSpeed, 0, 0);
   // Determine appropriate magnetic field
   const double bMag{2 * M_PI * centralFreq *
-                    (ME + eKE * TMath::Qe() / pow(TMath::C(), 2)) /
-                    TMath::Qe()};
+                    (ME + eKE * QE / pow(C, 2)) /
+                    QE};
   std::cout << "Required magnetic field = " << bMag << " T\n";
 
   // Calculate radiated power

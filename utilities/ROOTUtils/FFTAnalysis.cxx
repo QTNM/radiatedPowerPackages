@@ -5,9 +5,11 @@
 #include "utilities/ROOTUtils/GraphUtils.h"
 #include "utilities/SignalUtils/FourierTransforms.h"
 #include "utilities/SignalUtils/FFTWComplex.h"
-#include "TMath.h"
+#include <cmath>
 #include "TF1.h"
 #include "TRandom3.h"
+
+using namespace rad;
 
 // Very similar to the FFTtools implementation but without the scaling of the x
 // axis the MHz
@@ -199,7 +201,7 @@ void rad::AddWhiteNoiseFrequencyDomainPowerNorm(TGraph *grIn, const double Teff,
   const double sampleRate = 2 * grIn->GetPointX(grIn->GetN() - 1);
   const double deltaT = 1.0 / sampleRate;
   const double deltaF = grIn->GetPointX(1) - grIn->GetPointX(0);
-  const double sigma = TMath::Sqrt(TMath::K() * Teff * sampleRate);
+  const double sigma = std::sqrt(K_B * Teff * sampleRate);
   TF1 *f1 = new TF1("f1", RayleighPDFFunc, 0, 4 * sigma, 1);
   f1->SetParameter(0, sigma);
 

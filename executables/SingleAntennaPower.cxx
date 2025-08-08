@@ -14,7 +14,6 @@
 #include "physics/SignalProcessing/InducedVoltage.h"
 #include "TFile.h"
 #include "TGraph.h"
-#include "TMath.h"
 #include "TString.h"
 #include "TVector3.h"
 
@@ -23,7 +22,7 @@ using std::cout;
 using std::endl;
 
 double LarmorPowerNR(double a) {
-  return MU0 * pow(TMath::Qe() * a, 2) / (6 * TMath::Pi() * TMath::C());
+  return MU0 * pow(QE * a, 2) / (6 * PI * C);
 }
 
 int main(int argc, char *argv[]) {
@@ -39,18 +38,18 @@ int main(int argc, char *argv[]) {
   // Electron details
   const double electronKE{18.6e3};  // eV
   const double electronSpeed{GetSpeedFromKE(electronKE, ME)};
-  const double tau{2 * R_E / (3 * TMath::C())};
+  const double tau{2 * R_E / (3 * C)};
   TVector3 vel0(electronSpeed, 0, 0);
   const double gyroradius{GetGyroradius(vel0, centralField, ME)};  // metres
   TVector3 pos0(0, -gyroradius, 0);
   const double centralFreq{CalcCyclotronFreq(electronKE, centralField.Mag())};
-  const double acc0{electronSpeed * 2 * TMath::Pi() * centralFreq};
-  const double gamma{1 / sqrt(1 - pow(electronSpeed / TMath::C(), 2))};
+  const double acc0{electronSpeed * 2 * PI * centralFreq};
+  const double gamma{1 / sqrt(1 - pow(electronSpeed / C, 2))};
 
   const double radiatedPower{
       MU0 *
-      pow(TMath::Qe() * 2 * TMath::Pi() * centralFreq * electronSpeed, 2) *
-      pow(gamma, 4) / (6 * TMath::Pi() * TMath::C())};
+      pow(QE * 2 * PI * centralFreq * electronSpeed, 2) *
+      pow(gamma, 4) / (6 * PI * C)};
   const double radiatedPowerNR{LarmorPowerNR(acc0)};
   cout << "Radiated power (R, NR) = " << radiatedPower * 1e15 << " fW,\t"
        << radiatedPowerNR << " fW\n";

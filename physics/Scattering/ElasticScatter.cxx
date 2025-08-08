@@ -12,6 +12,8 @@
 
 #include "utilities/BasicCore/Constants.h"
 
+using namespace rad;
+
 rad::ElasticScatter::ElasticScatter(double incidentKE, unsigned int aNum,
                                     unsigned int aMass)
     : BaseScatter(incidentKE), Z(aNum), A(aMass) {
@@ -30,7 +32,7 @@ double rad::ElasticScatter::TotalRutherfordXSec() {
 }
 
 double rad::ElasticScatter::RutherfordDCS(double theta) {
-  const double chargeFac{Z * pow(TMath::Qe(), 2) /
+  const double chargeFac{Z * pow(QE, 2) /
                          pow(16 * M_PI * EPSILON0 * GetIncidentKE() * QE, 2)};
   if (theta == 0) {
     return 0;
@@ -67,9 +69,9 @@ double rad::ElasticScatter::ScreeningFactor(double theta) {
 }
 
 double rad::ElasticScatter::CalcF(double R, double q) {
-  return 3 / pow(q * R / TMath::Hbar(), 3) *
-         (sin(q * R / TMath::Hbar()) -
-          q * R / TMath::Hbar() * cos(q * R / TMath::Hbar()));
+  return 3 / pow(q * R / HBAR, 3) *
+         (sin(q * R / HBAR) -
+          q * R / HBAR * cos(q * R / HBAR));
 }
 
 inline double rad::ElasticScatter::R0() { return 1.2e-15 * pow(A, 1 / 3); }
@@ -155,8 +157,8 @@ double rad::ElasticScatter::GetRandomScatteringAngle() {
 double rad::ElasticScatter::GetEnergyAfterScatter(double theta) {
   // Calculate incident momentum
   const double Ei_Joules{GetIncidentKE() * QE + ME * pow(C, 2)};
-  const double pi{sqrt(pow(Ei_Joules, 2) - pow(ME * pow(TMath::C(), 2), 2)) /
-                  TMath::C()};
+  const double pi{sqrt(pow(Ei_Joules, 2) - pow(ME * pow(C, 2), 2)) /
+                  C};
   // Now calculate the final momentum
   const double pf{pi - Calcq(theta)};
   const double Ef{sqrt(pow(pf * C, 2) + pow(ME * pow(C, 2), 2))};

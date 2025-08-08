@@ -3,10 +3,12 @@
 #include <cmath>
 #include <time.h>
 
-#include "TMath.h"
 #include "TRandom3.h"
+#include "utilities/BasicCore/Constants.h"
 
 #include "physics/SignalProcessing/NoiseFunc.h"
+
+using namespace rad;
 
 rad::GaussianNoise::GaussianNoise(double T, double R, int setSeed) {
   noiseTemp = T;
@@ -43,11 +45,11 @@ void rad::GaussianNoise::SetResistance(double r) {
 }
 
 void rad::GaussianNoise::SetSigma() {
-  sigma = TMath::Sqrt( TMath::K() * noiseTemp * (sampleFreq/2) );
+  sigma = std::sqrt( K_B * noiseTemp * (sampleFreq/2) );
 }
 
 double rad::GaussianNoise::GetNoiseVoltage(bool IsComponent) {
-  double premult = IsComponent ? TMath::Sqrt(resistance*0.5*0.5) : TMath::Sqrt(resistance);
+  double premult = IsComponent ? std::sqrt(resistance*0.5*0.5) : std::sqrt(resistance);
   double volt = premult * numGen->Gaus(0.0, sigma);
   return volt;
 }

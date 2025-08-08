@@ -11,7 +11,6 @@
 #include "TAxis.h"
 #include "TFile.h"
 #include "TGraph.h"
-#include "TMath.h"
 #include "TString.h"
 
 using namespace rad;
@@ -37,7 +36,7 @@ int main(int argc, char** argv) {
       new HalfWaveDipole(antennaPoint1, antennaDirX1, antennaDirZ1, 27.01e9);
   antenna1->SetBandwidth(antennaLowerBandwidth, antennaUpperBandwidth);
 
-  LocalOscillator myLO(26.75e9 * 2 * TMath::Pi());
+  LocalOscillator myLO(26.75e9 * 2 * PI);
   const double loadResistance = 70.0;
   const double sampleRate = 750e6;  // Hz
   const double noiseTemp = 4.0;

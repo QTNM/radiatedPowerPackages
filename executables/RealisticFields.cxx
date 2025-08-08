@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
       harm->evaluate_field_at_point(TVector3(0, 0.001, 0)).Mag()};
   const double electronKE{18600};  // eV
   const double electronSpeed{GetSpeedFromKE(electronKE, ME)};
-  const double tau = 2 * R_E / (3 * TMath::C());
+  const double tau = 2 * R_E / (3 * C);
   TVector3 v0(electronSpeed, 0, 0);
   const double gyroradius{GetGyroradius(
       v0, harm->evaluate_field_at_point(TVector3(0, 0.001, 0)), ME)};
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
 
   const double centralFreq{CalcCyclotronFreq(electronKE, centralField)};
   const double centralPeriod{1.0 / centralFreq};
-  const double centralLambda{TMath::C() / centralFreq};
+  const double centralLambda{C / centralFreq};
   std::cout << "Electron frequency, wavelength = " << centralFreq / 1e9
             << " GHz, " << centralLambda * 1e2 << " cm" << std::endl;
 
@@ -141,10 +141,10 @@ int main(int argc, char *argv[]) {
   const double loadResistance{73.0};
   std::vector<IAntenna *> antennaArray;
   for (int iAnt = 0; iAnt < nAntennas; iAnt++) {
-    double antennaAngle{2 * TMath::Pi() * double(iAnt) / double(nAntennas)};
+    double antennaAngle{2 * PI * double(iAnt) / double(nAntennas)};
     double timeShift{centralPeriod * (1.0 - double(iAnt) / double(nAntennas))};
     std::cout << "Dipole " << iAnt
-              << ": Angle = " << antennaAngle * 180 / TMath::Pi()
+              << ": Angle = " << antennaAngle * 180 / PI
               << " degrees. Required time shift is " << timeShift * 1e12
               << " ps" << std::endl;
     TVector3 antennaPoint(antennaRadius * cos(antennaAngle),
@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
   const double tAcq{simTime - 1e-6};  // seconds
   const double sampleRate{750e6};     // Hertz
   const double loFreq{centralFreq - sampleRate / 4.0};
-  LocalOscillator lo(2 * TMath::Pi() * loFreq);
+  LocalOscillator lo(2 * PI * loFreq);
   GaussianNoise noiseFunc(noiseTemp, loadResistance);
 
   Signal sig(trackFile, antennaArray, lo, sampleRate, {noiseFunc});

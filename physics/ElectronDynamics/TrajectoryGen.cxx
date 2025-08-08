@@ -8,11 +8,13 @@
 
 #include "physics/ElectronDynamics/BaseField.h"
 #include "physics/ElectronDynamics/BorisSolver.h"
+#include "utilities/BasicCore/Constants.h"
 #include "TFile.h"
-#include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
 #include "TVector3.h"
+
+using namespace rad;
 
 rad::ElectronTrajectoryGen::ElectronTrajectoryGen(
     TString outputFile, BaseField *field, TVector3 initPos, TVector3 initVel,
@@ -29,8 +31,8 @@ rad::ElectronTrajectoryGen::ElectronTrajectoryGen(
     foutTest->Close();
   }
 
-  double tau = energyLoss ? 2 * R_E / (3 * TMath::C()) : 0.0;
-  solver = BorisSolver(field, -TMath::Qe(), ME, tau, cav);
+  double tau = energyLoss ? 2 * R_E / (3 * C) : 0.0;
+  solver = BorisSolver(field, -QE, ME, tau, cav);
 
   // Check that various input values make sense
   if (simStepSize <= 0) {

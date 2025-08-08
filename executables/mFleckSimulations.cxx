@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
 
   const double centralFreq{CalcCyclotronFreq(electronKE, centralField)};
   const double centralPeriod{1.0 / centralFreq};
-  const double centralLambda{TMath::C() / centralFreq};
+  const double centralLambda{C / centralFreq};
   std::cout << "Electron frequency, wavelength = " << centralFreq / 1e9
             << " GHz, " << centralLambda * 1e2 << " cm" << std::endl;
 
@@ -141,10 +141,10 @@ int main(int argc, char *argv[]) {
     std::vector<IAntenna *> antennaArray;
 
     for (int ii{0}; ii < iAnt; ii++) {
-      double antennaAngle{2 * TMath::Pi() * double(ii) / double(iAnt)};
+      double antennaAngle{2 * PI * double(ii) / double(iAnt)};
       double timeShift{centralPeriod * (1.0 - double(ii) / double(iAnt))};
       std::cout << "Dipole " << ii
-                << ": Angle = " << antennaAngle * 180 / TMath::Pi()
+                << ": Angle = " << antennaAngle * 180 / PI
                 << " degrees. Required time shift is " << timeShift * 1e12
                 << " ps" << std::endl;
       TVector3 antennaPoint(antennaRadius * cos(antennaAngle),

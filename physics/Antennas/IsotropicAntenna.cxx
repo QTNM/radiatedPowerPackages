@@ -3,8 +3,12 @@
 #include "physics/Antennas/IsotropicAntenna.h"
 
 #include <iostream>
+#include <cmath>
 
 #include "TVector3.h"
+#include "utilities/BasicCore/Constants.h"
+
+using namespace rad;
 
 rad::IsotropicAntenna::IsotropicAntenna(TVector3 antPos, double AEff, double Z,
                                         double freq, double delay)
@@ -39,7 +43,7 @@ double rad::IsotropicAntenna::GetEPhi(double theta, double phi) {
 }
 
 double rad::IsotropicAntenna::GetHEff() {
-  return sqrt(imp * effectiveArea / (120 * TMath::Pi()));
+  return sqrt(imp * effectiveArea / (120 * PI));
 }
 
 double rad::IsotropicAntenna::GetHEff(TVector3 ePos) { return GetHEff(); }

@@ -6,7 +6,7 @@
 #ifndef LOCAL_OSCILLATOR_H
 #define LOCAL_OSCILLATOR_H
 
-#include "TMath.h"
+#include "utilities/BasicCore/Constants.h"
 
 namespace rad
 {
@@ -20,7 +20,7 @@ namespace rad
     LocalOscillator(double angFreq);
     ~LocalOscillator();
     double GetAngularFrequency() { return angularFreq; }
-    double GetFrequency() { return (angularFreq / (2*TMath::Pi())); }
+    double GetFrequency() { return (angularFreq / (2*rad::PI)); }
     void SetAngularFrequency(double newFreq) { angularFreq = newFreq; }
 
     double GetInPhaseComponent(const double time);

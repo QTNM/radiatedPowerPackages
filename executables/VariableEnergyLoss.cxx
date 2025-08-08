@@ -16,7 +16,6 @@
 #include "physics/ElectronDynamics/QTNMFields.h"
 #include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"
-#include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
 #include "TTreeReader.h"
@@ -74,8 +73,8 @@ int main(int argc, char *argv[]) {
   // Define the cavity
   const double cavityRadius{5e-3};  // metres
   const double p11Prime{GetBesselPrimeZero(1, 1)};
-  const double cavityLength{TMath::Pi() /
-                            sqrt(pow(TMath::TwoPi() * cycFreq / TMath::C(), 2) -
+  const double cavityLength{PI /
+                            sqrt(pow((2 * PI) * cycFreq / C, 2) -
                                  pow(p11Prime / cavityRadius, 2))};
   std::cout << "Cavity length = " << cavityLength * 1e3 << " mm\n";
   TVector3 probePosition(0.5 * cavityRadius, 0, 0);
@@ -115,15 +114,15 @@ int main(int argc, char *argv[]) {
   TTreeReaderValue<double> yFree(readFreeSpace, "yVel");
   TTreeReaderValue<double> zFree(readFreeSpace, "zVel");
 
-  double E0{ke * TMath::Qe()};
+  double E0{ke * QE};
 
   auto grPowerFree = new TGraph();
   setGraphAttr(grPowerFree);
   grPowerFree->SetTitle("Free space; Time [s]; P_{rad} [fW]");
   while (readFreeSpace.Next()) {
     TVector3 vel(*xFree, *yFree, *zFree);
-    double gamma1{1 / sqrt(1 - pow(vel.Mag() / TMath::C(), 2))};
-    double E1{(gamma1 - 1) * ME * TMath::C() * TMath::C()};
+    double gamma1{1 / sqrt(1 - pow(vel.Mag() / C, 2))};
+    double E1{(gamma1 - 1) * ME * C * C};
     double power{(E0 - E1) * 1e15 / simStepSize};
     if (power > 0.01) {
       grPowerFree->SetPoint(grPowerFree->GetN(), *tFree, power);
@@ -145,11 +144,11 @@ int main(int argc, char *argv[]) {
   setGraphAttr(grPowerCav);
   grPowerCav->SetTitle("Cavity; Time [s]; P_{rad} [fW]");
   grPowerCav->SetLineColor(kRed);
-  E0 = ke * TMath::Qe();
+  E0 = ke * QE;
   while (readCavity.Next()) {
     TVector3 vel(*xCav, *yCav, *zCav);
-    double gamma1{1 / sqrt(1 - pow(vel.Mag() / TMath::C(), 2))};
-    double E1{(gamma1 - 1) * ME * TMath::C() * TMath::C()};
+    double gamma1{1 / sqrt(1 - pow(vel.Mag() / C, 2))};
+    double E1{(gamma1 - 1) * ME * C * C};
     double power{(E0 - E1) * 1e15 / simStepSize};
     if (power > 0.01) {
       grPowerCav->SetPoint(grPowerCav->GetN(), *tCav, power);

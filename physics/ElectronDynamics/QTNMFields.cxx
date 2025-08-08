@@ -9,9 +9,10 @@
 
 #include "utilities/BasicCore/Constants.h"
 #include "TGraph.h"
-#include "TMath.h"
 #include "TSpline.h"
 #include "TVector3.h"
+
+using namespace rad;
 
 TVector3 rad::UniformField::evaluate_field_at_point(const TVector3 vec) {
   TVector3 BField(0, 0, fieldStrength);
@@ -48,7 +49,7 @@ TVector3 rad::CoilField::evaluate_field_at_point(const TVector3 vec) {
   double rad_norm = rad / coilRadius;
   double z_norm = z_rel / coilRadius;
   double alpha = pow(1.0 + rad_norm, 2) + z_norm * z_norm;
-  double root_alpha_pi = sqrt(alpha) * TMath::Pi();
+  double root_alpha_pi = sqrt(alpha) * PI;
   double beta = 4 * rad_norm / alpha;
   double int_k = boost::math::ellint_1(sqrt(beta));
   double int_e = boost::math::ellint_2(sqrt(beta));
@@ -106,7 +107,7 @@ TVector3 rad::SolenoidField::evaluate_field_at_point(const TVector3 vec) {
   double xiPlus = (vec.Z() - zOff) + l / 2;
   double xiMinus = (vec.Z() - zOff) - l / 2;
 
-  double premultR = (mu * n * i / TMath::Pi()) * TMath::Sqrt(r / rad);
+  double premultR = (mu * n * i / PI) * std::sqrt(r / rad);
   double premultZ = (mu * n * i / 4);
   double kPlus = sqrt(4 * rad * r / (xiPlus * xiPlus + pow(rad + r, 2)));
   double kMinus = sqrt(4 * rad * r / (xiMinus * xiMinus + pow(rad + r, 2)));
@@ -126,22 +127,22 @@ TVector3 rad::SolenoidField::evaluate_field_at_point(const TVector3 vec) {
 
   double Bz{0};
   if (xiPlus == 0) {
-    Bz = xiPlus * kPlus * int_kPlus / (TMath::Pi() * sqrt(r * rad)) +
+    Bz = xiPlus * kPlus * int_kPlus / (PI * sqrt(r * rad)) +
          boost::math::heuman_lambda(kPlus, phiPlus);
-    Bz -= xiMinus * kMinus * int_kMinus / (TMath::Pi() * sqrt(r * rad)) +
+    Bz -= xiMinus * kMinus * int_kMinus / (PI * sqrt(r * rad)) +
           (r - rad) * xiMinus * boost::math::heuman_lambda(kMinus, phiMinus) /
               abs((r - rad) * xiMinus);
   } else if (xiMinus == 0) {
-    Bz = xiPlus * kPlus * int_kPlus / (TMath::Pi() * sqrt(r * rad)) +
+    Bz = xiPlus * kPlus * int_kPlus / (PI * sqrt(r * rad)) +
          (r - rad) * xiPlus * boost::math::heuman_lambda(kPlus, phiPlus) /
              abs((r - rad) * xiPlus);
-    Bz -= xiMinus * kMinus * int_kMinus / (TMath::Pi() * sqrt(r * rad)) +
+    Bz -= xiMinus * kMinus * int_kMinus / (PI * sqrt(r * rad)) +
           boost::math::heuman_lambda(kMinus, phiMinus);
   } else {
-    Bz = (xiPlus * kPlus * int_kPlus / (TMath::Pi() * sqrt(r * rad)) +
+    Bz = (xiPlus * kPlus * int_kPlus / (PI * sqrt(r * rad)) +
           (r - rad) * xiPlus * boost::math::heuman_lambda(kPlus, phiPlus) /
               abs((r - rad) * xiPlus)) -
-         (xiMinus * kMinus * int_kMinus / (TMath::Pi() * sqrt(r * rad)) +
+         (xiMinus * kMinus * int_kMinus / (PI * sqrt(r * rad)) +
           (r - rad) * xiMinus * boost::math::heuman_lambda(kMinus, phiMinus) /
               abs((r - rad) * xiMinus));
   }

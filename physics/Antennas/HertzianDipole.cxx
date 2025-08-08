@@ -3,9 +3,12 @@
 #include "physics/Antennas/HertzianDipole.h"
 
 #include <cassert>
+#include <cmath>
 
-#include "TMath.h"
+#include "utilities/BasicCore/Constants.h"
 #include "TVector3.h"
+
+using namespace rad;
 
 rad::HertzianDipole::HertzianDipole(TVector3 antPos, TVector3 antXAx,
                                     TVector3 antZAx, double freq,
@@ -31,7 +34,7 @@ rad::HertzianDipole::HertzianDipole(TVector3 antPos, TVector3 antXAx,
 TVector3 rad::HertzianDipole::GetETheta(const TVector3 electronPosition) {
   TVector3 thetaHat = GetThetaHat(electronPosition);
   double thetaAng = GetTheta(electronPosition);
-  thetaHat *= TMath::Sin(thetaAng);
+  thetaHat *= std::sin(thetaAng);
   return thetaHat;
 }
 
@@ -47,23 +50,23 @@ double rad::HertzianDipole::GetETheta(double theta, double phi) {
 double rad::HertzianDipole::GetEPhi(double theta, double phi) { return 0; }
 
 double rad::HertzianDipole::GetHEff() {
-  double heff = GetCentralWavelength() * TMath::Sqrt(3 / (8 * TMath::Pi()));
+  double heff = GetCentralWavelength() * std::sqrt(3 / (8 * PI));
   return heff;
 }
 
 double rad::HertzianDipole::GetHEff(TVector3 ePos) {
-  double lambda{TMath::C() / GetCentralFrequency()};
+  double lambda{C / GetCentralFrequency()};
   double thetaAng{GetTheta(ePos)};
   double imp{50};  // Assume 50 Ohm resistance
   double gain{1.5 * sin(thetaAng) * sin(thetaAng)};
-  return sqrt(imp * lambda * lambda * gain / (480 * TMath::Pi() * TMath::Pi()));
+  return sqrt(imp * lambda * lambda * gain / (480 * PI * PI));
 }
 
 double rad::HertzianDipole::GetAEff(TVector3 ePos) {
   // Calculate angle between dipole direction and electron
   double thetaAng{GetTheta(ePos)};
-  double lambda{TMath::C() / GetCentralFrequency()};
-  return (3 / (8 * TMath::Pi())) * pow(lambda * sin(thetaAng), 2);
+  double lambda{C / GetCentralFrequency()};
+  return (3 / (8 * PI)) * pow(lambda * sin(thetaAng), 2);
 }
 
 double rad::HertzianDipole::GetAEffTheta(TVector3 ePos) {

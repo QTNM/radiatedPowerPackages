@@ -12,7 +12,6 @@
 #include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"
 #include "TGraph.h"
-#include "TMath.h"
 #include "TSpline.h"
 #include "TString.h"
 #include "TTreeReader.h"
@@ -40,7 +39,7 @@ int main() {
 
   // Calculate cyclotron frequency
   const double cycFreq{CalcCyclotronFreq(eKE, centreField.Mag())};
-  const double k0{TMath::TwoPi() * cycFreq / TMath::C()};
+  const double k0{(2 * PI) * cycFreq / C};
   std::cout << "Cyclotron frequency = " << cycFreq / 1e9 << " GHz\n";
 
   // Define some cavity stuff
@@ -52,21 +51,21 @@ int main() {
   const double cavityRadius{5e-3};  // metres
   const double p11Prime{GetBesselPrimeZero(1, 1)};
   const double cavityLength{
-      TMath::Pi() / sqrt(pow(TMath::TwoPi() * modeFreq / TMath::C(), 2) -
+      PI / sqrt(pow((2 * PI) * modeFreq / C, 2) -
                          pow(p11Prime / cavityRadius, 2))};
   std::cout << "Cavity length = " << cavityLength * 1e3 << " mm\n";
   // Define the actual cavity
   TVector3 probePosition(cavityRadius, 0, 0);
   CircularCavity cav(cavityRadius, cavityLength, probePosition);
   const double fTE111{cav.GetResonantModeF(CircularCavity::kTE, 1, 1, 1)};
-  const double kTE111{TMath::TwoPi() * fTE111 / TMath::C()};
+  const double kTE111{(2 * PI) * fTE111 / C};
   const double tTE111{1 / fTE111};
   std::cout << "TE111 frequency = " << fTE111 / 1e9 << " GHz\n";
 
   // Try and word out a normalisation for the TE111 mode
   const uint nNormPnts{30};
   const double dRho{cav.GetRadius() / double(nNormPnts)};
-  const double dPhi{TMath::TwoPi() / double(nNormPnts)};
+  const double dPhi{(2 * PI) / double(nNormPnts)};
   const double dZ{cav.GetLength() / double(nNormPnts)};
   double integral1{0};
   double integral2{0};
@@ -95,7 +94,7 @@ int main() {
   // Now we have the normalisations we can propagate our electron
   // Start with an electron completing no axial motion
   const double pitchAngleDeg{89};
-  const double pitchAngleRad{pitchAngleDeg * TMath::Pi() / 180};
+  const double pitchAngleRad{pitchAngleDeg * PI / 180};
   TVector3 eVel(eSpeed * sin(pitchAngleRad), 0, eSpeed * cos(pitchAngleRad));
   const double gyroradius{GetGyroradius(
       eVel, field->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
@@ -138,12 +137,12 @@ int main() {
   while (reader.Next()) {
     TVector3 r0(*xPos, *yPos, *zPos);
     ComplexVector3 J(*xVel, *yVel, *zVel);
-    J *= -TMath::Qe();
+    J *= -QE;
     std::complex<double> denom{
         kTE111 * kTE111 -
         k0 * k0 * (1.0 + std::complex<double>(1, -1) / cavityQ)};
-    std::complex<double> en1(0, -MU0 * cycFreq * TMath::TwoPi());
-    std::complex<double> en2(0, -MU0 * cycFreq * TMath::TwoPi());
+    std::complex<double> en1(0, -MU0 * cycFreq * (2 * PI));
+    std::complex<double> en2(0, -MU0 * cycFreq * (2 * PI));
     ComplexVector3 eField1{cav.GetModeEField(r0, CircularCavity::kTE,
                                              normalisation1, 1, 1, 1, true, 0)};
     ComplexVector3 eField2{cav.GetModeEField(

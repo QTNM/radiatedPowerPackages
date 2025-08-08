@@ -109,8 +109,8 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
   xVel = pos.X();
   yVel = pos.Y();
   zVel = pos.Z();
-  const double tau{2 * R_E / (3 * TMath::C())};
-  BorisSolver solver(field, -TMath::Qe(), ME, tau);
+  const double tau{2 * R_E / (3 * C)};
+  BorisSolver solver(field, -QE, ME, tau);
   TVector3 acc{solver.acc(pos, vel)};
   xAcc = acc.X();
   yAcc = acc.Y();
@@ -125,7 +125,7 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
   std::mt19937 gen(rd());
 
   // Set some information about the electron creation
-  double gamma{1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2))};
+  double gamma{1 / sqrt(1 - pow(v.Mag() / C, 2))};
   double ke{(gamma - 1) * ME_EV};
   ElectronInfo eiTemp;
   eiTemp.startTime = time;
@@ -156,7 +156,7 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
 
     // Calculate the total cross-section
     // We want to see if the scatter is happening in the next time step
-    double gamma{1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2))};
+    double gamma{1 / sqrt(1 - pow(v.Mag() / C, 2))};
     double ke{(gamma - 1) * ME_EV};
     ElasticScatter scatterElasticHe(ke, 2, 4);
     ElasticScatter scatterElasticT(ke, 1, 3);
@@ -279,7 +279,7 @@ double GenerateElectron(TString file, TVector3 pos, TVector3 vel,
         // then do so now
         if (!haveSavedInfo) {
           // Calculate start frequency
-          gamma = 1 / sqrt(1 - pow(v.Mag() / TMath::C(), 2));
+          gamma = 1 / sqrt(1 - pow(v.Mag() / C, 2));
           ke = (gamma - 1) * ME_EV;
           bMean /= double(nFieldPoints);
           double startF{CalcCyclotronFreq(ke, bMean)};

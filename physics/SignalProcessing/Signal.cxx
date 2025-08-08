@@ -4,6 +4,8 @@
 
 #include "physics/SignalProcessing/Signal.h"
 
+using namespace rad;
+
 rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
                     LocalOscillator lo, double sRate,
                     std::vector<GaussianNoise> noiseTerms, double tAcq)
@@ -201,7 +203,7 @@ rad::Signal::Signal(TString filePath, ICavity* cav, LocalOscillator lo,
 
   // TO DO: figure out what the relevant modes are
 
-  const double omega{CalcInitialFreq() * TMath::TwoPi()};
+  const double omega{CalcInitialFreq() * (2 * PI)};
 
   // Calculate mode normalisation
   // This should be for all the relevant modes but for now just do it for the
@@ -314,8 +316,8 @@ rad::Signal::Signal(TString filePath, IWaveguide* wg, LocalOscillator lo,
 
   // First things first, we need to figure out a rough frequency our electron is
   // radiating at
-  const double omega{CalcInitialFreq() * TMath::TwoPi()};
-  std::cout << "Calculated frequency = " << omega * 1e-9 / TMath::TwoPi()
+  const double omega{CalcInitialFreq() * (2 * PI)};
+  std::cout << "Calculated frequency = " << omega * 1e-9 / (2 * PI)
             << " GHz\n";
 
   // Now need to check if the mode our probe is reading out propagates
@@ -554,7 +556,7 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
           pos, ICavity::kTE, norm.real(), 1, 1, 1, false)};
       // Calculate the current density
       ComplexVector3 J(xVel, yVel, zVel);
-      J *= -TMath::Qe();
+      J *= -QE;
 
       // Now calculate the field amplitudes
       // Assume we're at the resonance
@@ -618,7 +620,7 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
           pos, ICavity::kTE, norm.real(), 1, 1, 1, false)};
       // Calculate the current density
       ComplexVector3 J(xVel, yVel, zVel);
-      J *= -TMath::Qe();
+      J *= -QE;
 
       // Now calculate the field amplitudes
       // Assume we're at the resonance
@@ -650,7 +652,7 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
       ComplexVector3 modeFieldMinus{cavity->GetModalEField(
           pos, ICavity::kTE, norm.real(), 1, 1, 1, false)};
       ComplexVector3 J(xVel, yVel, zVel);
-      J *= -TMath::Qe();
+      J *= -QE;
 
       // Now calculate the field amplitudes
       // Assume we're at the resonance
@@ -912,7 +914,7 @@ void rad::Signal::AddNewTimes(long double time, TVector3 ePos) {
   // Now calculate advanced time for each antenna point
   for (size_t i{0}; i < antenna.size(); i++) {
     long double ta{time + (ePos - antenna.at(i)->GetAntennaPosition()).Mag() /
-                              TMath::C()};
+                              C};
     advancedTimeVec.at(i).push_back(ta);
   }
 

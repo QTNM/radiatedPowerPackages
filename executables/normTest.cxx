@@ -8,7 +8,6 @@
 #include "TAxis.h"
 #include "TFile.h"
 #include "TGraph.h"
-#include "TMath.h"
 #include "TTree.h"
 
 // My files

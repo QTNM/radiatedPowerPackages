@@ -12,7 +12,6 @@
 #include "TGraph.h"
 #include "TH1.h"
 #include "THStack.h"
-#include "TMath.h"
 #include "TRandom3.h"
 #include "TString.h"
 #include "TVector3.h"
@@ -73,8 +72,8 @@ int main(int argc, char *argv[]) {
 
   // Some kinematic info that we need
   const double eKE{18.5e3};  // eV
-  const double gamma{(ME * TMath::C() * TMath::C() + eKE * TMath::Qe()) /
-                     (ME * TMath::C() * TMath::C())};
+  const double gamma{(ME * C * C + eKE * QE) /
+                     (ME * C * C)};
   std::cout << "Gamma = " << gamma << std::endl;
 
   const double minRadius{0.001};

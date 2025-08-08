@@ -7,8 +7,9 @@
 #include <iostream>
 
 #include "utilities/BasicCore/Constants.h"
-#include "TMath.h"
 #include "TVector3.h"
+
+using namespace rad;
 
 rad::RectangularWaveguide::RectangularWaveguide(double longSide,
                                                 double shortSide,
@@ -32,8 +33,8 @@ double rad::RectangularWaveguide::GetCutoffWavenumber(WaveguideMode mode) {
               << std::endl;
     return -1;
   } else {
-    double k_c{sqrt(pow(double(m) * TMath::Pi() / a, 2) +
-                    pow(double(n) * TMath::Pi() / b, 2))};
+    double k_c{sqrt(pow(double(m) * PI / a, 2) +
+                    pow(double(n) * PI / b, 2))};
     return k_c;
   }
 }
@@ -55,30 +56,30 @@ TVector3 rad::RectangularWaveguide::GetModeEField(TVector3 pos,
   double k_c{GetCutoffWavenumber(mode)};
   double m{double(mode.GetModeIndex1())};
   double n{double(mode.GetModeIndex2())};
-  double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
+  double betaSq{pow(omega / C, 2) - k_c * k_c};
   double beta{sqrt(betaSq)};
 
   if (mode.GetModeType() == ModeType::kTE) {
     // We have a TE mode
-    double Ex{(omega * MU0 * double(n) * TMath::Pi() / (k_c * k_c * b)) * A *
-              cos(double(m) * TMath::Pi() * x / a) *
-              sin(double(n) * TMath::Pi() * y / b)};
-    double Ey{(-1.0 * omega * MU0 * double(m) * TMath::Pi() / (k_c * k_c * a)) *
-              A * sin(double(m) * TMath::Pi() * x / a) *
-              cos(double(n) * TMath::Pi() * y / b)};
+    double Ex{(omega * MU0 * double(n) * PI / (k_c * k_c * b)) * A *
+              cos(double(m) * PI * x / a) *
+              sin(double(n) * PI * y / b)};
+    double Ey{(-1.0 * omega * MU0 * double(m) * PI / (k_c * k_c * a)) *
+              A * sin(double(m) * PI * x / a) *
+              cos(double(n) * PI * y / b)};
     double Ez{0.0};
     TVector3 eField{Ex, Ey, Ez};
     return eField;
   } else if (mode.GetModeType() == ModeType::kTM) {
     // We have a TM mode
-    double Ex{(-1.0 * beta * double(m) * TMath::Pi() / (k_c * k_c * a)) * A *
-              cos(double(m) * TMath::Pi() * x / a) *
-              sin(double(n) * TMath::Pi() * y / b)};
-    double Ey{(-1.0 * beta * double(n) * TMath::Pi() / (k_c * k_c * b)) * A *
-              sin(double(m) * TMath::Pi() * x / a) *
-              cos(double(n) * TMath::Pi() * y / b)};
-    double Ez{A * sin(double(m) * TMath::Pi() * x / a) *
-              sin(double(n) * TMath::Pi() * y / b)};
+    double Ex{(-1.0 * beta * double(m) * PI / (k_c * k_c * a)) * A *
+              cos(double(m) * PI * x / a) *
+              sin(double(n) * PI * y / b)};
+    double Ey{(-1.0 * beta * double(n) * PI / (k_c * k_c * b)) * A *
+              sin(double(m) * PI * x / a) *
+              cos(double(n) * PI * y / b)};
+    double Ez{A * sin(double(m) * PI * x / a) *
+              sin(double(n) * PI * y / b)};
     TVector3 eField{Ex, Ey, Ez};
     return eField;
   } else {
@@ -107,7 +108,7 @@ TVector3 rad::RectangularWaveguide::GetModeHField(TVector3 pos,
   double k_c{GetCutoffWavenumber(mode)};
   double m{double(mode.GetModeIndex1())};
   double n{double(mode.GetModeIndex2())};
-  double betaSq{pow(omega / TMath::C(), 2) - k_c * k_c};
+  double betaSq{pow(omega / C, 2) - k_c * k_c};
   double beta{sqrt(betaSq)};
 
   double HX{0};
@@ -143,7 +144,7 @@ double rad::RectangularWaveguide::GetCutoffFrequency(WaveguideMode mode) {
     return -1;
   } else {
     double k_c{GetCutoffWavenumber(mode)};
-    return k_c * TMath::C() / (2 * TMath::Pi());
+    return k_c * C / (2 * PI);
   }
 }
 

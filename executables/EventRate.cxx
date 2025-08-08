@@ -12,7 +12,6 @@
 
 #include "TF1.h"
 #include "TFile.h"
-#include "TMath.h"
 #include "TString.h"
 #include "utilities/BasicCore/Constants.h"
 #include "utilities/BasicCore/Physics.h"
@@ -25,8 +24,8 @@ using namespace rad;
 /// @param B Magnetic field in T
 /// @return Electric kinetic energy in eV
 double CalcEFromFreq(double f, double B) {
-  double eTotJ{TMath::Qe() * B * pow(TMath::C(), 2) / (f * TMath::TwoPi())};
-  return (eTotJ - ME * TMath::C() * TMath::C()) / TMath::Qe();
+  double eTotJ{QE * B * pow(C, 2) / (f * (2 * PI))};
+  return (eTotJ - ME * C * C) / QE;
 }
 
 double TritiumESpectrum(double *x, double *par) {
@@ -104,7 +103,7 @@ int main(int argc, char *argv[]) {
 
   // Try and do a calculation for CRESDA
   const double densCRESDA{1e18};  // m^-3
-  const double volCRESDA{TMath::Pi() * 80e-3 * 30e-3 *
+  const double volCRESDA{PI * 80e-3 * 30e-3 *
                          30e-3};  // Uniform field region
   const double nAtomsCRESDA{densCRESDA * volCRESDA};
   const double nDecaysCRESDA{nAtomsCRESDA * decayRateInt * seconds1Yr};

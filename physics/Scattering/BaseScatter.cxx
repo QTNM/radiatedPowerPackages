@@ -12,6 +12,8 @@
 #include "utilities/BasicCore/Physics.h"
 #include "utilities/BasicFunctions/BasicFunctions.h"
 
+using namespace rad;
+
 double rad::BaseScatter::GetMeanFreePath(double N) {
   double xsec{GetTotalXSec()};
   return 1 / (N * xsec);
@@ -30,12 +32,12 @@ TVector3 rad::BaseScatter::GetScatteredVector(TVector3 vel, double outKE,
   std::mt19937 gen(rd());
 
   // Calculate outgoing speed from kinetic energy
-  const double speed{TMath::C() * sqrt((pow(ME_EV + outKE, 2) - ME_EV * ME_EV) /
+  const double speed{C * sqrt((pow(ME_EV + outKE, 2) - ME_EV * ME_EV) /
                                        pow(ME_EV + outKE, 2))};
 
   // Distribute azimuthal angle uniformly
   std::uniform_real_distribution<double> uni(0, 1);
-  double phi{uni(gen) * TMath::TwoPi()};
+  double phi{uni(gen) * (2 * PI)};
 
   // Original direction in global coords
   TVector3 originalDir{vel.Unit()};

@@ -79,7 +79,7 @@ double GetTrueCycFreq(const TString &trackFile, BaseField *field) {
 
   tree->GetEntry(0);
   TVector3 initVel(xVel, yVel, zVel);
-  const double gamma{1 / sqrt(1 - pow(initVel.Mag() / TMath::C(), 2))};
+  const double gamma{1 / sqrt(1 - pow(initVel.Mag() / C, 2))};
   const double EInit{(gamma - 1) * ME_EV};
 
   delete tree;

@@ -81,7 +81,7 @@ class BorisSolver {
   /// @param mass_v Particle mass. Default is electron mass
   /// @param tau_v Energy loss. Default is zero
   /// @param cavity Pointer to resonant cavity (if using)
-  BorisSolver(BaseField* field_v, const double charge_v = -TMath::Qe(),
+  BorisSolver(BaseField* field_v, const double charge_v = -QE,
               const double mass_v = ME, const double tau_v = 0.0,
               CircularCavity* cavity = 0);
 

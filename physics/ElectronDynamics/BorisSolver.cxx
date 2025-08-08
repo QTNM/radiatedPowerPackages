@@ -91,7 +91,7 @@ TVector3 rad::BorisSolver::calculate_omega(const TVector3 BField,
                                            const double charge,
                                            const double energy,
                                            const double mass) {
-  double gamma_m0{mass + energy * TMath::Qe() / pow(TMath::C(), 2)};
+  double gamma_m0{mass + energy * QE / pow(C, 2)};
   return (charge * BField * (1.0 / gamma_m0));
 }
 

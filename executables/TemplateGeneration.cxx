@@ -69,8 +69,8 @@ bool GenerateElectron(TString file, TVector3 pos, TVector3 vel,
   xVel = pos.X();
   yVel = pos.Y();
   zVel = pos.Z();
-  const double tau{2 * R_E / (3 * TMath::C())};
-  BorisSolver solver(field, -TMath::Qe(), ME, tau);
+  const double tau{2 * R_E / (3 * C)};
+  BorisSolver solver(field, -QE, ME, tau);
   TVector3 acc{solver.acc(pos, vel)};
   xAcc = acc.X();
   yAcc = acc.Y();

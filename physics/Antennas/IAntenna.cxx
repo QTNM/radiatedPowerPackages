@@ -3,15 +3,18 @@
 #include "physics/Antennas/IAntenna.h"
 
 #include <cassert>
+#include <cmath>
 #include <iostream>
 
 #include "utilities/BasicFunctions/BasicFunctions.h"
-#include "TMath.h"
+#include "utilities/BasicCore/Constants.h"
 #include "TVector3.h"
+
+using namespace rad;
 
 double rad::IAntenna::GetCentralWavelength() {
   double freq = GetCentralFrequency();
-  double lambda = TMath::C() / freq;
+  double lambda = C / freq;
   return lambda;
 }
 
@@ -27,26 +30,26 @@ TVector3 rad::IAntenna::GetThetaHat(const TVector3 electronPosition) {
   if (z > 0) {
     theta = atan(sqrt(x * x + y * y) / z);
   } else if (z < 0) {
-    theta = atan(sqrt(x * x + y * y) / z) + TMath::Pi();
+    theta = atan(sqrt(x * x + y * y) / z) + PI;
   } else {
-    theta = TMath::Pi() / 2;
+    theta = PI / 2;
   }
 
   // Now do phi
   if (x > 0) {
     phi = atan(y / x);
   } else if (x < 0 && y >= 0) {
-    phi = atan(y / x) + TMath::Pi();
+    phi = atan(y / x) + PI;
   } else if (x < 0 && y < 0) {
-    phi = atan(y / x) - TMath::Pi();
+    phi = atan(y / x) - PI;
   } else if (x == 0 && y > 0) {
-    phi = TMath::Pi() / 2;
+    phi = PI / 2;
   } else {
-    phi = -TMath::Pi() / 2;
+    phi = -PI / 2;
   }
 
-  TVector3 vec(TMath::Cos(theta) * TMath::Cos(phi),
-               TMath::Cos(theta) * TMath::Sin(phi), -1 * TMath::Sin(theta));
+  TVector3 vec(std::cos(theta) * std::cos(phi),
+               std::cos(theta) * std::sin(phi), -1 * std::sin(theta));
   TVector3 rotateVec{
       RotateToGlobalCoords(vec, antennaXAxis, antennaYAxis, antennaZAxis)};
   return rotateVec;
@@ -60,16 +63,16 @@ TVector3 rad::IAntenna::GetPhiHat(const TVector3 electronPosition) {
   if (x > 0) {
     phi = atan(y / x);
   } else if (x < 0 && y >= 0) {
-    phi = atan(y / x) + TMath::Pi();
+    phi = atan(y / x) + PI;
   } else if (x < 0 && y < 0) {
-    phi = atan(y / x) - TMath::Pi();
+    phi = atan(y / x) - PI;
   } else if (x == 0 && y > 0) {
-    phi = TMath::Pi() / 2;
+    phi = PI / 2;
   } else {
-    phi = -TMath::Pi() / 2;
+    phi = -PI / 2;
   }
 
-  TVector3 vec(-1 * TMath::Sin(phi), TMath::Cos(phi), 0);
+  TVector3 vec(-1 * std::sin(phi), std::cos(phi), 0);
   TVector3 rotateVec{
       RotateToGlobalCoords(vec, antennaXAxis, antennaYAxis, antennaZAxis)};
   return rotateVec;
@@ -77,14 +80,14 @@ TVector3 rad::IAntenna::GetPhiHat(const TVector3 electronPosition) {
 
 double rad::IAntenna::GetTheta(const TVector3 electronPosition) {
   const TVector3 rHat = (antennaPosition - electronPosition).Unit();
-  double theta = TMath::ACos(antennaZAxis.Dot(rHat));
+  double theta = std::acos(antennaZAxis.Dot(rHat));
   return theta;
 }
 
 double rad::IAntenna::GetPhi(const TVector3 electronPosition) {
   const TVector3 rHat = (antennaPosition - electronPosition).Unit();
-  double phi = TMath::ATan2(antennaYAxis.Dot(rHat), antennaXAxis.Dot(rHat));
-  if (phi < 0) phi += 2 * TMath::Pi();
+  double phi = std::atan2(antennaYAxis.Dot(rHat), antennaXAxis.Dot(rHat));
+  if (phi < 0) phi += 2 * PI;
   return phi;
 }
 
@@ -101,10 +104,10 @@ double rad::IAntenna::GetPatternIntegral() {
   const int nPntsTheta{200};
   const int nPntsPhi{200};
   // Hypothetical width for integration
-  const double binArea{TMath::Pi() * 2 * TMath::Pi() /
+  const double binArea{PI * 2 * PI /
                        double(nPntsPhi * nPntsTheta)};
-  const double binWidthTheta{TMath::Pi() / double(nPntsTheta)};
-  const double binWidthPhi{2 * TMath::Pi() / double(nPntsPhi)};
+  const double binWidthTheta{PI / double(nPntsTheta)};
+  const double binWidthPhi{2 * PI / double(nPntsPhi)};
   double PRad{0};
   for (int ith{0}; ith < nPntsTheta; ith++) {
     double theta{double(ith) * binWidthTheta + binWidthTheta / 2};

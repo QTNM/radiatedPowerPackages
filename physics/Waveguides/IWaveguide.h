@@ -8,7 +8,6 @@
 #define IWAVEGUIDE_H
 
 #include "utilities/BasicFunctions/ComplexVector3.h"
-#include "TMath.h"
 #include "TVector3.h"
 #include "physics/Waveguides/WaveguideMode.h"
 

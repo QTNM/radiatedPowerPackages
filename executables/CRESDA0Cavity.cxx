@@ -31,8 +31,8 @@ int main() {
   std::cout << "Cyclotron frequency = " << cycFreq / 1e9 << " GHz\n";
   std::cout << "Cyclotron frequency (0 eV) = " << cycFreq0 / 1e9 << " GHz\n";
   const double p11Prime{GetBesselPrimeZero(1, 1)};
-  const double d5mm_TE111{1 * TMath::Pi() /
-                          sqrt(pow(TMath::TwoPi() * cycFreq / TMath::C(), 2) -
+  const double d5mm_TE111{1 * PI /
+                          sqrt(pow((2 * PI) * cycFreq / C, 2) -
                                pow(p11Prime / cavityRadius, 2))};
   TVector3 probePosition(cavityRadius, 0, 0);
   CircularCavity cav(cavityRadius, d5mm_TE111, probePosition);
