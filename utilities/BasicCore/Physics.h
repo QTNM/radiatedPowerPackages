@@ -44,9 +44,9 @@ inline double CalcTimeFromRetardedTime(const double fieldPointPos[3],
 /// @param particleMass Particle mass in kg
 /// @return Speed in m/s
 inline double GetSpeedFromKE(double T, double particleMass) {
-  double gamma = T * rad::QE / (particleMass * rad::C * rad::C) + 1;
+  double gamma = T * QE / (particleMass * C * C) + 1;
   double betaSq = 1 - 1 / (gamma * gamma);
-  double speed = sqrt(betaSq) * rad::C;
+  double speed = sqrt(betaSq) * C;
   return speed;
 }
 
