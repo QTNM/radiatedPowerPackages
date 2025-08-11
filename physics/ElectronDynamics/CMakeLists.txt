@@ -7,9 +7,11 @@ add_library(ElectronDynamics
   PenningTraps.cxx
 )
 
-target_link_libraries(ElectronDynamics PUBLIC 
+target_link_libraries(ElectronDynamics 
+  PUBLIC 
   BasicCore 
-  Waveguides 
   ${ROOT_LIBRARIES} 
+  PRIVATE
+  Waveguides 
   ${Boost_MATH_LIBRARY}
 )

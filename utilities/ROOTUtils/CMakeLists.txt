@@ -5,7 +5,7 @@ add_library(ROOTUtils
     CorrelationAnalysis.cxx
 )
 
-target_link_libraries(ROOTUtils PUBLIC 
+target_link_libraries(ROOTUtils PRIVATE 
     BasicCore 
     SignalUtils 
     ${ROOT_LIBRARIES}
