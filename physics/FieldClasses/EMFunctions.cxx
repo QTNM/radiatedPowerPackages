@@ -1,6 +1,6 @@
 /// EMFunctions.cxx
 
-#include "utilities/BasicFunctions/EMFunctions.h"
+#include "physics/FieldClasses/EMFunctions.h"
 
 #include "utilities/BasicCore/Constants.h"
 

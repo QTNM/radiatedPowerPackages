@@ -1,2 +1,2 @@
-add_library(FieldClasses FieldClasses.cxx FieldPointNR.cxx)
-target_link_libraries(FieldClasses PUBLIC BasicCore ROOTUtils BasicFunctions ${ROOT_LIBRARIES})
+add_library(FieldClasses FieldClasses.cxx FieldPointNR.cxx EMFunctions.cxx)
+target_link_libraries(FieldClasses PUBLIC BasicCore ROOTUtils ${ROOT_LIBRARIES})

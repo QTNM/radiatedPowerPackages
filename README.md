@@ -59,7 +59,7 @@ HDF5 libraries are also required for some executables purely for I/O.
 - `Waveguides` → BasicCore + BasicFunctions + ROOT + Boost
 - `ElectronDynamics` → BasicCore + Waveguides + ROOT + Boost
 - `Scattering` → BasicCore + BasicFunctions + Boost
-- `SignalProcessing` → BasicFunctions + SignalUtils + FieldClasses + Antennas + Waveguides + ROOT
+- `SignalProcessing` → SignalUtils + FieldClasses + Antennas + Waveguides + ROOT
 
 
 There are also 47+ example programs (`executables/`) demonstrating various physics calculations and signal processing workflows. We recommend installing all packages to access the full functionality.

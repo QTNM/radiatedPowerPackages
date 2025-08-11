@@ -1,6 +1,5 @@
 add_library(BasicFunctions 
     BasicFunctions.cxx 
-    EMFunctions.cxx 
     TritiumSpectrum.cxx 
     ComplexVector3.cxx
 )

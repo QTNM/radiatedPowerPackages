@@ -11,7 +11,7 @@
 #include "TString.h"
 #include "TVector3.h"
 #include "physics/Antennas/IAntenna.h"
-#include "utilities/BasicFunctions/EMFunctions.h"
+#include "physics/FieldClasses/EMFunctions.h"
 
 namespace rad {
 class FieldPoint {

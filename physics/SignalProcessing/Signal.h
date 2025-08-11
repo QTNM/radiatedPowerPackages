@@ -27,7 +27,7 @@
 #include "physics/Waveguides/WaveguideMode.h"
 #include "utilities/BasicCore/Constants.h"
 #include "utilities/BasicCore/MathUtils.h"
-#include "utilities/BasicFunctions/EMFunctions.h"
+#include "physics/FieldClasses/EMFunctions.h"
 #include "utilities/SignalUtils/ButterworthFilter.h"
 
 namespace rad {
