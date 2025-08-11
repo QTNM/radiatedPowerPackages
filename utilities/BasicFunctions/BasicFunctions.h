@@ -1,19 +1,7 @@
-// BasicFunctions.h - Consolidated header for all utility functions
+// BasicFunctions.h
 #ifndef BASIC_FUNCTIONS_H
 #define BASIC_FUNCTIONS_H
 
-// Include ROOT-based utilities (requires ROOT)
-#include "utilities/ROOTUtils/CorrelationAnalysis.h"
-#include "utilities/ROOTUtils/FFTAnalysis.h"
-#include "utilities/ROOTUtils/GraphUtils.h"
-#include "utilities/ROOTUtils/HistogramUtils.h"
-
-// Legacy includes for backward compatibility
-#include "Math/Point3D.h"
-#include "Math/Vector3D.h"
-#include "TGraph.h"
-#include "TH1.h"
-#include "TH2.h"
 #include "TVector3.h"
 
 namespace rad {

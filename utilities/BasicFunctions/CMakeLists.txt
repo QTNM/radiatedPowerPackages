@@ -6,7 +6,5 @@ add_library(BasicFunctions
 )
 target_link_libraries(BasicFunctions PUBLIC 
     BasicCore 
-    SignalUtils 
-    ROOTUtils 
     ${ROOT_LIBRARIES}
 )

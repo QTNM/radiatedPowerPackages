@@ -3,7 +3,6 @@
 #ifndef EM_FUNCTIONS_H
 #define EM_FUNCTIONS_H
 
-#include "utilities/BasicCore/Constants.h"
 #include "Math/Point3D.h"
 #include "Math/Vector3D.h"
 #include "TVector3.h"

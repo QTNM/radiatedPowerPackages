@@ -1,9 +1,6 @@
 /// BasicFunctions.cxx - Non-ROOT utility functions
 #include "utilities/BasicFunctions/BasicFunctions.h"
 
-#include "utilities/BasicCore/Constants.h"
-#include "TVector3.h"
-
 TVector3 rad::RotateToGlobalCoords(TVector3 v, TVector3 xAx, TVector3 yAx,
                                    TVector3 zAx) {
   // We are just transforming to the ROOT frame so our new axis coordinates

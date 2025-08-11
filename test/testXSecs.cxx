@@ -12,13 +12,14 @@
 #include <iostream>
 #include <string>
 
-#include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicFunctions/BasicFunctions.h"
-#include "physics/Scattering/ElasticScatter.h"
-#include "physics/Scattering/InelasticScatter.h"
 #include "TAxis.h"
 #include "TFile.h"
 #include "TGraph.h"
+#include "physics/Scattering/ElasticScatter.h"
+#include "physics/Scattering/InelasticScatter.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/BasicFunctions.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 
