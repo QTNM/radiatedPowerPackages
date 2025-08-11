@@ -54,7 +54,7 @@ HDF5 libraries are also required for some executables purely for I/O.
 - `BasicFunctions` → BasicCore + ROOT
 
 **Physics Dependencies:**
-- `FieldClasses` → BasicCore + BasicFunctions + ROOTUtils + ROOT
+- `FieldClasses` → BasicCore + ROOTUtils + ROOT
 - `Antennas` → BasicFunctions + ROOT  
 - `Waveguides` → BasicCore + BasicFunctions + ROOT + Boost
 - `ElectronDynamics` → BasicCore + Waveguides + ROOT + Boost
