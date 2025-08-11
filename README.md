@@ -40,8 +40,8 @@ The core code requires C++20, built with CMake (3.18+) with the following extern
 | ElectronDynamics | x | x | | 
 | Antennas | | x | |
 | SignalProcessing | | x | |
-| Waveguides | x | x | |
-| Scattering | x | | |
+| Waveguides | | x | |
+| Scattering | | | |
 
 HDF5 libraries are also required for some executables purely for I/O.
 
@@ -51,13 +51,13 @@ HDF5 libraries are also required for some executables purely for I/O.
 - `BasicCore` → No dependencies (header-only)
 - `SignalUtils` → FFTW3 + Boost
 - `ROOTUtils` → BasicCore + SignalUtils + ROOT
-- `BasicFunctions` → BasicCore + SignalUtils + ROOTUtils + ROOT
+- `BasicFunctions` → BasicCore + ROOT
 
 **Physics Dependencies:**
-- `FieldClasses` → BasicCore + BasicFunctions + ROOT
+- `FieldClasses` → BasicCore + ROOTUtils + ROOT
 - `Antennas` → BasicFunctions + ROOT  
 - `Waveguides` → BasicCore + BasicFunctions + ROOT + Boost
-- `ElectronDynamics` → BasicCore + BasicFunctions + Waveguides + ROOT + Boost
+- `ElectronDynamics` → BasicCore + Waveguides + ROOT + Boost
 - `Scattering` → BasicCore + BasicFunctions + Boost
 - `SignalProcessing` → BasicFunctions + SignalUtils + FieldClasses + Antennas + Waveguides + ROOT
 
