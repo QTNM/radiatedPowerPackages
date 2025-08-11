@@ -8,6 +8,11 @@
 #include <complex>
 #include <iostream>
 
+// Helper function to convert TVector3 to ComplexVector3 (real vector)
+static rad::ComplexVector3 fromTVector3(const TVector3& v) {
+  return rad::ComplexVector3(v.X(), v.Y(), v.Z());
+}
+
 #include "TVector3.h"
 #include "utilities/BasicCore/Constants.h"
 #include "utilities/BasicCore/MathUtils.h"
@@ -238,7 +243,8 @@ double rad::CircularWaveguide::GetHFieldIntegral(WaveguideMode mode,
                      (2 * PI) * double(iPhi) / double(nSurfPnts)};
 
       TVector3 surfacePos{thisRho * cos(thisPhi), thisRho * sin(thisPhi), 0.0};
-      ComplexVector3 hTrans{GetModeHField(surfacePos, mode, A, omega, true)};
+      ComplexVector3 hTrans{
+          fromTVector3(GetModeHField(surfacePos, mode, A, omega, true))};
       hTrans.SetZ(std::complex<double>{0, 0});
       integral += (hTrans.Dot(hTrans)).real() * area;
     }

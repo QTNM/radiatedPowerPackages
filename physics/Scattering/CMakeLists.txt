@@ -5,6 +5,6 @@ add_library(Scattering
 )
 target_link_libraries(Scattering PRIVATE 
   BasicCore 
-  BasicFunctions 
+  BasicFunctions
   ${Boost_MATH_LIBRARY}
 )

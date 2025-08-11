@@ -13,9 +13,9 @@
 #include "physics/Waveguides/Probe.h"
 #include "physics/Waveguides/RectangularWaveguide.h"
 #include "physics/Waveguides/WaveguideMode.h"
+#include "utilities/BasicCore/ComplexVector3.h"
 #include "utilities/BasicCore/Constants.h"
 #include "utilities/BasicCore/Physics.h"
-#include "utilities/BasicFunctions/ComplexVector3.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
@@ -36,8 +36,9 @@ double GetEModeNormFactor(RectangularWaveguide *wv, int m, int n, double freq,
                    wv->GetShortDimension() * double(iy) / double(nSurfPnts)};
       TVector3 surfacePos{thisx, thisy, 0.0};
       WaveguideMode mode(m, n, kTE);
-      ComplexVector3 eTransReal{
+      TVector3 eTrans_tv{
           wv->GetModeEField(surfacePos, mode, 1, freq * 2 * PI, true)};
+      ComplexVector3 eTransReal{eTrans_tv.X(), eTrans_tv.Y(), eTrans_tv.Z()};
       eTransReal.SetZ(0.0);
       sum += (eTransReal.Dot(eTransReal)).real() * area;
     }  // Loop over y points
@@ -62,8 +63,9 @@ double GetHModeNormFactor(RectangularWaveguide *wv, int m, int n, double freq,
                    wv->GetShortDimension() * double(iy) / double(nSurfPnts)};
       TVector3 surfacePos{thisx, thisy, 0.0};
       WaveguideMode mode(m, n, kTE);
-      ComplexVector3 hTransReal{
+      TVector3 hTrans{
           wv->GetModeHField(surfacePos, mode, 1, freq * 2 * PI, true)};
+      ComplexVector3 hTransReal{hTrans.X(), hTrans.Y(), hTrans.Z()};
       hTransReal.SetZ(0.0);
       sum += (hTransReal.Dot(hTransReal)).real() * area;
     }  // Loop over y points
@@ -79,11 +81,13 @@ std::complex<double> GetPositiveAmp(RectangularWaveguide *wv, int m, int n,
   WaveguideMode mode(m, n, kTE);
   double waveImp{wv->GetModeImpedance(mode, freq * 2 * PI)};
   TVector3 j{-QE * vel};
-  ComplexVector3 jComplex{j};
+  ComplexVector3 jComplex{j.X(), j.Y(), j.Z()};
 
-  ComplexVector3 eTrans{wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
+  TVector3 eTransRe{wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
+  ComplexVector3 eTrans{eTransRe.X(), eTransRe.Y(), eTrans.Z()};
   eTrans.SetZ(std::complex<double>{0.0, 0.0});
-  ComplexVector3 eAxial{wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
+  TVector3 eAxials_tv{wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
+  ComplexVector3 eAxial{eAxials_tv.X(), eAxials_tv.Y(), eAxials_tv.Z()};
   eAxial.SetX(std::complex<double>{0.0, 0.0});
   eAxial.SetY(std::complex<double>{0.0, 0.0});
   ComplexVector3 subVec{eTrans - eAxial};
@@ -97,11 +101,13 @@ std::complex<double> GetNegativeAmp(RectangularWaveguide *wv, int m, int n,
   WaveguideMode mode(m, n, kTE);
   double waveImp{wv->GetModeImpedance(mode, freq * 2 * PI)};
   TVector3 j{-QE * vel};
-  ComplexVector3 jComplex{j};
+  ComplexVector3 jComplex{j.X(), j.Y(), j.Z()};
 
-  ComplexVector3 eTrans{wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
+  TVector3 eTrans_tv{wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
+  ComplexVector3 eTrans{eTrans_tv.X(), eTrans_tv.Y(), eTrans_tv.Z()};
   eTrans.SetZ(std::complex<double>{0.0, 0.0});
-  ComplexVector3 eAxial{wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
+  TVector3 eAxial_tv{wv->GetModeEField(pos, mode, 1, freq * 2 * PI, true)};
+  ComplexVector3 eAxial{eAxial_tv.X(), eAxial_tv.Y(), eAxial_tv.Z()};
   eAxial.SetX(std::complex<double>{0.0, 0.0});
   eAxial.SetY(std::complex<double>{0.0, 0.0});
   ComplexVector3 subVec{eTrans + eAxial};
@@ -130,11 +136,13 @@ double CalculatePowerPlus(RectangularWaveguide *wv, int m, int n, double freq,
       TVector3 surfacePos{thisx, thisy, integralZPos};
 
       WaveguideMode mode(m, n, kTE);
-      ComplexVector3 ETotal{
+      TVector3 ETotal_tv{
           wv->GetModeEField(surfacePos, mode, 1, freq * 2 * PI, true)};
+      ComplexVector3 ETotal{ETotal_tv.X(), ETotal_tv.Y(), ETotal_tv.Z()};
       ETotal *= aPlus;
-      ComplexVector3 HTotal{
+      TVector3 HTotal_tv{
           wv->GetModeHField(surfacePos, mode, 1, freq * 2 * PI, true)};
+      ComplexVector3 HTotal{HTotal_tv.X(), HTotal_tv.Y(), HTotal_tv.Z()};
       HTotal *= aPlus;
 
       totalPowerPlus += (ETotal.Cross(HTotal.Conj())).Z().real() * area;

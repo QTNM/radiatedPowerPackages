@@ -118,7 +118,7 @@ add_executable(SyntheticSignals SyntheticSignals.cxx)
 target_link_libraries(SyntheticSignals PRIVATE Antennas ElectronDynamics FieldClasses ROOTUtils ${ROOT_LIBRARIES})
 
 add_executable(TwoElectronSim TwoElectronSim.cxx)
-target_link_libraries(TwoElectronSim PRIVATE ElectronDynamics ROOTUtils ${ROOT_LIBRARIES})
+target_link_libraries(TwoElectronSim PRIVATE BasicFunctions ElectronDynamics ROOTUtils ${ROOT_LIBRARIES})
 
 add_executable(EventGenWithScattering EventGenWithScattering.cxx)
 target_link_libraries(EventGenWithScattering PRIVATE ElectronDynamics Scattering SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})

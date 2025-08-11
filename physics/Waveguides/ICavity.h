@@ -11,7 +11,7 @@
 
 #include <boost/math/special_functions/bessel.hpp>
 
-#include "utilities/BasicFunctions/ComplexVector3.h"
+#include "utilities/BasicCore/ComplexVector3.h"
 #include "TVector3.h"
 
 namespace rad {

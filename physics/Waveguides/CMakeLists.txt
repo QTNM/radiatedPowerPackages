@@ -10,7 +10,6 @@ add_library(Waveguides
 
 target_link_libraries(Waveguides PUBLIC 
   BasicCore
-  BasicFunctions
   ${ROOT_LIBRARIES} 
   ${Boost_MATH_LIBRARY}
 )

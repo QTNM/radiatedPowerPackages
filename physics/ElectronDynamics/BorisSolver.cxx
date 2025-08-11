@@ -6,6 +6,12 @@
 
 #include "physics/ElectronDynamics/BorisSolver.h"
 
+// Helper function to convert ComplexVector3 real part to TVector3
+static TVector3 toRealTVector3(const rad::ComplexVector3& cv) {
+    auto real = cv.RealComponents();
+    return TVector3(real[0], real[1], real[2]);
+}
+
 rad::BorisSolver::BorisSolver()
     : mass(ME), charge(-QE), tau(0), field(new UniformField(1.0)) {}
 
@@ -30,12 +36,10 @@ rad::BorisSolver::BorisSolver(BaseField* field_v, const double charge_v,
                    cav->GetLength() * double(iZ) / double(nScanPnts - 1)};
           TVector3 pos(rho * cos(phi), rho * sin(phi), z);
           // For now just look at the TE111 mode
-          TVector3 fPlus{
-              cav->GetModalEField(pos, CircularCavity::kTE, A, 1, 1, 1, true)
-                  .Real()};
-          TVector3 fMinus{
-              cav->GetModalEField(pos, CircularCavity::kTE, A, 1, 1, 1, false)
-                  .Real()};
+          TVector3 fPlus{toRealTVector3(
+              cav->GetModalEField(pos, CircularCavity::kTE, A, 1, 1, 1, true))};
+          TVector3 fMinus{toRealTVector3(
+              cav->GetModalEField(pos, CircularCavity::kTE, A, 1, 1, 1, false))};
 
           if (fPlus.Mag() > maxFieldPlus) maxFieldPlus = fPlus.Mag();
           if (fMinus.Mag() > maxFieldMinus) maxFieldMinus = fMinus.Mag();
@@ -62,13 +66,11 @@ rad::BorisSolver::BorisSolver(BaseField* field_v, const double charge_v,
           double z{dZ / 2 + double(iZ) * dZ};
           TVector3 pos(rho * cos(phi), rho * sin(phi), z);
 
-          TVector3 fPlus{cav->GetModalEField(pos, CircularCavity::kTE,
-                                             1 / maxFieldPlus, 1, 1, 1, true)
-                             .Real()};
+          TVector3 fPlus{toRealTVector3(cav->GetModalEField(pos, CircularCavity::kTE,
+                                             1 / maxFieldPlus, 1, 1, 1, true))};
           vEffPlus += dV * fPlus.Mag();
-          TVector3 fMinus{cav->GetModalEField(pos, CircularCavity::kTE,
-                                              1 / maxFieldMinus, 1, 1, 1, false)
-                              .Real()};
+          TVector3 fMinus{toRealTVector3(cav->GetModalEField(pos, CircularCavity::kTE,
+                                              1 / maxFieldMinus, 1, 1, 1, false))};
           vEffMinus += dV * fMinus.Mag();
           vEff += dV * (fPlus + fMinus).Mag();
         }
@@ -111,7 +113,7 @@ TVector3 rad::BorisSolver::radiation_acceleration(const TVector3 pos,
                                              1 / maxField, 1, 1, 1, true)};
     ComplexVector3 fMinus{cav->GetModalEField(pos, CircularCavity::kTE,
                                               1 / maxField, 1, 1, 1, false)};
-    fieldFactor = (fPlus + fMinus).Real().Mag2();
+    fieldFactor = toRealTVector3(fPlus + fMinus).Mag2();
 
     // Now calculate the detuning factor
     // Start by getting the mode resonant frequency

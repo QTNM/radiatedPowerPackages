@@ -10,7 +10,7 @@
 #include "physics/Waveguides/ICavity.h"
 #include "utilities/BasicCore/Constants.h"
 #include "utilities/BasicCore/MathUtils.h"
-#include "utilities/BasicFunctions/ComplexVector3.h"
+#include "utilities/BasicCore/ComplexVector3.h"
 
 namespace rad {
 class CircularCavity : public ICavity {

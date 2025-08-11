@@ -7,6 +7,12 @@
 #include "utilities/ROOTUtils/FFTAnalysis.h"
 #include "utilities/ROOTUtils/GraphUtils.h"
 
+// Helper function to convert ComplexVector3 real part to TVector3
+static TVector3 toRealTVector3(const rad::ComplexVector3& cv) {
+    auto real = cv.RealComponents();
+    return TVector3(real[0], real[1], real[2]);
+}
+
 using namespace rad;
 
 rad::Signal::Signal(TString trajectoryFilePath, IAntenna* ant,
@@ -575,7 +581,7 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
           cavity->GetModalEField(cavity->GetProbePosition(), ICavity::kTE,
                                  norm.real(), 1, 1, 1, false) *
           fieldAmpMinus};
-      return (probeFieldPlus + probeFieldMinus).Real();
+      return toRealTVector3(probeFieldPlus + probeFieldMinus);
     } else if (firstGuessTime < tr) {
       // We are searching upwards
       for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
@@ -638,7 +644,7 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
           cavity->GetModalEField(cavity->GetProbePosition(), ICavity::kTE,
                                  norm.real(), 1, 1, 1, false)};
       probeFieldMinus *= fieldAmpMinus;
-      TVector3 totalProbeField{(probeFieldPlus + probeFieldMinus).Real()};
+      TVector3 totalProbeField{toRealTVector3(probeFieldPlus + probeFieldMinus)};
       ExVals.at(0) = totalProbeField.X();
       EyVals.at(0) = totalProbeField.Y();
       EzVals.at(0) = totalProbeField.Z();
@@ -670,7 +676,7 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
           cavity->GetModalEField(cavity->GetProbePosition(), ICavity::kTE,
                                  norm.real(), 1, 1, 1, false)};
       probeFieldMinus *= fieldAmpMinus;
-      TVector3 totalProbeField{(probeFieldPlus + probeFieldMinus).Real()};
+      TVector3 totalProbeField{toRealTVector3(probeFieldPlus + probeFieldMinus)};
       ExVals.at(iEl) = totalProbeField.X();
       EyVals.at(iEl) = totalProbeField.Y();
       EzVals.at(iEl) = totalProbeField.Z();

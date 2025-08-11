@@ -7,7 +7,7 @@
 #ifndef IWAVEGUIDE_H
 #define IWAVEGUIDE_H
 
-#include "utilities/BasicFunctions/ComplexVector3.h"
+#include "utilities/BasicCore/ComplexVector3.h"
 #include "TVector3.h"
 #include "physics/Waveguides/WaveguideMode.h"
 
