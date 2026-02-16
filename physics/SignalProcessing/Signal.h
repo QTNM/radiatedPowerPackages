@@ -172,11 +172,6 @@ class Signal {
   /// @return Index of guess
   int GetFirstGuessPoint(long double ts, unsigned int antInd);
 
-  /// @brief Find the lower bracket index in the TTree for a given retarded time
-  /// @param tr Retarded time in seconds
-  /// @return Index i such that t[i] <= tr < t[i+1]
-  int FindBracketIndex(long double tr);
-
   /// @brief Sets up the tree to be read in
   /// @param filePath Path to electron trajectory file
   void SetUpTree(TString filePath);
