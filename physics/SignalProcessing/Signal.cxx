@@ -2,6 +2,9 @@
   Signal.cxx
 */
 
+#include <algorithm>
+#include <stdexcept>
+
 #include "physics/SignalProcessing/Signal.h"
 
 #include "utilities/ROOTUtils/FFTAnalysis.h"
@@ -451,51 +454,7 @@ double rad::Signal::CalcVoltage(long double tr, IAntenna* ant) {
     return 0;
   } else {
     // We actually have to calculate the voltage
-    // Start off with a first guess
-    int firstGuessTInd{int(round(filePntsPerTime * (tr - fileStartTime)))};
-
-    // Find the appropriate time
-    inputTree->GetEntry(firstGuessTInd);
-    double firstGuessTime{time};
-    unsigned int correctIndex{0};
-    if (firstGuessTime == tr) {
-      // Easy, no need for interpolation
-      TVector3 pos(xPos, yPos, zPos);
-      TVector3 vel(xVel, yVel, zVel);
-      TVector3 acc(xAcc, yAcc, zAcc);
-      ROOT::Math::XYZVector eField{
-          CalcEField(ant->GetAntennaPosition(), pos, vel, acc)};
-      TVector3 eField2(eField.X(), eField.Y(), eField.Z());
-      double voltage{(eField2.Dot(antenna[0]->GetETheta(pos)) +
-                      eField2.Dot(antenna[0]->GetEPhi(pos))) *
-                     antenna[0]->GetHEff()};
-      voltage /= 2.0;
-      return voltage;
-    } else if (firstGuessTime < tr) {
-      // We are searching upwards
-      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
-    } else if (firstGuessTime > tr) {
-      // We are searching downwards
-      for (int i{firstGuessTInd}; i >= 0; i--) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
-    }
+    int correctIndex{FindBracketIndex(tr)};
 
     // We have the relevant index so we can now do some interpolation
     std::vector<long double> timeVals(4);
@@ -548,65 +507,7 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
     return TVector3(0, 0, 0);
   } else {
     // We actually have to calculate the voltage
-    // Start off with a first guess
-    int firstGuessTInd{int(round(filePntsPerTime * (tr - fileStartTime)))};
-
-    // Find the appropriate time
-    inputTree->GetEntry(firstGuessTInd);
-    double firstGuessTime{time};
-    unsigned int correctIndex{0};
-    if (firstGuessTime == tr) {
-      // Easy, no need for interpolation
-      TVector3 pos(xPos, yPos, zPos);
-      ComplexVector3 modeFieldPlus{cavity->GetModalEField(
-          pos, ICavity::kTE, norm.real(), 1, 1, 1, true)};
-      ComplexVector3 modeFieldMinus{cavity->GetModalEField(
-          pos, ICavity::kTE, norm.real(), 1, 1, 1, false)};
-      // Calculate the current density
-      ComplexVector3 J(xVel, yVel, zVel);
-      J *= -QE;
-
-      // Now calculate the field amplitudes
-      // Assume we're at the resonance
-      const double factor{-190};
-      std::complex<double> fieldAmpPlus{factor * J.Dot(modeFieldPlus)};
-      std::complex<double> fieldAmpMinus{factor * J.Dot(modeFieldMinus)};
-
-      // Now calculate the actual electric field at the probe
-      ComplexVector3 probeFieldPlus{
-          cavity->GetModalEField(cavity->GetProbePosition(), ICavity::kTE,
-                                 norm.real(), 1, 1, 1, true) *
-          fieldAmpPlus};
-      ComplexVector3 probeFieldMinus{
-          cavity->GetModalEField(cavity->GetProbePosition(), ICavity::kTE,
-                                 norm.real(), 1, 1, 1, false) *
-          fieldAmpMinus};
-      return toRealTVector3(probeFieldPlus + probeFieldMinus);
-    } else if (firstGuessTime < tr) {
-      // We are searching upwards
-      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
-    } else {
-      // We are searching downwards
-      for (int i{firstGuessTInd}; i >= 0; i--) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
-    }
+    int correctIndex{FindBracketIndex(tr)};
 
     // Now can do some interpolation if we haven't already found the value
     std::vector<double> timeVals(4);
@@ -699,54 +600,7 @@ TVector3 rad::Signal::CalcWaveguideEField(double tr, WaveguideMode mode,
     return TVector3(0, 0, 0);
   } else {
     // We actually have to calculate the voltage
-    // Start off with a first guess
-    int firstGuessTInd{int(round(filePntsPerTime * (tr - fileStartTime)))};
-
-    // Find the appropriate time
-    inputTree->GetEntry(firstGuessTInd);
-    double firstGuessTime{time};
-    unsigned int correctIndex{0};
-    if (firstGuessTime == tr) {
-      TVector3 pos(xPos, yPos, zPos);
-      TVector3 vel(xVel, yVel, zVel);
-      // Calculate the field amplitudes
-      double ampPlus{
-          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, true, true)};
-      double ampMinus{
-          waveguide->GetFieldAmp(mode, omega, pos, vel, norm, false, true)};
-      // Now calculate the actual field at the probe position
-      TVector3 probeFieldPlus{
-          waveguide->GetModeEField(pos, mode, norm, omega, true)};
-      probeFieldPlus *= ampPlus;
-      TVector3 probeFieldMinus{
-          waveguide->GetModeEField(pos, mode, norm, omega, false)};
-      probeFieldMinus *= ampMinus;
-      return probeFieldPlus + probeFieldMinus;
-    } else if (firstGuessTime < tr) {
-      // We are searching upwards
-      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
-    } else {
-      // We are searching downwards
-      for (int i{firstGuessTInd}; i >= 0; i--) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
-    }
+    int correctIndex{FindBracketIndex(tr)};
 
     // Now can do some interpolation if we haven't already found the value
     std::vector<double> timeVals(4);
@@ -821,53 +675,7 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double omega) {
     return 0;
   } else {
     // We actually have to calculate the voltage
-    // Start off with a first guess
-    int firstGuessTInd{int(round(filePntsPerTime * (tr - fileStartTime)))};
-
-    // Find the appropriate time
-    inputTree->GetEntry(firstGuessTInd);
-    double firstGuessTime{time};
-    unsigned int correctIndex{0};
-
-    if (firstGuessTime == tr) {
-      TVector3 pos(xPos, yPos, zPos);
-      TVector3 vel(xVel, yVel, zVel);
-      // Calculate the field amplitudes after checking where our probe is in
-      // relation to the electron
-      if (pr.GetPosition().Z() > pos.Z()) {
-        return waveguide->GetFieldAmp(mode, omega, pos, vel,
-                                      1 / waveguide->GetPn(),
-                                      pr.GetPolarisationState(), true);
-      } else {
-        return waveguide->GetFieldAmp(mode, omega, pos, vel,
-                                      1 / waveguide->GetPn(),
-                                      pr.GetPolarisationState(), false);
-      }
-    } else if (firstGuessTime < tr) {
-      // We are searching upwards
-      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
-    } else {
-      // We are searching downwards
-      for (int i{firstGuessTInd}; i >= 0; i--) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
-    }
+    int correctIndex{FindBracketIndex(tr)};
 
     // Now can do some interpolation if we haven't already found the value
     std::vector<double> timeVals(4);
@@ -1043,6 +851,38 @@ void rad::Signal::OpenInputFile(TString filePath) {
     std::cout << "Couldn't open file! Exiting.\n";
     exit(1);
   }
+}
+
+int rad::Signal::FindBracketIndex(long double tr) {
+  const int lastIdx{(int)inputTree->GetEntries() - 2};
+  int idx{std::clamp(int(round(filePntsPerTime * (tr - fileStartTime))), 0,
+                     lastIdx)};
+
+  inputTree->GetEntry(idx);
+  double tLow{time};
+  inputTree->GetEntry(idx + 1);
+  double tHigh{time};
+
+  if (tr < tLow && idx > 0) {
+    --idx;
+    tHigh = tLow;
+    inputTree->GetEntry(idx);
+    tLow = time;
+  } else if (tr >= tHigh && idx < lastIdx) {
+    ++idx;
+    tLow = tHigh;
+    inputTree->GetEntry(idx + 1);
+    tHigh = time;
+  }
+
+  if (tr < tLow || tr >= tHigh) {
+    throw std::runtime_error(
+        "FindBracketIndex: retarded time " + std::to_string((double)tr) +
+        " not bracketed after index correction (tLow=" +
+        std::to_string(tLow) + ", tHigh=" + std::to_string(tHigh) + ")");
+  }
+
+  return idx;
 }
 
 int rad::Signal::GetFirstGuessPoint(long double ts, unsigned int antInd) {
