@@ -457,7 +457,6 @@ double rad::Signal::CalcVoltage(long double tr, IAntenna* ant) {
     // Find the appropriate time
     inputTree->GetEntry(firstGuessTInd);
     double firstGuessTime{time};
-    unsigned int correctIndex{0};
     if (firstGuessTime == tr) {
       // Easy, no need for interpolation
       TVector3 pos(xPos, yPos, zPos);
@@ -471,31 +470,8 @@ double rad::Signal::CalcVoltage(long double tr, IAntenna* ant) {
                      antenna[0]->GetHEff()};
       voltage /= 2.0;
       return voltage;
-    } else if (firstGuessTime < tr) {
-      // We are searching upwards
-      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
-    } else if (firstGuessTime > tr) {
-      // We are searching downwards
-      for (int i{firstGuessTInd}; i >= 0; i--) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
     }
+    int correctIndex{FindBracketIndex(tr, firstGuessTInd, firstGuessTime)};
 
     // We have the relevant index so we can now do some interpolation
     std::vector<long double> timeVals(4);
@@ -554,7 +530,6 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
     // Find the appropriate time
     inputTree->GetEntry(firstGuessTInd);
     double firstGuessTime{time};
-    unsigned int correctIndex{0};
     if (firstGuessTime == tr) {
       // Easy, no need for interpolation
       TVector3 pos(xPos, yPos, zPos);
@@ -582,31 +557,8 @@ TVector3 rad::Signal::CalcCavityEField(double tr, std::complex<double> norm) {
                                  norm.real(), 1, 1, 1, false) *
           fieldAmpMinus};
       return toRealTVector3(probeFieldPlus + probeFieldMinus);
-    } else if (firstGuessTime < tr) {
-      // We are searching upwards
-      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
-    } else {
-      // We are searching downwards
-      for (int i{firstGuessTInd}; i >= 0; i--) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
     }
+    int correctIndex{FindBracketIndex(tr, firstGuessTInd, firstGuessTime)};
 
     // Now can do some interpolation if we haven't already found the value
     std::vector<double> timeVals(4);
@@ -705,7 +657,6 @@ TVector3 rad::Signal::CalcWaveguideEField(double tr, WaveguideMode mode,
     // Find the appropriate time
     inputTree->GetEntry(firstGuessTInd);
     double firstGuessTime{time};
-    unsigned int correctIndex{0};
     if (firstGuessTime == tr) {
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
@@ -722,31 +673,8 @@ TVector3 rad::Signal::CalcWaveguideEField(double tr, WaveguideMode mode,
           waveguide->GetModeEField(pos, mode, norm, omega, false)};
       probeFieldMinus *= ampMinus;
       return probeFieldPlus + probeFieldMinus;
-    } else if (firstGuessTime < tr) {
-      // We are searching upwards
-      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
-    } else {
-      // We are searching downwards
-      for (int i{firstGuessTInd}; i >= 0; i--) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
     }
+    int correctIndex{FindBracketIndex(tr, firstGuessTInd, firstGuessTime)};
 
     // Now can do some interpolation if we haven't already found the value
     std::vector<double> timeVals(4);
@@ -827,8 +755,6 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double omega) {
     // Find the appropriate time
     inputTree->GetEntry(firstGuessTInd);
     double firstGuessTime{time};
-    unsigned int correctIndex{0};
-
     if (firstGuessTime == tr) {
       TVector3 pos(xPos, yPos, zPos);
       TVector3 vel(xVel, yVel, zVel);
@@ -843,31 +769,8 @@ double rad::Signal::CalcWgAmp(double tr, WaveguideMode mode, double omega) {
                                       1 / waveguide->GetPn(),
                                       pr.GetPolarisationState(), false);
       }
-    } else if (firstGuessTime < tr) {
-      // We are searching upwards
-      for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
-    } else {
-      // We are searching downwards
-      for (int i{firstGuessTInd}; i >= 0; i--) {
-        inputTree->GetEntry(i);
-        double lowerPoint{time};
-        inputTree->GetEntry(i + 1);
-        double upperPoint{time};
-        if (tr > lowerPoint && tr < upperPoint) {
-          correctIndex = i;
-          break;
-        }
-      }
     }
+    int correctIndex{FindBracketIndex(tr, firstGuessTInd, firstGuessTime)};
 
     // Now can do some interpolation if we haven't already found the value
     std::vector<double> timeVals(4);
@@ -1043,6 +946,39 @@ void rad::Signal::OpenInputFile(TString filePath) {
     std::cout << "Couldn't open file! Exiting.\n";
     exit(1);
   }
+}
+
+int rad::Signal::FindBracketIndex(long double tr, int firstGuessTInd,
+                                  double firstGuessTime) {
+  int correctIndex{0};
+  if (firstGuessTime < tr) {
+    // We are searching upwards
+    // Seed lowerPoint from the already-loaded first guess entry
+    double lowerPoint{firstGuessTime};
+    for (int i{firstGuessTInd}; i < inputTree->GetEntries() - 2; i++) {
+      inputTree->GetEntry(i + 1);
+      double upperPoint{time};
+      if (tr > lowerPoint && tr < upperPoint) {
+        correctIndex = i;
+        break;
+      }
+      lowerPoint = upperPoint;
+    }
+  } else if (firstGuessTime > tr) {
+    // We are searching downwards
+    // Seed upperPoint from the already-loaded first guess entry
+    double upperPoint{firstGuessTime};
+    for (int i{firstGuessTInd}; i >= 0; i--) {
+      inputTree->GetEntry(i);
+      double lowerPoint{time};
+      if (tr > lowerPoint && tr < upperPoint) {
+        correctIndex = i;
+        break;
+      }
+      upperPoint = lowerPoint;
+    }
+  }
+  return correctIndex;
 }
 
 int rad::Signal::GetFirstGuessPoint(long double ts, unsigned int antInd) {
