@@ -45,7 +45,7 @@ inline constexpr double RYDBERG_EV{13.605693122994};
 // Ionisation energy of tritium in eV
 inline constexpr double TRITIUM_I{13.603};
 
-// Boltzmann constant in Joules/Kelving
+// Boltzmann constant in Joules/Kelvin
 inline constexpr double K_B{1.380649e-23};
 
 // Reduced Planck constant in J⋅s
