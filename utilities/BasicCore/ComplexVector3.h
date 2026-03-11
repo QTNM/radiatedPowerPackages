@@ -5,8 +5,8 @@
   No external dependencies - pure C++ implementation
 */
 
-#ifndef COMPLEX_VECTOR_THREE_H
-#define COMPLEX_VECTOR_THREE_H
+#ifndef BASIC_CORE_COMPLEX_VECTOR_THREE_H
+#define BASIC_CORE_COMPLEX_VECTOR_THREE_H
 
 #include <array>
 #include <complex>
