@@ -1,12 +1,14 @@
 #include "utilities/SignalUtils/BandpassFilter.h"
 
+#include <stdexcept>
+
 std::vector<double> rad::BandPassFilter(std::vector<double> xVals,
                                         std::vector<double> yVals,
                                         double minFreq, double maxFreq) {
   // Do some input checking
   if (xVals.size() != yVals.size()) {
-    std::cout << "Your x and y values are not the same length. Are you sure "
-                 "this is right?\n";
+    throw std::length_error(
+        "Input vectors to bandpass filter must be same length");
   }
   if (xVals.size() < 2 || yVals.size() < 2) {
     std::cout << "Invalid input value size. Returning standard output.\n";
