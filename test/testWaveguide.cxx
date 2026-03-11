@@ -26,6 +26,7 @@
 #include "physics/Waveguides/Probe.h"
 #include "physics/Waveguides/RectangularWaveguide.h"
 #include "physics/Waveguides/WaveguideMode.h"
+#include "utilities/BasicCore/Physics.h"
 
 /// @brief Function for generating a random file string
 /// @return A unique string which can be used for file names
