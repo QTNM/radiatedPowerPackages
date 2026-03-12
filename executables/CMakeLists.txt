@@ -14,9 +14,6 @@ target_link_libraries(perpendicularAntenna PRIVATE Antennas SignalProcessing ROO
 add_executable(rayleighDistributionChecks rayleighDistributionChecks.cxx)
 target_link_libraries(rayleighDistributionChecks PUBLIC SignalProcessing Antennas ROOTUtils ${ROOT_LIBRARIES})
 
-add_executable(writeTrajectory writeTrajectory.cxx)
-target_link_libraries(writeTrajectory PUBLIC ElectronDynamics ${ROOT_LIBRARIES})
-
 add_executable(singleBinPower singleBinPower.cxx)
 target_link_libraries(singleBinPower PUBLIC SignalProcessing Antennas ROOTUtils ${ROOT_LIBRARIES})
 
