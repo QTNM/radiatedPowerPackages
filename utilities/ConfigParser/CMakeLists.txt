@@ -6,7 +6,7 @@ add_library(ConfigParser
 )
 
 target_link_libraries(ConfigParser
-    PUBLIC  BasicCore ElectronDynamics yaml-cpp::yaml-cpp ${ROOT_LIBRARIES}
+    PUBLIC  BasicCore ElectronDynamics yaml-cpp ${ROOT_LIBRARIES}
 )
 
 target_include_directories(ConfigParser PUBLIC
