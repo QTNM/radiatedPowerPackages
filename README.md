@@ -1,37 +1,68 @@
 # radiatedPowerPackages
-Designed to offer easy calculation of EM fields and the associated voltage signals for a moving electron.
+A modular C++20 library for electromagnetic field calculations and signal processing in QTNM (Quantum Technologies for Neutrino Mass) experiments.
+
+## Library Organization
+
+The project is organized into two main categories:
+
+### Utilities (`utilities/`)
+Reusable mathematical and computational libraries:
+- **BasicCore** - Header-only constants and basic math (no dependencies)
+- **SignalUtils** - FFTW/Boost dependent signal processing utilities
+- **ROOTUtils** - ROOT framework dependent analysis utilities  
+- **BasicFunctions** - Legacy consolidated utility functions
+
+### Physics Modules (`physics/`)
+Domain-specific physics implementations:
+- **FieldClasses** - EM field calculations at spatial points
+- **ElectronDynamics** - Particle trajectory generation (Boris solver)
+- **Antennas** - Antenna implementations (dipoles, patches, etc.)
+- **SignalProcessing** - Voltage signals, noise, local oscillators
+- **Waveguides** - Waveguide and cavity mode calculations
+- **Scattering** - Electron scattering models
 
 ## Requirements and Dependencies
 
-The core code requires C++20, built with CMake (3.18+) with the following external dependencies for each package:
+The core code requires C++20, built with CMake (3.18+) with the following external dependencies:
 
-|   | BOOST (1.73+) | ROOT (6.14+) | libRootFftwWrapper(*)|
-|:-:|:-------------:|:------------:|:--------------------:|
-| Basic Functions | | x | x |
-| Field Classes | | x | x |
-| Signal Processing | | x | x
+### Utility Libraries
+|   | BOOST (1.73+) | ROOT (6.14+) | FFTW3 |
+|:-:|:-------------:|:------------:|:-----:|
+| BasicCore | | | |
+| SignalUtils | x | | x |
+| ROOTUtils | | x | |
+| BasicFunctions | | x | |
+
+### Physics Libraries
+|   | BOOST (1.73+) | ROOT (6.14+) | FFTW3 |
+|:-:|:-------------:|:------------:|:-----:|
+| FieldClasses | | x | |
+| ElectronDynamics | x | x | | 
 | Antennas | | x | |
-| Electron Dynamics | x | x | |
-| Scattering | x | | |
+| SignalProcessing | | x | |
+| Waveguides | | x | |
+| Scattering | | | |
 
 HDF5 libraries are also required for some executables purely for I/O.
 
-(*) libRootFftwWrapper available at: https://github.com/nichol77/libRootFftwWrapper. Requires an existing FFTW install.
+### Library Dependencies
 
-There are also inter-dependencies between the individual packages:
+**Utility Dependencies:**
+- `BasicCore` → No dependencies (header-only)
+- `SignalUtils` → FFTW3 + Boost
+- `ROOTUtils` → BasicCore + SignalUtils + ROOT
+- `BasicFunctions` → BasicCore + ROOT
 
-|   | Basic Functions | Field Classes | Signal Processing | Antennas | Electron Dynamics | Scattering |
-|:-:|:---------------:|:-------------:|:-----------------:|:--------:|:-----------------:|:----------:|
-| Basic Functions | | | | | |
-| Field Classes | x | | | | |
-| Signal Processing | x | x | | x | |
-| Antennas | x | | | | |
-| Electron Dynamics | x | | | | |
-| Scattering | | | | | |
+**Physics Dependencies:**
+- `FieldClasses` → BasicCore + ROOTUtils + ROOT
+- `Antennas` → BasicFunctions + ROOT  
+- `Waveguides` → BasicCore + ROOT + Boost
+- `ElectronDynamics` → BasicCore + Waveguides + ROOT + Boost
+- `Scattering` → BasicCore + BasicFunctions + Boost
+- `SignalProcessing` → SignalUtils + FieldClasses + Antennas + Waveguides + ROOT
 
-Dependencies are listed row by row, for example the Signal Processing package requires the Basic Functions, Field Classes and Antennas packages.
 
-There are also a set of example programs (radiatedPowerPackages/executables) for which we recommend installing all packages.
+There are also 47+ example programs (`executables/`) demonstrating various physics calculations and signal processing workflows. We recommend installing all packages to access the full functionality.
 
 A docker image containing the required external libraries is available at: https://hub.docker.com/repository/docker/sebj101/qtnm_deps.
 
@@ -71,24 +102,13 @@ $ ./bootstrap.sh --prefix=/usr/local --with-libraries=program_options
 $ ./b2 install
 ```
 
-### libROOTFFTW
-```
-$ git clone https://github.com/nichol77/libRootFftwWrapper.git
-$ cd "libRootFftwWrapper"
-$ mkdir build
-$ cd build
-$ cmake .. 
-$ make 
-$ make install
-```
-
 ### HDF5
 ```
 $ sudo apt-get install -y libhdf5-serial-dev
 ```
 
 ## Build instructions
-The package is designed to be built with CMake and the build instructions are as follows.
+The package uses a hierarchical CMake build system.
 
 ```bash
 $ mkdir build
@@ -98,10 +118,17 @@ $ cmake --build . -jN
 ```
 where N is the number of cores used in the build
 
+### Build System Features
+- **Modular Design**: Each `utilities/` and `physics/` directory manages its own subdirectories
+- **Clean Dependencies**: Clear separation between utility libraries and physics modules
+- **Selective Building**: Can build individual libraries as needed
+- **Professional Structure**: Follows modern C++ project organization patterns
+- **Maintainable**: Easy to add new libraries or modify existing ones
+
 ## Creating electron trajectories
-All the code required to create magnetic fields and electron trajectories is contained within the ```ElectronDynamics``` folder. 
-It is possible to use the contained classes to generate your own electron trajectories (this is demonstrated in the ```writeTrajectory``` executable).
-However, a helper class (```ElectronTrajectoryGen``` contained within ```ElectronDynamics/TrajectoryGen.h```) exists which will create ROOT files containing the trajectories in a format that can be read by other package components.
+All the code required to create magnetic fields and electron trajectories is contained within the `physics/ElectronDynamics/` module. 
+It is possible to use the contained classes to generate your own electron trajectories (this is demonstrated in the `writeTrajectory` executable).
+However, a helper class (`ElectronTrajectoryGen` contained within `physics/ElectronDynamics/TrajectoryGen.h`) exists which will create ROOT files containing the trajectories in a format that can be read by other package components.
 
 The required arguments are:
 * The output file path
@@ -122,32 +149,40 @@ The solver used to propagate the particles is the Boris solver which is energy c
 An explanation of the solver (named as the Boris C solver) is given in [Ref. 1][1].
 
 ### Magnetic fields
-Classes representing several types of magnetic fields and trapping configurations are found in ```ElectronDynamics/QTNMFields.h```.
-The most familiar ones are ```BathtubField``` and ```HarmonicField```.
+Classes representing several types of magnetic fields and trapping configurations are found in `physics/ElectronDynamics/QTNMFields.h`.
+The most familiar ones are `BathtubField` and `HarmonicField`.
 
 ## Using the signal processing
 
 ### Antennas
-Different types of antenna are implemented as derived classes of the abstract base class ```IAntenna```. 
-Typically the one I used for my analyses is the ```HalfWaveDipole```.
-Implementations do exist for other antennas but I provide no guarantee of accuracy for them (yet).
-The ```HalfWaveDipole``` requires a spatial position, the directions of two (perpendicular) cartesian axes and a central frequency. 
+Different types of antenna are implemented as derived classes of the abstract base class `IAntenna` in `physics/Antennas/`. 
+Typically the one used for analyses is the `HalfWaveDipole`.
+Implementations exist for other antennas including `HertzianDipole`, `PatchAntenna`, and `IsotropicAntenna`.
+The `HalfWaveDipole` requires a spatial position, the directions of two (perpendicular) cartesian axes and a central frequency. 
 Additionally a time delay (in seconds) may be specified for the antenna.
 
 ### FieldPoint
-If you want to view the EM fields at a given point in space the best class to use is ```FieldPoint``` located in ```FieldClasses/FieldClasses.h``` which takes an its inputs a ROOT file containing an electron trajectory and a pointer to an antenna.
-Calling the function ```GenerateFields``` is required to generate the fields between two specified times.
+If you want to view the EM fields at a given point in space the best class to use is `FieldPoint` located in `physics/FieldClasses/FieldClasses.h` which takes as its inputs a ROOT file containing an electron trajectory and a pointer to an antenna.
+Calling the function `GenerateFields` is required to generate the fields between two specified times.
 
 ### InducedVoltage
-The ```InducedVoltage``` voltage class provides a lighter weight implementation of just the voltage induced on the specific antenna (or array of antennas). 
-The required inputs are an electron trajectory file and either a pointer to an antenna or (in the case of simulating an array of antennas wired together) and vector of antennas.
+The `InducedVoltage` class (in `physics/SignalProcessing/`) provides a lighter weight implementation of just the voltage induced on the specific antenna (or array of antennas). 
+The required inputs are an electron trajectory file and either a pointer to an antenna or (in the case of simulating an array of antennas wired together) a vector of antennas.
 Additionally, a boolean can be specified over whether or not to include the signal propagation time when generating the signal.
 
-If one just wants to view this signal without any downmixing, downsampling or noise added then simply call the function ```GenerateVoltage```. 
-A ```TGraph``` of the time series signal can then be produced using ```GetVoltageGraph```.
+If one just wants to view this signal without any downmixing, downsampling or noise added then simply call the function `GenerateVoltage`. 
+A `TGraph` of the time series signal can then be produced using `GetVoltageGraph`.
 
 ### Signal
-Full signal processing is done using the ```Signal``` class which takes as an input the path to the electron trajectory file, a pointer to the ```IAntenna```, a ```LocalOscillator``` used to define the down-mixing and the sampling rate (in Hertz).
-Additionally a vector of ```GaussianNoise``` terms can be supplied as well as a maximum acquisition time.
+Full signal processing is done using the `Signal` class (in `physics/SignalProcessing/`) which takes as an input the path to the electron trajectory file, a pointer to the `IAntenna`, a `LocalOscillator` used to define the down-mixing and the sampling rate (in Hertz).
+Additionally a vector of `GaussianNoise` terms can be supplied as well as a maximum acquisition time.
+
+## Utility Functions
+
+The organized utility libraries provide:
+- **BasicCore**: Constants (`utilities/BasicCore/Constants.h`), math utilities, neutrino oscillation parameters
+- **SignalUtils**: FFTW wrappers, digital filters (`ButterworthFilter`), Fourier transforms
+- **ROOTUtils**: TGraph utilities, power spectra, correlation analysis, signal analysis functions
+- **BasicFunctions**: Consolidated legacy functions for backward compatibility
 
 [1]: <https://aip.scitation.org/doi/pdf/10.1063/1.5051077>

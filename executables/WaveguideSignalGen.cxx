@@ -19,23 +19,23 @@
 #include <random>
 #include <string>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "BasicFunctions/NuFitValues.h"
-#include "BasicFunctions/TritiumSpectrum.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
+
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/NuFitValues.h"
+#include "utilities/BasicFunctions/TritiumSpectrum.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
 #include "H5Cpp.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/Signal.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TSystem.h"
 #include "TTree.h"
 #include "TVector3.h"
-#include "Waveguides/CircularWaveguide.h"
-#include "Waveguides/Probe.h"
-#include "Waveguides/WaveguideMode.h"
+#include "physics/Waveguides/CircularWaveguide.h"
+#include "physics/Waveguides/Probe.h"
+#include "physics/Waveguides/WaveguideMode.h"
 
 using namespace rad;
 using std::cout;
@@ -67,8 +67,8 @@ bool GenerateElectron(TString file, TVector3 pos, TVector3 vel,
   xVel = pos.X();
   yVel = pos.Y();
   zVel = pos.Z();
-  const double tau{2 * R_E / (3 * TMath::C())};
-  BorisSolver solver(field, -TMath::Qe(), ME, tau);
+  const double tau{2 * R_E / (3 * C)};
+  BorisSolver solver(field, -QE, ME, tau);
   TVector3 acc{solver.acc(pos, vel)};
   xAcc = acc.X();
   yAcc = acc.Y();

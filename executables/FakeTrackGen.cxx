@@ -5,15 +5,18 @@
 */
 
 #include <chrono>
+#include <iostream>
 #include <random>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TH2.h"
-#include "TMath.h"
 #include "TString.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/HistogramUtils.h"
 
 using namespace rad;
 
@@ -28,7 +31,7 @@ TGraph *GetChirpGraph(double srate, int N, double A, double f0, double c) {
   // Generate a random starting phase
   long int seed{std::chrono::system_clock::now().time_since_epoch().count()};
   std::mt19937 rng(seed);
-  std::uniform_real_distribution<double> dist(0, 2 * TMath::Pi());
+  std::uniform_real_distribution<double> dist(0, 2 * PI);
   double phi0{dist(rng)};
 
   for (int iS{0}; iS < N; iS++) {
@@ -42,7 +45,7 @@ TGraph *GetChirpGraph(double srate, int N, double A, double f0, double c) {
 
 void AddWhiteNoise(TGraph *gr, double T) {
   const double fs{1.0 / (gr->GetPointX(1) - gr->GetPointX(0))};
-  const double sigma{sqrt(TMath::K() * T * fs / 2)};
+  const double sigma{sqrt(K_B * T * fs / 2)};
   long int seed{std::chrono::system_clock::now().time_since_epoch().count()};
   std::mt19937 rng(seed);
   std::normal_distribution<double> noise{0, sigma};
@@ -54,17 +57,17 @@ void AddWhiteNoise(TGraph *gr, double T) {
 }
 
 double GetChirpRate(double Ek, double B, double theta) {
-  const double ETot{Ek * TMath::Qe() + ME * pow(TMath::C(), 2)};
-  const double gamma{ETot / (ME * pow(TMath::C(), 2))};
+  const double ETot{Ek * QE + ME * pow(C, 2)};
+  const double gamma{ETot / (ME * pow(C, 2))};
   const double betaSq{1 - 1 / (gamma * gamma)};
-  return betaSq * pow(sin(theta), 2) * pow(TMath::Qe(), 5) * pow(B, 3) *
-         TMath::C() /
-         (ETot * ETot * (1 - betaSq) * 12 * pow(TMath::Pi() * ME, 2) *
+  return betaSq * pow(sin(theta), 2) * pow(QE, 5) * pow(B, 3) *
+         C /
+         (ETot * ETot * (1 - betaSq) * 12 * pow(PI * ME, 2) *
           EPSILON0);
 }
 
 TH2D *MakeSpectrogram(double srate, double totTime, double snrMax, double B = 1,
-                      double theta = TMath::PiOver2(), double Ek = 18.6e3) {
+                      double theta = PI/2, double Ek = 18.6e3) {
   // Calculate chirp rate
   const double cRate{GetChirpRate(Ek, B, theta)};
 
@@ -100,7 +103,7 @@ TH2D *MakeSpectrogram(double srate, double totTime, double snrMax, double B = 1,
   auto gr = GetChirpGraph(srate, nSamplesPerTimeBin * nTimeBins,
                           sqrt(2 * signalPower), f0DM, cRate);
   // Add noise
-  const double noiseTemp{noisePower / (TMath::K() * deltaFOpt)};
+  const double noiseTemp{noisePower / (K_B * deltaFOpt)};
   AddWhiteNoise(gr, noiseTemp);
 
   // Now divide the graph up and add to the spectrogram
@@ -128,7 +131,7 @@ TH2D *MakeSpectrogram(double srate, double totTime, double snrMax, double B = 1,
 }
 
 TH2D *MakeSpectrogram(TGraph *grIn, double totTime, double snrMax, double B = 1,
-                      double theta = TMath::PiOver2(), double Ek = 18.6e3) {
+                      double theta = PI/2, double Ek = 18.6e3) {
   // Calculate chirp rate
   const double cRate{GetChirpRate(Ek, B, theta)};
   const double srate{1 / (grIn->GetPointX(1) - grIn->GetPointX(0))};
@@ -204,7 +207,7 @@ int main(int argc, char *argv[]) {
     std::uniform_real_distribution<double> EkDist(18.5e3, 18.6e3);
     for (int iTh{0}; iTh < nThrows; iTh++) {
       double thetaDeg{thetaDegDist(rng)};
-      double theta{thetaDeg * TMath::Pi() / 180};
+      double theta{thetaDeg * PI / 180};
       double Ek{EkDist(rng)};
       const double cRate{GetChirpRate(Ek, chosenField, theta)};
 
@@ -229,7 +232,7 @@ int main(int argc, char *argv[]) {
       auto gr = GetChirpGraph(sampleRate, nSamplesPerTimeBin * nTimeBins,
                               sqrt(2 * signalPower), f0DM, cRate);
       // Add noise
-      const double noiseTemp{noisePower / (TMath::K() * deltaFOpt)};
+      const double noiseTemp{noisePower / (K_B * deltaFOpt)};
       AddWhiteNoise(gr, noiseTemp);
 
       // Filter to remove noise around signal

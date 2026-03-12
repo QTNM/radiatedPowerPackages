@@ -5,25 +5,25 @@
 #include <cmath>
 #include <iostream>
 
-#include "Antennas/HalfWaveDipole.h"
-#include "Antennas/IAntenna.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
-#include "SignalProcessing/InducedVoltage.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/NoiseFunc.h"
-#include "SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
-#include "TMath.h"
 #include "TMultiGraph.h"
 #include "TRandom3.h"
 #include "TSpline.h"
 #include "TString.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "physics/Antennas/HalfWaveDipole.h"
+#include "physics/Antennas/IAntenna.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/SignalProcessing/InducedVoltage.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/NoiseFunc.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 
@@ -99,21 +99,20 @@ int main(int argc, char* argv[]) {
   grBMag->Write("grBMag");
 
   // Start out with a 90 degree endpoint electron
-  const double pitchAngleRad = pitchAngle * TMath::Pi() / 180.0;
+  const double pitchAngleRad = pitchAngle * PI / 180.0;
   const double TElec = 18600;  // eV
-  const double gamma = TElec * TMath::Qe() / (ME * TMath::C() * TMath::C()) + 1;
+  const double gamma = TElec * QE / (ME * C * C) + 1;
   const double betaSq = 1 - 1 / pow(gamma, 2);
-  const double V0 = sqrt(betaSq) * TMath::C();
-  const double tau = 2 * R_E / (3 * TMath::C());
+  const double V0 = sqrt(betaSq) * C;
+  const double tau = 2 * R_E / (3 * C);
 
   const double centralFrequency =
-      (1.0 / (2 * TMath::Pi())) * TMath::Qe() * centralField / (gamma * ME);
+      (1.0 / (2 * PI)) * QE * centralField / (gamma * ME);
   const double centralPeriod = 1.0 / centralFrequency;
   std::cout << "Central frequency = " << centralFrequency << " Hz" << std::endl;
 
   TVector3 vInitial(V0 * sin(pitchAngleRad), 0, V0 * cos(pitchAngleRad));
-  const double gyroradius =
-      gamma * ME * vInitial.X() / (TMath::Qe() * centralField);
+  const double gyroradius = gamma * ME * vInitial.X() / (QE * centralField);
   TVector3 X0(0, gyroradius + radialOffset, 0);
   std::cout << "Gyroradius = " << (gyroradius * 1000) << " mm" << std::endl;
 
@@ -126,8 +125,8 @@ int main(int argc, char* argv[]) {
   const double antennaRadius = 0.03;
   const double antennaLowerBandwidth = 26e9;
   const double antennaUpperBandwidth = 28e9;
-  const double centralWavelength = TMath::C() / centralFrequency;
-  const double boreCircumference = 2 * TMath::Pi() * antennaRadius;
+  const double centralWavelength = C / centralFrequency;
+  const double boreCircumference = 2 * PI * antennaRadius;
 
   TString trackFilePath =
       Form("%s/track_r%.3f_p%.2f_n%d.root", outputDir.data(), radialOffset,
@@ -138,19 +137,18 @@ int main(int argc, char* argv[]) {
   // Firstly create our dipoles and add them to the array
   std::vector<IAntenna*> antennaArray;
   for (int iDip = 0; iDip < nDipoles; iDip++) {
-    double antennaAngle1 = 2 * TMath::Pi() * double(iDip) / double(nDipoles);
+    double antennaAngle1 = 2 * PI * double(iDip) / double(nDipoles);
     double reqShift = centralPeriod * double(iDip) / double(nDipoles);
-    std::cout << "Dipole " << iDip
-              << ": Angle = " << (antennaAngle1 * 180 / TMath::Pi())
+    std::cout << "Dipole " << iDip << ": Angle = " << (antennaAngle1 * 180 / PI)
               << " degrees. Required time shift is " << reqShift * 1e12 << " ps"
               << std::endl;
 
     // Antenna specifications
-    TVector3 antennaPoint1(antennaRadius * TMath::Cos(antennaAngle1),
-                           antennaRadius * TMath::Sin(antennaAngle1), 0.0);
-    TVector3 antennaDirZ1(-1 * TMath::Sin(antennaAngle1),
-                          TMath::Cos(antennaAngle1), 0.0);
-    TVector3 antennaDirX1(TMath::Cos(antennaAngle1), TMath::Sin(antennaAngle1),
+    TVector3 antennaPoint1(antennaRadius * std::cos(antennaAngle1),
+                           antennaRadius * std::sin(antennaAngle1), 0.0);
+    TVector3 antennaDirZ1(-1 * std::sin(antennaAngle1), std::cos(antennaAngle1),
+                          0.0);
+    TVector3 antennaDirX1(std::cos(antennaAngle1), std::sin(antennaAngle1),
                           0.0);
     HalfWaveDipole* antenna = new HalfWaveDipole(
         antennaPoint1, antennaDirX1, antennaDirZ1, centralFrequency, reqShift);
@@ -167,7 +165,7 @@ int main(int argc, char* argv[]) {
   const double tAcq = simTime - 1e-6;  // seconds
   const double sampleRate = 750e6;     // Hz
   const double dmFreq = 26.7e9;        // Hz
-  LocalOscillator lo(2 * TMath::Pi() * dmFreq);
+  LocalOscillator lo(2 * PI * dmFreq);
   GaussianNoise noise1(noiseTemp, loadResistance);
 
   InducedVoltage iv(trackFilePath, antennaArray, true);

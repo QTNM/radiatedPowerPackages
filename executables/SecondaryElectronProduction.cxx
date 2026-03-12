@@ -18,12 +18,12 @@
 #include <random>
 #include <string>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "Scattering/ElasticScatter.h"
-#include "Scattering/InelasticScatter.h"
+
+#include "utilities/BasicCore/Constants.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/Scattering/ElasticScatter.h"
+#include "physics/Scattering/InelasticScatter.h"
 #include "TFile.h"
 #include "TString.h"
 #include "TTree.h"
@@ -138,7 +138,7 @@ int main(int argc, char* argv[]) {
   const double deltaT{1 / (10 * maxCycFreq)};  // seconds
   cout << "Time step: " << deltaT << " seconds" << endl;
 
-  const double tau{2 * R_E / (3 * TMath::C())};
+  const double tau{2 * R_E / (3 * C)};
   for (unsigned int iEv{0}; iEv < nSims; iEv++) {
     cout << "Simulating event " << iEv + 1 << endl;
 
@@ -193,7 +193,7 @@ int main(int argc, char* argv[]) {
     const double maxTSim{1e-3};    // seconds
     const double printTime{10e-6};  // seconds
     // Set up the Boris solver
-    BorisSolver solver(field, -TMath::Qe(), ME, tau);
+    BorisSolver solver(field, -QE, ME, tau);
 
     while (tSim < maxTSim && abs(genPos.Z()) < trapLength / 2) {
       // Set up print out for the time
@@ -221,7 +221,7 @@ int main(int argc, char* argv[]) {
         auto [pos, vel] = solver.advance_step(tScatter, genPos, genVel);
         genPos = pos;
         genVel = vel;
-        EGen = (sqrt(1 / (1 - pow(genVel.Mag() / TMath::C(), 2))) - 1) * ME_EV;
+        EGen = (sqrt(1 / (1 - pow(genVel.Mag() / C, 2))) - 1) * ME_EV;
 
         scatterTime[nScatters] = tSim;
         incidentPosX[nScatters] = genPos.X();
@@ -267,7 +267,7 @@ int main(int argc, char* argv[]) {
         tSim += deltaT;
         genPos = pos;
         genVel = vel;
-        EGen = (sqrt(1 / (1 - pow(genVel.Mag() / TMath::C(), 2))) - 1) * ME_EV;
+        EGen = (sqrt(1 / (1 - pow(genVel.Mag() / C, 2))) - 1) * ME_EV;
       }
     }
 

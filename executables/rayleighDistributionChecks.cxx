@@ -1,17 +1,20 @@
 // rayleighDistributionChecks.cxx
 
-#include "Antennas/HalfWaveDipole.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "SignalProcessing/InducedVoltage.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/NoiseFunc.h"
-#include "SignalProcessing/Signal.h"
+#include <cmath>
+
 #include "TAxis.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TH1.h"
-#include "TMath.h"
+#include "physics/Antennas/HalfWaveDipole.h"
+#include "physics/SignalProcessing/InducedVoltage.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/NoiseFunc.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/HistogramUtils.h"
 
 using namespace rad;
 
@@ -57,7 +60,7 @@ int main(int argc, char** argv) {
     hNoiseVals->Fill(noiseRoot);
   }
 
-  const double sigma = TMath::Sqrt(TMath::K() * TEff * bandwidth);
+  const double sigma = std::sqrt(K_B * TEff * bandwidth);
   TF1* fCDF = new TF1("fCDF", RayleighCDFFunc, 0, 4 * sigma, 1);
   fCDF->SetParameter(0, sigma);
   fCDF->SetTitle(
@@ -87,7 +90,7 @@ int main(int argc, char** argv) {
 
   TString trackFilePath{
       "/home/sjones/work/qtnm/trajectories/electronTraj1ms90Deg.root"};
-  LocalOscillator myLO(downmixFreq * 2 * TMath::Pi());
+  LocalOscillator myLO(downmixFreq * 2 * PI);
   GaussianNoise noise1(TEff, loadResistance);
   Signal sig1(trackFilePath, antenna1, myLO, sampleRate, {noise1});
   TGraph* grVI = sig1.GetVITimeDomain();

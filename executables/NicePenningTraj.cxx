@@ -6,14 +6,13 @@
 
 #include <iostream>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/PenningTraps.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicCore/Constants.h"
+
+#include "physics/ElectronDynamics/PenningTraps.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"
 #include "TGraph2D.h"
-#include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
 #include "TTreeReader.h"
@@ -38,11 +37,11 @@ int main() {
   auto trap = new IdealPenningTrap(BFieldMag, v0, rho0, z0);
 
   // Calculate minimum pitch angle
-  const double thetaBot{acos(sqrt(-TMath::Qe() * v0 / (eKE * TMath::Qe()))) *
-                        180 / TMath::Pi()};  // degrees
+  const double thetaBot{acos(sqrt(-QE * v0 / (eKE * QE))) *
+                        180 / PI};  // degrees
   std::cout << "Minimum trap angle = " << thetaBot << " degrees\n";
 
-  const double angle{88.0 * TMath::Pi() / 180};
+  const double angle{88.0 * PI / 180};
   TVector3 initVel(eSpeed * sin(angle), 0, eSpeed * cos(angle));
   const double stepSize{1e-12};
   const double simTime{1e-6};

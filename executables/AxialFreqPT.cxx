@@ -7,14 +7,15 @@
 #include <iostream>
 #include <memory>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/PenningTraps.h"
-#include "ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TString.h"
 #include "TTree.h"
+#include "physics/ElectronDynamics/PenningTraps.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 
@@ -110,8 +111,8 @@ int main(int argc, char *argv[]) {
   auto trap = new IdealPenningTrap(BFieldMag, v0, rho0, z0);
 
   // Calculate minimum pitch angle
-  const double thetaBot{acos(sqrt(-TMath::Qe() * v0 / (eKE * TMath::Qe()))) *
-                        180 / TMath::Pi()};  // degrees
+  const double thetaBot{acos(sqrt(-QE * v0 / (eKE * QE))) * 180 /
+                        PI};  // degrees
   std::cout << "Minimum trap angle = " << thetaBot << " degrees\n";
 
   // Set up angle scan
@@ -129,7 +130,7 @@ int main(int argc, char *argv[]) {
                                            double(iP) / double(nScanPnts - 1)};
     std::cout << "Pitch angle = " << scanAngleDeg << " degrees\n";
 
-    double scanAngle{scanAngleDeg * TMath::Pi() / 180};
+    double scanAngle{scanAngleDeg * PI / 180};
     TVector3 initVel(eSpeed * sin(scanAngle), 0, eSpeed * cos(scanAngle));
     const double stepSize{1e-12};
     const double simTime{1e-6};

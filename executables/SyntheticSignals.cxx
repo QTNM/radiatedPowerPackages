@@ -11,12 +11,6 @@
 #include <iostream>
 #include <string>
 
-#include "Antennas/IsotropicAntenna.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
-#include "FieldClasses/FieldClasses.h"
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TH2.h"
@@ -24,6 +18,14 @@
 #include "TStyle.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "physics/Antennas/IsotropicAntenna.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/FieldClasses/FieldClasses.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/HistogramUtils.h"
 
 using namespace rad;
 
@@ -31,9 +33,8 @@ TVector3 EFieldMagneticDipole(double r, double theta, double phi, double t,
                               double f, double phase = 0, double m0 = 1) {
   const double omega{2 * M_PI * f};
   const double prefac{MU0 * m0 * sin(theta) / (4 * M_PI * r)};
-  const double ePhi{(omega * omega / TMath::C()) *
-                        cos(omega * (t - r / TMath::C())) +
-                    (omega / r) * sin(omega * (t - r / TMath::C()))};
+  const double ePhi{(omega * omega / C) * cos(omega * (t - r / C)) +
+                    (omega / r) * sin(omega * (t - r / C))};
   return prefac * TVector3(-ePhi * sin(phi), ePhi * cos(phi), 0);
 }
 
@@ -48,7 +49,7 @@ TVector3 EFieldElectricDipole(TVector3 r, TVector3 p0, double f, double t,
   double omega{2 * M_PI * f};
   TVector3 eUnit{(p0.Cross(r.Unit())).Cross(r.Unit())};
   double prefac{-MU0 * omega * omega / (4 * M_PI * r.Mag())};
-  return eUnit * prefac * cos(omega * (t - r.Mag() / TMath::C()) + phase);
+  return eUnit * prefac * cos(omega * (t - r.Mag() / C) + phase);
 }
 
 TVector3 EFieldCrossedDipole(TVector3 r, double f, double t) {
@@ -61,7 +62,7 @@ TVector3 EFieldCrossedDipole(TVector3 r, double f, double t) {
 
 double PRadMagneticDipole(double f, double m0) {
   double omega{2 * M_PI * f};
-  return MU0 * m0 * m0 * pow(omega, 4) / (12 * M_PI * pow(TMath::C(), 3));
+  return MU0 * m0 * m0 * pow(omega, 4) / (12 * M_PI * pow(C, 3));
 }
 
 int main(int argc, char *argv[]) {
@@ -96,7 +97,9 @@ int main(int argc, char *argv[]) {
             << " fW\n";
 
   auto field = new UniformField(bField);
-  const double r_g{GetGyroradius(vel, TVector3(0, 0, bField), ME)};
+  double velArr[3] = {vel.X(), vel.Y(), vel.Z()};
+  double bFieldArr[3] = {0, 0, bField};
+  const double r_g{GetGyroradius(velArr, bFieldArr, ME)};
   TVector3 x0(0, -r_g, 0);
   const double simTime{1e-7};       // seconds
   const double simStepSize{2e-12};  // seconds
@@ -119,8 +122,8 @@ int main(int argc, char *argv[]) {
   grRealZ->Write("grRealZ");
 
   // Now try magnetic dipole
-  const double kCyc{2 * M_PI * fCyc / TMath::C()};
-  const double i0{sqrt((12 * pow(TMath::C(), 3) * PRad) /
+  const double kCyc{2 * M_PI * fCyc / C};
+  const double i0{sqrt((12 * pow(C, 3) * PRad) /
                        (MU0 * M_PI * pow(r_g, 4) * pow(2 * M_PI * fCyc, 4)))};
   const double m0{M_PI * r_g * r_g * i0};
   const double magDipoleP{PRadMagneticDipole(fCyc, m0)};

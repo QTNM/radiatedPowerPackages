@@ -9,21 +9,20 @@
 #include <cmath>
 #include <iostream>
 
-#include "Antennas/HalfWaveDipole.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
-#include "SignalProcessing/InducedVoltage.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/NoiseFunc.h"
-#include "SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
-#include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "physics/Antennas/HalfWaveDipole.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/SignalProcessing/InducedVoltage.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/NoiseFunc.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 
 using namespace rad;
 
@@ -80,21 +79,23 @@ int main(int argc, char *argv[]) {
 
   const double thetaBot{asin(
       sqrt(1.0 - trapDepth / (trapDepth + bField)))};  // Minimum trapping angle
-  std::cout << "Minimum trapping pitch angle = "
-            << thetaBot * 180.0 / TMath::Pi() << " degrees" << std::endl;
+  std::cout << "Minimum trapping pitch angle = " << thetaBot * 180.0 / PI
+            << " degrees" << std::endl;
 
   // Electron kinematics
   const double electronKE{18600};  // eV
   const double electronSpeed{GetSpeedFromKE(electronKE, ME)};
-  const double tau = 2 * R_E / (3 * TMath::C());
+  const double tau = 2 * R_E / (3 * C);
   TVector3 V0(electronSpeed, 0, 0);
-  const double gyroradius{
-      GetGyroradius(V0, field->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
+  double velArr[3] = {V0.X(), V0.Y(), V0.Z()};
+  TVector3 centralFieldVec = field->evaluate_field_at_point(TVector3(0, 0, 0));
+  double bFieldArr[3] = {centralFieldVec.X(), centralFieldVec.Y(), centralFieldVec.Z()};
+  const double gyroradius{GetGyroradius(velArr, bFieldArr, ME)};
   TVector3 X0(0, -gyroradius, 0);
 
   const double centralFreq{CalcCyclotronFreq(electronKE, centralField)};
   const double centralPeriod{1.0 / centralFreq};
-  const double centralLambda{TMath::C() / centralFreq};
+  const double centralLambda{C / centralFreq};
   std::cout << "Electron frequency, wavelength = " << centralFreq / 1e9
             << " GHz, " << centralLambda * 1e2 << " cm" << std::endl;
 
@@ -113,18 +114,16 @@ int main(int argc, char *argv[]) {
   const double antennaSize{(centralLambda / 2.0) + 1e-2};
   std::cout << "Antennas have a physical size of " << antennaSize * 1e3 << " mm"
             << std::endl;
-  const int nAntennas{
-      int(floor((TMath::Pi() * antennaZoneDiameter) / antennaSize))};
+  const int nAntennas{int(floor((PI * antennaZoneDiameter) / antennaSize))};
   std::cout << "We have " << nAntennas << " antennas" << std::endl;
 
   std::vector<IAntenna *> antennaArray;
   const double loadResistance{73.0};
 
   for (int iAnt = 0; iAnt < nAntennas; iAnt++) {
-    double antennaAngle{2 * TMath::Pi() * double(iAnt) / double(nAntennas)};
+    double antennaAngle{2 * PI * double(iAnt) / double(nAntennas)};
     double timeShift{centralPeriod * (1.0 - double(iAnt) / double(nAntennas))};
-    std::cout << "Dipole " << iAnt
-              << ": Angle = " << antennaAngle * 180 / TMath::Pi()
+    std::cout << "Dipole " << iAnt << ": Angle = " << antennaAngle * 180 / PI
               << " degrees. Required time shift is " << timeShift * 1e12
               << " ps" << std::endl;
     TVector3 antennaPoint(antennaZoneRadius * cos(antennaAngle),
@@ -165,7 +164,7 @@ int main(int argc, char *argv[]) {
   const double tAcq{simTime - 1e-6};  // seconds
   const double sampleRate{750e6};     // Hertz
   const double loFreq{centralFreq - sampleRate / 4.0};
-  LocalOscillator lo(2 * TMath::Pi() * loFreq);
+  LocalOscillator lo(2 * PI * loFreq);
   const double noiseTemp{4.0};  // Kelvin
   GaussianNoise noiseFunc(noiseTemp, loadResistance);
 

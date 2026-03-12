@@ -9,17 +9,17 @@
 #include <random>
 #include <vector>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "BasicFunctions/TritiumSpectrum.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TString.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/TritiumSpectrum.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 

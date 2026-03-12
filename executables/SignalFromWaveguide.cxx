@@ -5,21 +5,21 @@
 #include <cmath>
 #include <iostream>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TString.h"
 #include "TTreeReader.h"
 #include "TTreeReaderValue.h"
 #include "TVector3.h"
-#include "Waveguides/CircularWaveguide.h"
-#include "Waveguides/Probe.h"
-#include "Waveguides/WaveguideMode.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "physics/Waveguides/CircularWaveguide.h"
+#include "physics/Waveguides/Probe.h"
+#include "physics/Waveguides/WaveguideMode.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 
 using namespace rad;
 
@@ -44,7 +44,9 @@ int main() {
   const double pitchAngleDeg{87.8};
   const double pitchAngleRad{pitchAngleDeg * M_PI / 180};
   TVector3 eVel(eSpeed * sin(pitchAngleRad), 0, eSpeed * cos(pitchAngleRad));
-  const double rg{GetGyroradius(eVel, centralB, ME)};
+  double velArr[3] = {eVel.X(), eVel.Y(), eVel.Z()};
+  double bFieldArr[3] = {centralB.X(), centralB.Y(), centralB.Z()};
+  const double rg{GetGyroradius(velArr, bFieldArr, ME)};
   TVector3 ePos(0, rg, 0);
 
   TString trackFile{
@@ -69,7 +71,7 @@ int main() {
   const double sampleRate{1e9};
   const double loFreq{cycFreq - 220e6};
   std::cout << "Local oscillator frequency = " << loFreq / 1e9 << " GHz\n";
-  LocalOscillator lo(loFreq * TMath::TwoPi());
+  LocalOscillator lo(loFreq * (2 * PI));
   Signal sig1(trackFile, wg1, lo, sampleRate, probe1);
   std::cout << "Finished generating first signal\n";
   Signal sig2(trackFile, wg2, lo, sampleRate, probe2);

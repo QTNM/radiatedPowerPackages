@@ -4,20 +4,22 @@
   cross-correlation techniques to pick out the signal from the noise
 */
 
+#include <cmath>
 #include <iostream>
 #include <vector>
 
-#include "Antennas/HalfWaveDipole.h"
-#include "BasicFunctions/BasicFunctions.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/NoiseFunc.h"
-#include "SignalProcessing/Signal.h"
 #include "TArrow.h"
 #include "TAxis.h"
 #include "TFile.h"
 #include "TGraph.h"
-#include "TMath.h"
 #include "TString.h"
+#include "physics/Antennas/HalfWaveDipole.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/NoiseFunc.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "utilities/ROOTUtils/CorrelationAnalysis.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 
@@ -29,30 +31,28 @@ int main(int argc, char** argv) {
   TString outputFile = argv[1];
 
   const double antennaRadius = 0.02;
-  const double antennaAngle1 = 0 * TMath::Pi() / 180;
-  const double antennaAngle2 = 90 * TMath::Pi() / 180;
+  const double antennaAngle1 = 0 * PI / 180;
+  const double antennaAngle2 = 90 * PI / 180;
 
-  TVector3 antennaPoint1(antennaRadius * TMath::Cos(antennaAngle1),
-                         antennaRadius * TMath::Sin(antennaAngle1), 0.0);
-  TVector3 antennaDirZ1(-1 * TMath::Sin(antennaAngle1),
-                        TMath::Cos(antennaAngle1), 0.0);
-  TVector3 antennaDirX1(TMath::Cos(antennaAngle1), TMath::Sin(antennaAngle1),
+  TVector3 antennaPoint1(antennaRadius * std::cos(antennaAngle1),
+                         antennaRadius * std::sin(antennaAngle1), 0.0);
+  TVector3 antennaDirZ1(-1 * std::sin(antennaAngle1), std::cos(antennaAngle1),
                         0.0);
+  TVector3 antennaDirX1(std::cos(antennaAngle1), std::sin(antennaAngle1), 0.0);
   HalfWaveDipole* antenna1 =
       new HalfWaveDipole(antennaPoint1, antennaDirX1, antennaDirZ1, 27.01e9);
 
-  TVector3 antennaPoint2(antennaRadius * TMath::Cos(antennaAngle2),
-                         antennaRadius * TMath::Sin(antennaAngle2), 0.0);
-  TVector3 antennaDirZ2(-1 * TMath::Sin(antennaAngle2),
-                        TMath::Cos(antennaAngle2), 0.0);
-  TVector3 antennaDirX2(TMath::Cos(antennaAngle2), TMath::Sin(antennaAngle2),
+  TVector3 antennaPoint2(antennaRadius * std::cos(antennaAngle2),
+                         antennaRadius * std::sin(antennaAngle2), 0.0);
+  TVector3 antennaDirZ2(-1 * std::sin(antennaAngle2), std::cos(antennaAngle2),
                         0.0);
+  TVector3 antennaDirX2(std::cos(antennaAngle2), std::sin(antennaAngle2), 0.0);
   HalfWaveDipole* antenna2 =
       new HalfWaveDipole(antennaPoint2, antennaDirX2, antennaDirZ2, 27.01e9);
 
   const double loadResistance = 70.0;
   const double noiseTemp = 4.0;
-  LocalOscillator myLO(26.75e9 * 2 * TMath::Pi());
+  LocalOscillator myLO(26.75e9 * 2 * PI);
   GaussianNoise noise1(noiseTemp, loadResistance);
   std::vector<GaussianNoise> noiseTerms;
   noiseTerms.push_back(noise1);

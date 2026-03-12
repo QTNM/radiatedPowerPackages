@@ -7,18 +7,19 @@
 #include <cmath>
 #include <iostream>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TString.h"
 #include "TVector3.h"
-#include "Waveguides/CircularWaveguide.h"
-#include "Waveguides/RectangularWaveguide.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "physics/Waveguides/CircularWaveguide.h"
+#include "physics/Waveguides/RectangularWaveguide.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 
@@ -32,9 +33,7 @@ int main() {
   const double eSpeed{GetSpeedFromKE(eKE, ME)};  // metres per second
   TVector3 eVel(eSpeed, 0, 0);
   // Determine appropriate magnetic field
-  const double bMag{2 * M_PI * centralFreq *
-                    (ME + eKE * TMath::Qe() / pow(TMath::C(), 2)) /
-                    TMath::Qe()};
+  const double bMag{2 * M_PI * centralFreq * (ME + eKE * QE / pow(C, 2)) / QE};
   std::cout << "Required magnetic field = " << bMag << " T\n";
 
   // Calculate radiated power
@@ -60,8 +59,10 @@ int main() {
   const double simTime{0.5e-6};  // seconds
 
   // Electron gyroradius in metres
-  const double gyroradius{GetGyroradius(
-      eVel, field->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
+  double velArr[3] = {eVel.X(), eVel.Y(), eVel.Z()};
+  TVector3 centralField = field->evaluate_field_at_point(TVector3(0, 0, 0));
+  double bFieldArr[3] = {centralField.X(), centralField.Y(), centralField.Z()};
+  const double gyroradius{GetGyroradius(velArr, bFieldArr, ME)};
   const double xMin{-4.5e-3};  // metres
   const double xMax{4.5e-3};   // metres
   const uint nXPnts{31};

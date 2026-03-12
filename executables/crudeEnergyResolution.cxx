@@ -3,12 +3,13 @@
 /// trap geometry Electrons are generated isotropically throughout the trap and
 /// the trapping condition checked
 
-#include "Antennas/HalfWaveDipole.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "SignalProcessing/InducedVoltage.h"
-#include "SignalProcessing/Signal.h"
+#include "physics/Antennas/HalfWaveDipole.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/SignalProcessing/InducedVoltage.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/ROOTUtils/HistogramUtils.h"
 
 // STL includes
 #include <getopt.h>
@@ -23,7 +24,8 @@
 
 // ROOT includes
 #include "TFile.h"
-#include "TMath.h"
+#include "TH1.h"
+#include "TH2.h"
 #include "TRandom3.h"
 #include "TSystem.h"
 #include "TTree.h"
@@ -154,14 +156,13 @@ int main(int argc, char* argv[]) {
       RCoil, ICoil, trapLength / 2, centralField, inhomAx, inhomRad);
   // Antenna specifications
   const double antennaRadius = 0.03;
-  const double antennaAngle1 = 0 * TMath::Pi() / 180;
-  const double antennaAngle2 = 90 * TMath::Pi() / 180;
-  TVector3 antennaPoint1(antennaRadius * TMath::Cos(antennaAngle1),
-                         antennaRadius * TMath::Sin(antennaAngle1), 0.0);
-  TVector3 antennaDirZ1(-1 * TMath::Sin(antennaAngle1),
-                        TMath::Cos(antennaAngle1), 0.0);
-  TVector3 antennaDirX1(TMath::Cos(antennaAngle1), TMath::Sin(antennaAngle1),
+  const double antennaAngle1 = 0 * PI / 180;
+  const double antennaAngle2 = 90 * PI / 180;
+  TVector3 antennaPoint1(antennaRadius * std::cos(antennaAngle1),
+                         antennaRadius * std::sin(antennaAngle1), 0.0);
+  TVector3 antennaDirZ1(-1 * std::sin(antennaAngle1), std::cos(antennaAngle1),
                         0.0);
+  TVector3 antennaDirX1(std::cos(antennaAngle1), std::sin(antennaAngle1), 0.0);
   HalfWaveDipole* antenna1 =
       new HalfWaveDipole(antennaPoint1, antennaDirX1, antennaDirZ1, 27.01e9);
   const double antennaLowerBandwidth = 26.95e9;
@@ -170,17 +171,17 @@ int main(int argc, char* argv[]) {
 
   // Electron dynamics
   const double TElec = 18600;  // eV
-  const double gamma = TElec * TMath::Qe() / (ME * TMath::C() * TMath::C()) + 1;
+  const double gamma = TElec * QE / (ME * C * C) + 1;
   const double betaSq = 1 - 1 / pow(gamma, 2);
-  const double initialSpeed = sqrt(betaSq) * TMath::C();
-  const double tau = 2 * R_E / (3 * TMath::C());
+  const double initialSpeed = sqrt(betaSq) * C;
+  const double tau = 2 * R_E / (3 * C);
 
   // Parameters for signal processing
   const double tAcq = maxSimTime - 1e-6;  // seconds
   const double loFreq = 26.75e9;          // Hz
   const double loadResistance = 70;       // Ohms
   const double sampleRate = 750e6;        // Hz
-  LocalOscillator lo(2 * TMath::Pi() * loFreq);
+  LocalOscillator lo(2 * PI * loFreq);
 
   // Create the output directory if it doesn't exist
   bool directoryExists = std::filesystem::is_directory(outputDir);
@@ -250,11 +251,11 @@ int main(int argc, char* argv[]) {
     const clock_t begin_time = clock();
 
     // Generate random electron directions
-    double phiVelGen = thisRand->Uniform() * 2 * TMath::Pi();
-    double thetaVelGen = thisRand->Uniform() * TMath::Pi();
+    double phiVelGen = thisRand->Uniform() * 2 * PI;
+    double thetaVelGen = thisRand->Uniform() * PI;
     // Generate random uniform volume distribution
     double radialPosGen = sqrt(thisRand->Uniform()) * RGen;
-    double thetaPosGen = thisRand->Uniform() * 2 * TMath::Pi();
+    double thetaPosGen = thisRand->Uniform() * 2 * PI;
     double zPosGen = -trapLength / 2 + (thisRand->Uniform() * trapLength);
 
     TVector3 posVec(radialPosGen * cos(thetaPosGen),
@@ -279,11 +280,11 @@ int main(int argc, char* argv[]) {
     pitchAngle = abs(atan(RVel / velVec.Z()));  // Initial value
 
     std::cout << "Initial angle (degrees), rPos, zPos = "
-              << (initialAngle * 180 / TMath::Pi()) << ", " << radialPosGen
-              << " m, " << zPosGen << " m" << std::endl;
+              << (initialAngle * 180 / PI) << ", " << radialPosGen << " m, "
+              << zPosGen << " m" << std::endl;
 
     // Set up the solver
-    BorisSolver solver(bathtubField, -TMath::Qe(), ME, tau);
+    BorisSolver solver(bathtubField, -QE, ME, tau);
     // Calculate the number of time steps
     int nTimeSteps = maxSimTime / timeStepSize;
 
@@ -293,7 +294,7 @@ int main(int argc, char* argv[]) {
     hZPos->Fill(posVec.Z());
     hRPos->Fill(radialPosGen);
     h2RZPos->Fill(posVec.Z(), radialPosGen);
-    hInitialAngle->Fill(initialAngle * 180 / TMath::Pi());
+    hInitialAngle->Fill(initialAngle * 180 / PI);
 
     TFile* fElec =
         new TFile(Form("%s/track%d.root", outputDir.data(), n), "RECREATE");
@@ -371,7 +372,7 @@ int main(int argc, char* argv[]) {
 
     BMean /= double(nRecordedSteps);
 
-    hPitchAngle->Fill(pitchAngle * 180 / TMath::Pi());
+    hPitchAngle->Fill(pitchAngle * 180 / PI);
 
     fElec->cd();
     tree->Write();
@@ -384,8 +385,8 @@ int main(int argc, char* argv[]) {
       hZPosAcc->Fill(posVec.Z());
       hRPosAcc->Fill(radialPosGen);
       h2RZPosAcc->Fill(posVec.Z(), radialPosGen);
-      hInitialAngleAcc->Fill(initialAngle * 180 / TMath::Pi());
-      hPitchAngleAcc->Fill(pitchAngle * 180 / TMath::Pi());
+      hInitialAngleAcc->Fill(initialAngle * 180 / PI);
+      hPitchAngleAcc->Fill(pitchAngle * 180 / PI);
 
       // If the electron was trapped we can do some signal processing
       TString trackFile{Form("%s/track%d.root", outputDir.data(), n)};
@@ -396,11 +397,11 @@ int main(int argc, char* argv[]) {
       TGraph* grVI = sig.GetVITimeDomain();
       grVI->SetTitle(Form(
           "Length = %.2f m: #theta = %.2f deg, r_{i} = %.2f m, z_{i} = %.2f m",
-          trapLength, (pitchAngle * 180 / TMath::Pi()), radialPosGen, zPosGen));
+          trapLength, (pitchAngle * 180 / PI), radialPosGen, zPosGen));
       TGraph* grVIPgram = sig.GetVIPowerPeriodogram(loadResistance);
       grVIPgram->SetTitle(Form(
           "Length = %.2f m: #theta = %.2f deg, r_{i} = %.2f m, z_{i} = %.2f m",
-          trapLength, (pitchAngle * 180 / TMath::Pi()), radialPosGen, zPosGen));
+          trapLength, (pitchAngle * 180 / PI), radialPosGen, zPosGen));
 
       fout->cd();
       grVI->Write(Form("grVI%d", n));

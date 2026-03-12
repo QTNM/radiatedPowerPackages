@@ -16,24 +16,25 @@
 #include <random>
 #include <string>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
 #include "H5Cpp.h"
-#include "Scattering/ElasticScatter.h"
-#include "Scattering/InelasticScatter.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TString.h"
 #include "TSystem.h"
 #include "TTree.h"
 #include "TVector3.h"
-#include "Waveguides/CircularWaveguide.h"
-#include "Waveguides/Probe.h"
-#include "Waveguides/RectangularWaveguide.h"
-#include "Waveguides/WaveguideMode.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/Scattering/ElasticScatter.h"
+#include "physics/Scattering/InelasticScatter.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "physics/Waveguides/CircularWaveguide.h"
+#include "physics/Waveguides/Probe.h"
+#include "physics/Waveguides/RectangularWaveguide.h"
+#include "physics/Waveguides/WaveguideMode.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 using std::cout;
@@ -98,7 +99,7 @@ int main(int argc, char* argv[]) {
   const double frequency{26e9};  // 26 GHz
   const double energy{18.6e3};   // 30 keV
   const double gamma{energy / ME_EV + 1};
-  const double reqBField{2 * M_PI * frequency * ME * gamma / TMath::Qe()};
+  const double reqBField{2 * M_PI * frequency * ME * gamma / QE};
   cout << "Required B field = " << reqBField << " Tesla\n";
   const double freeSpacePower{CalcLarmorPower(energy, reqBField, M_PI / 2)};
   cout << "Free space power = " << freeSpacePower * 1e15 << " fW\n";
@@ -113,9 +114,10 @@ int main(int argc, char* argv[]) {
 
   auto wg{new RectangularWaveguide(wr42Width, wr42Height, 10e-2)};
   const double eSpeed{GetSpeedFromKE(energy, ME)};
-  const double gyroradius{
-      GetGyroradius(TVector3(eSpeed, 0, 0),
-                    field->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
+  double eVelArr[3] = {eSpeed, 0, 0};
+  TVector3 centralField = field->evaluate_field_at_point(TVector3(0, 0, 0));
+  double bFieldArr[3] = {centralField.X(), centralField.Y(), centralField.Z()};
+  const double gyroradius{GetGyroradius(eVelArr, bFieldArr, ME)};
 
   auto grPower{new TGraph()};
   auto grPowerSignal{new TGraph()};
@@ -149,7 +151,7 @@ int main(int argc, char* argv[]) {
     const double modeImp{wg->GetModeImpedance(modeTE10, 2 * M_PI * frequency)};
     const double k_c{wg->GetCutoffWavenumber(modeTE10)};
     const double omega{2 * M_PI * frequency};
-    const double beta{sqrt(pow(omega / TMath::C(), 2) - k_c * k_c)};
+    const double beta{sqrt(pow(omega / C, 2) - k_c * k_c)};
     const double modePn{M_PI * M_PI * beta * MU0 * omega *
                         (wr42Height * wr42Height) /
                         (2 * wr42Height * wr42Width * pow(k_c, 4))};
@@ -192,7 +194,7 @@ int main(int argc, char* argv[]) {
       TVector3 modeField{wg->GetModeEField(thePos, modeTE10, normPlus,
                                            2 * M_PI * frequency, true)};
 
-      TVector3 J{-TMath::Qe() * theVel};
+      TVector3 J{-QE * theVel};
       const double ATE10{-1 / modePn * modeField.Dot(J)};
       const double ampJackson{
           -modeImp / 2 *

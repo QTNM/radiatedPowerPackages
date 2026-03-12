@@ -8,14 +8,15 @@
 #include <iostream>
 #include <memory>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TH1.h"
 #include "TLine.h"
-#include "TMath.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/MathUtils.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
+#include "utilities/ROOTUtils/HistogramUtils.h"
 
 using namespace rad;
 
@@ -29,12 +30,11 @@ using std::unique_ptr;
 /// @param theta Pitch angle in radians
 /// @param beta Electron speed divided by c
 /// @return The rate of change of electron frequency in Hz s^-1
-double CalcDfDt(double B, double theta = TMath::PiOver2(),
-                double beta = 0.2627) {
+double CalcDfDt(double B, double theta = PI / 2, double beta = 0.2627) {
   double gamma{1 / sqrt(1 - beta * beta)};
-  double E{gamma * ME * TMath::C() * TMath::C()};
-  double premult{pow(TMath::Qe(), 5) * pow(B, 3) * TMath::C() /
-                 (12 * EPSILON0 * pow(TMath::Pi() * ME, 2))};
+  double E{gamma * ME * C * C};
+  double premult{pow(QE, 5) * pow(B, 3) * C /
+                 (12 * EPSILON0 * pow(PI * ME, 2))};
   return premult * (1 / (E * E)) * pow(beta * sin(theta), 2) /
          (1 - beta * beta);
 }
@@ -44,8 +44,7 @@ double CalcDfDt(double B, double theta = TMath::PiOver2(),
 /// @param theta Pitch angle in radians
 /// @param beta Electron speed divided by c
 /// @return The optimum acquisition time (for a frequency bin) in seconds
-double CalcTAcqOpt(double B, double theta = TMath::PiOver2(),
-                   double beta = 0.2627) {
+double CalcTAcqOpt(double B, double theta = PI / 2, double beta = 0.2627) {
   return 1 / sqrt(CalcDfDt(B, theta, beta));
 }
 
@@ -60,7 +59,7 @@ long double CalcRequiredTriggerThreshold(double B, double TNoise, double tFalse,
                                          double obsWidth) {
   double tAcqOpt{CalcTAcqOpt(B)};
   const double deltaFOpt{1 / tAcqOpt};
-  const long double sigma{sqrt(TMath::K() * TNoise * deltaFOpt)};
+  const long double sigma{sqrt(K_B * TNoise * deltaFOpt)};
   const long double nBins{obsWidth / deltaFOpt};
   long double pTrig{tAcqOpt / tFalse};
   long double CDF{pow(1 - pTrig, 1 / nBins)};
@@ -80,7 +79,7 @@ long double CalcReqTrigThresh(double B, double TNoise, double tFalse,
                               double obsWidth, int nSamples) {
   double tAcqOpt{CalcTAcqOpt(B)};
   const double deltaFOpt{1 / tAcqOpt};
-  const long double sigma{sqrt(TMath::K() * TNoise * deltaFOpt)};
+  const long double sigma{sqrt(K_B * TNoise * deltaFOpt)};
   const long double nBins{obsWidth / deltaFOpt};
   long double pTrig{tAcqOpt / tFalse};
   long double CDF{pow(1 - pTrig, 1 / nBins)};
@@ -93,9 +92,8 @@ long double CalcReqTrigThresh(double B, double TNoise, double tFalse,
 /// @param B Magnetic field in tesla
 /// @return Radiated power in watts
 double CalcLarmorPower(double beta, double B) {
-  double f0{TMath::Qe() * B / ME * (1 / (2 * TMath::Pi()))};
-  double premult{2 * TMath::Pi() * pow(TMath::Qe() * f0, 2) /
-                 (3 * EPSILON0 * TMath::C())};
+  double f0{QE * B / ME * (1 / (2 * PI))};
+  double premult{2 * PI * pow(QE * f0, 2) / (3 * EPSILON0 * C)};
   return premult * beta * beta / (1 - beta * beta);
 }
 
@@ -193,7 +191,7 @@ unique_ptr<TGraph> MakeTrigThreshNeigbourNorm(double TNoise, double tFalse,
 unique_ptr<TGraph> MakeTfPlot(double T, double bandwidth, int nBins = 1,
                               int nPnts = 400, double pMin = 5e-18,
                               double pMax = 0.5e-15) {
-  const long double sigma{sqrt(TMath::K() * T * bandwidth)};
+  const long double sigma{sqrt(K_B * T * bandwidth)};
   const long double tAcq{1 / bandwidth};
   const double logPowerDiff{(log10(pMax) - log10(pMin)) / double(nPnts - 1)};
 
@@ -220,7 +218,7 @@ unique_ptr<TGraph> MakeTfPlot(double T, double bandwidth, int nBins = 1,
 unique_ptr<TGraph> MakeTfPlotNeighbour(double T, double bandwidth, int nBins,
                                        int nPnts = 400, double pMin = 5e-18,
                                        double pMax = 0.5e-15) {
-  const long double sigma{sqrt(TMath::K() * T * bandwidth)};
+  const long double sigma{sqrt(K_B * T * bandwidth)};
   const long double tAcq{1 / bandwidth};
   const double logPowerDiff{(log10(pMax) - log10(pMin)) / double(nPnts - 1)};
 
@@ -249,7 +247,7 @@ unique_ptr<TGraph> MakeTfPlotNeighbour(double T, double bandwidth, int nBins,
 unique_ptr<TGraph> MakeFalseTrigProbPlot(double T, double bandwidth,
                                          int nPnts = 400, double pMin = 5e-18,
                                          double pMax = 0.1e-15) {
-  const long double sigma{sqrt(TMath::K() * T * bandwidth)};
+  const long double sigma{sqrt(K_B * T * bandwidth)};
   const double logPowerDiff{(log10(pMax) - log10(pMin)) / double(nPnts - 1)};
 
   auto grProb = make_unique<TGraph>();
@@ -276,12 +274,11 @@ int main(int argc, char *argv[]) {
   // Set up noise parameters
   const double noiseTemp{11};    // Kelvin
   const double bandwidth{17e3};  // Hz
-  const long double sigma{sqrt(TMath::K() * noiseTemp * bandwidth)};
+  const long double sigma{sqrt(K_B * noiseTemp * bandwidth)};
   cout << "Sigma = " << sigma << endl;
-  const long double mean{sigma * sqrt(TMath::Pi() / 2)};
-  cout << "Power per bandwidth = " << TMath::K() * noiseTemp << " W/Hz\n";
-  cout << "Power per 17 kHz bin = " << TMath::K() * noiseTemp * bandwidth
-       << " W\n";
+  const long double mean{sigma * sqrt(PI / 2)};
+  cout << "Power per bandwidth = " << K_B * noiseTemp << " W/Hz\n";
+  cout << "Power per 17 kHz bin = " << K_B * noiseTemp * bandwidth << " W\n";
 
   const long double maxDistX{6 * sigma};
   const int nFuncPnts{10000};

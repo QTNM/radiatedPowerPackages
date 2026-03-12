@@ -18,16 +18,7 @@
 #include <random>
 #include <string>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
 #include "H5Cpp.h"
-#include "Scattering/ElasticScatter.h"
-#include "Scattering/InelasticScatter.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/Signal.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TMultiGraph.h"
@@ -35,9 +26,18 @@
 #include "TSystem.h"
 #include "TTree.h"
 #include "TVector3.h"
-#include "Waveguides/CircularWaveguide.h"
-#include "Waveguides/Probe.h"
-#include "Waveguides/WaveguideMode.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/Scattering/ElasticScatter.h"
+#include "physics/Scattering/InelasticScatter.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "physics/Waveguides/CircularWaveguide.h"
+#include "physics/Waveguides/Probe.h"
+#include "physics/Waveguides/WaveguideMode.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 
 using namespace rad;
 using std::cout;
@@ -69,8 +69,8 @@ bool GenerateElectron(TString file, TVector3 pos, TVector3 vel,
   xVel = pos.X();
   yVel = pos.Y();
   zVel = pos.Z();
-  const double tau{2 * R_E / (3 * TMath::C())};
-  BorisSolver solver(field, -TMath::Qe(), ME, tau);
+  const double tau{2 * R_E / (3 * C)};
+  BorisSolver solver(field, -QE, ME, tau);
   TVector3 acc{solver.acc(pos, vel)};
   xAcc = acc.X();
   yAcc = acc.Y();
@@ -261,7 +261,9 @@ int main(int argc, char* argv[]) {
       TVector3 initialVel(sin(pitchAngle), 0, cos(pitchAngle));
       double initialSpeed{GetSpeedFromKE(kineticEnergy, ME)};
       initialVel *= initialSpeed;
-      const double gyroradius{GetGyroradius(initialVel, centralField, ME)};
+      double velArr[3] = {initialVel.X(), initialVel.Y(), initialVel.Z()};
+      double bFieldArr[3] = {centralField.X(), centralField.Y(), centralField.Z()};
+      const double gyroradius{GetGyroradius(velArr, bFieldArr, ME)};
       const double zGen{0};  // metres
       TVector3 startPos{rho, 0, zGen};
       double xStart{startPos.X()};

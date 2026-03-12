@@ -10,15 +10,16 @@
 
 #include <iostream>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
 #include "TFile.h"
-#include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 using std::cout;
@@ -30,10 +31,9 @@ int main(int argc, char *argv[]) {
 
   const double trapFraction{0.1};  //  Desired fraction of electrons to trap
   const double dThetaMax{asin(trapFraction)};
-  const double trapAngleMin{TMath::Pi() / 2 - dThetaMax};
-  cout << "dThetaMax = " << dThetaMax * 180 / TMath::Pi() << "degrees\n";
-  cout << "Min. pitch angle = " << trapAngleMin * 180 / TMath::Pi()
-       << " degrees\n";
+  const double trapAngleMin{PI / 2 - dThetaMax};
+  cout << "dThetaMax = " << dThetaMax * 180 / PI << "degrees\n";
+  cout << "Min. pitch angle = " << trapAngleMin * 180 / PI << " degrees\n";
 
   const double bkgBMin{1};
   const double bkgBMax{1.0};
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
     grB->Write("grB");
 
     const double pitchAngleStart{1.001 * trapAngleMin};
-    const double pitchAngleEnd{90 * TMath::Pi() / 180};
+    const double pitchAngleEnd{90 * PI / 180};
     const int nPnts{20};
     const double simTime{5e-6};
     const double simStepSize{1e-12};
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
     // Electron kinematics
     const double electronKE{18600};  // eV
     const double electronSpeed{GetSpeedFromKE(electronKE, ME)};
-    const double tau = 2 * R_E / (3 * TMath::C());
+    const double tau = 2 * R_E / (3 * C);
 
     TGraph *grBMean = new TGraph();
     setGraphAttr(grBMean);
@@ -119,8 +119,10 @@ int main(int argc, char *argv[]) {
                                              double(iPnt) / double(nPnts - 1)};
       TVector3 V0(electronSpeed * sin(thisAngle), 0,
                   electronSpeed * cos(thisAngle));
-      const double gyroradius{GetGyroradius(
-          V0, field1m->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
+      double velArr[3] = {V0.X(), V0.Y(), V0.Z()};
+      TVector3 centralField = field1m->evaluate_field_at_point(TVector3(0, 0, 0));
+      double bFieldArr[3] = {centralField.X(), centralField.Y(), centralField.Z()};
+      const double gyroradius{GetGyroradius(velArr, bFieldArr, ME)};
       TVector3 X0(0, -gyroradius, 0);
       TString trackFile{Form(
           "/home/sjones/work/qtnm/outputs/RFBandwidth/track%d.root", iPnt)};
@@ -140,7 +142,7 @@ int main(int argc, char *argv[]) {
       double bMean{0};
       TGraph *grZ{new TGraph()};
       setGraphAttr(grZ);
-      grZ->SetTitle(Form("#theta = %.2f", thisAngle * 180 / TMath::Pi()));
+      grZ->SetTitle(Form("#theta = %.2f", thisAngle * 180 / PI));
       // Loop over tree entries
       for (int e{0}; e < tr->GetEntries(); e++) {
         tr->GetEntry(e);
@@ -152,9 +154,9 @@ int main(int argc, char *argv[]) {
       cout << iPnt << ":\t bMean = " << bMean << " T\n";
 
       double f{CalcCyclotronFreq(electronKE, bMean)};
-      grBMean->SetPoint(iPnt, thisAngle * 180 / TMath::Pi(), bMean);
-      grF->SetPoint(iPnt, thisAngle * 180 / TMath::Pi(), f);
-      grDeltaF->SetPoint(iPnt, thisAngle * 180 / TMath::Pi(), f);
+      grBMean->SetPoint(iPnt, thisAngle * 180 / PI, bMean);
+      grF->SetPoint(iPnt, thisAngle * 180 / PI, f);
+      grDeltaF->SetPoint(iPnt, thisAngle * 180 / PI, f);
 
       TGraph *grZPgram{MakePowerSpectrumPeriodogram(grZ)};
       double maxFreq{-DBL_MAX};
@@ -166,7 +168,7 @@ int main(int argc, char *argv[]) {
         }
       }
       cout << "Axial frequency = " << maxFreq / 1e6 << "MHz\n";
-      grAxFreq->SetPoint(iPnt, thisAngle * 180 / TMath::Pi(), maxFreq / 1e6);
+      grAxFreq->SetPoint(iPnt, thisAngle * 180 / PI, maxFreq / 1e6);
 
       fout->cd();
       grZ->Write(Form("grZ_%d_%d", iBkg, iPnt));

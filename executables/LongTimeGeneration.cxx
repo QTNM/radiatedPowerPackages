@@ -13,17 +13,16 @@
 #include <random>
 #include <vector>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "BasicFunctions/TritiumSpectrum.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "Scattering/ElasticScatter.h"
-#include "Scattering/InelasticScatter.h"
+
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicFunctions/TritiumSpectrum.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/Scattering/ElasticScatter.h"
+#include "physics/Scattering/InelasticScatter.h"
 #include "TBranch.h"
 #include "TFile.h"
 #include "TH1.h"
-#include "TMath.h"
 #include "TString.h"
 #include "TSystem.h"
 #include "TTree.h"
@@ -108,7 +107,7 @@ int main(int argc, char *argv[]) {
   TString outputStem{outputStemStr};
 
   double simStepTime{1 / (10 * centralCycFreq)};  // seconds
-  const double tau{2 * R_E / (3 * TMath::C())};
+  const double tau{2 * R_E / (3 * C)};
 
   for (unsigned int i{0}; i < nElectrons; i++) {
     cout << "Electron " << i << endl;
@@ -122,14 +121,14 @@ int main(int argc, char *argv[]) {
     // Uniform distribution
     std::uniform_real_distribution<double> uni1(0, 1);
     double zGen{-zMax + uni1(gen) * 2 * zMax};
-    double thetaPosGen{uni1(gen) * TMath::TwoPi()};
+    double thetaPosGen{uni1(gen) * (2 * PI)};
     double rGen{rMax * sqrt(uni1(gen))};
 
     TVector3 pos(rGen * cos(thetaPosGen), rGen * sin(thetaPosGen), zGen);
 
     // Generate a uniform velocity distribution
-    double phiVelGen{uni1(gen) * TMath::TwoPi()};
-    double thetaVelGen{uni1(gen) * TMath::Pi()};
+    double phiVelGen{uni1(gen) * (2 * PI)};
+    double thetaVelGen{uni1(gen) * PI};
     TVector3 vel(eSpeed * cos(phiVelGen) * sin(thetaVelGen),
                  eSpeed * sin(phiVelGen) * sin(thetaVelGen),
                  eSpeed * cos(thetaVelGen));
@@ -161,7 +160,7 @@ int main(int argc, char *argv[]) {
     yVel = vel.Y();
     zVel = vel.Z();
 
-    BorisSolver solver(field, -TMath::Qe(), ME, tau);
+    BorisSolver solver(field, -QE, ME, tau);
     TVector3 acc{solver.acc(pos, vel)};
     xAcc = acc.X();
     yAcc = acc.Y();
@@ -210,7 +209,7 @@ int main(int argc, char *argv[]) {
         tree->Fill();
       } else {
         // Time to do a scattering calculation
-        double gamma{1 / sqrt(1 - pow(vel.Mag() / TMath::C(), 2))};
+        double gamma{1 / sqrt(1 - pow(vel.Mag() / C, 2))};
         eKE = (gamma - 1) * ME_EV;
 
         // Recalculate the cross sections based on the cross-sections
@@ -240,7 +239,7 @@ int main(int argc, char *argv[]) {
           eKE = scatInel2.GetPrimaryScatteredE(wSample, theta2Sample);
           vel = scatInel2.GetScatteredVector(vel, eKE, scatAngle);
         }
-        cout << "Scattering angle = " << scatAngle * 180 / TMath::Pi()
+        cout << "Scattering angle = " << scatAngle * 180 / PI
              << " degrees\t New KE = " << eKE / 1e3 << " keV\n";
 
         // Now calculate the new acceleration

@@ -12,19 +12,19 @@
 #include <cmath>
 #include <iostream>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/Signal.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TH2.h"
-#include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
-#include "Waveguides/CircularWaveguide.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
+#include "physics/Waveguides/CircularWaveguide.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 
@@ -88,10 +88,12 @@ int main(int argc, char* argv[]) {
   // Electron kinematics (the fixed parts anyway)
   const double eKE{30e3};                        // eV
   const double eSpeed{GetSpeedFromKE(eKE, ME)};  // m/s
-  const double beta{eSpeed / TMath::C()};
+  const double beta{eSpeed / C};
   std::cout << "Beta = " << beta << std::endl;
   const double gamma{1 / sqrt(1 - beta * beta)};
-  const double rg{GetGyroradius(TVector3(eSpeed, 0, 0), centralField, ME)};
+  double eVelArr[3] = {eSpeed, 0, 0};
+  double bFieldArr[3] = {centralField.X(), centralField.Y(), centralField.Z()};
+  const double rg{GetGyroradius(eVelArr, bFieldArr, ME)};
   TVector3 x0(0, rg, 0);
   std::cout << "x0 = " << x0.Y() * 1e3 << " mm\n";
 
@@ -132,7 +134,7 @@ int main(int argc, char* argv[]) {
                       (zMaxMax - zMaxMin) * double(iZ) / double(nzMaxPnts - 1)};
     const double thetaBotRad{atan2(l0, zMax)};
     const double thetaBotDeg{thetaBotRad * 180 / M_PI};
-    const double avgCycFreq{(TMath::Qe() * b0 / (gamma * ME * 2 * M_PI)) *
+    const double avgCycFreq{(QE * b0 / (gamma * ME * 2 * M_PI)) *
                             (1 + zMax * zMax / (2 * l0 * l0))};
     const double axFreq{eSpeed * sin(thetaBotRad) / (l0 * 2 * M_PI)};
     std::cout << "z_max = " << zMax * 100 << " cm\ttheta_bot = " << thetaBotDeg

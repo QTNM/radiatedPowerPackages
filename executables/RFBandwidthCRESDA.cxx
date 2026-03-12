@@ -8,16 +8,17 @@
 
 #include <iostream>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "ElectronDynamics/TrajectoryGen.h"
 #include "TF1.h"
 #include "TFile.h"
-#include "TMath.h"
 #include "TString.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
+#include "utilities/ROOTUtils/FFTAnalysis.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 using std::cout;
@@ -52,17 +53,16 @@ int main(int argc, char *argv[]) {
   // Set up pitch angle scan
   const double trapAngleMin{asin(sqrt(1 - trapB / bkgB))};
   const double pitchAngleStart{1.001 * trapAngleMin};
-  const double pitchAngleEnd{90 * TMath::Pi() / 180};
+  const double pitchAngleEnd{90 * PI / 180};
   const int nPnts{2};
   const double simTime{1e-6};
   const double simStepSize{1e-12};
-  cout << "Min. pitch angle = " << trapAngleMin * 180 / TMath::Pi()
-       << " degrees\n";
+  cout << "Min. pitch angle = " << trapAngleMin * 180 / PI << " degrees\n";
 
   // Electron kinematics
   const double electronKE{18600};  // eV
   const double electronSpeed{GetSpeedFromKE(electronKE, ME)};
-  const double tau{2 * R_E / (3 * TMath::C())};
+  const double tau{2 * R_E / (3 * C)};
 
   TGraph *grAxFreq{new TGraph()};
   setGraphAttr(grAxFreq);
@@ -80,8 +80,11 @@ int main(int argc, char *argv[]) {
                                            double(iPnt) / double(nPnts - 1)};
     TVector3 V0(electronSpeed * sin(thisAngle), 0,
                 electronSpeed * cos(thisAngle));
-    const double gyroradius{GetGyroradius(
-        V0, field->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
+    double V0Arr[3] = {V0.X(), V0.Y(), V0.Z()};
+    TVector3 centralField{field->evaluate_field_at_point(TVector3(0, 0, 0))};
+    double centralFieldArr[3] = {centralField.X(), centralField.Y(),
+                                 centralField.Z()};
+    const double gyroradius{GetGyroradius(V0Arr, centralFieldArr, ME)};
     TVector3 X0(0, -gyroradius, 0);
 
     TString trackFile{Form(
@@ -101,7 +104,7 @@ int main(int argc, char *argv[]) {
     double bMean{0};
     TGraph *grZ{new TGraph()};
     setGraphAttr(grZ);
-    grZ->SetTitle(Form("#theta = %.2f", thisAngle * 180 / TMath::Pi()));
+    grZ->SetTitle(Form("#theta = %.2f", thisAngle * 180 / PI));
     // Loop over tree entries
     for (int e{0}; e < tr->GetEntries(); e++) {
       tr->GetEntry(e);
@@ -112,7 +115,7 @@ int main(int argc, char *argv[]) {
     bMean /= double(tr->GetEntries());
 
     double f{CalcCyclotronFreq(electronKE, bMean)};
-    grDeltaF->SetPoint(iPnt, thisAngle * 180 / TMath::Pi(), f);
+    grDeltaF->SetPoint(iPnt, thisAngle * 180 / PI, f);
 
     TGraph *grZPgram{MakePowerSpectrumPeriodogram(grZ)};
     double maxFreq{-DBL_MAX};
@@ -124,7 +127,7 @@ int main(int argc, char *argv[]) {
       }
     }
     cout << "Axial frequency = " << maxFreq / 1e6 << " MHz\n";
-    grAxFreq->SetPoint(iPnt, thisAngle * 180 / TMath::Pi(), maxFreq / 1e6);
+    grAxFreq->SetPoint(iPnt, thisAngle * 180 / PI, maxFreq / 1e6);
 
     fout->cd();
     grZ->Write(Form("grZ%d", iPnt));

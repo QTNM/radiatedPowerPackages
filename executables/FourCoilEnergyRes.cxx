@@ -17,21 +17,21 @@
 #include <string>
 #include <tuple>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "BasicFunctions/Constants.h"
-#include "ElectronDynamics/BorisSolver.h"
-#include "ElectronDynamics/QTNMFields.h"
-#include "SignalProcessing/LocalOscillator.h"
-#include "SignalProcessing/Signal.h"
+
+#include "utilities/BasicCore/Constants.h"
+#include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/ElectronDynamics/QTNMFields.h"
+#include "physics/SignalProcessing/LocalOscillator.h"
+#include "physics/SignalProcessing/Signal.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TString.h"
 #include "TSystem.h"
 #include "TTree.h"
-#include "Waveguides/CircularWaveguide.h"
-#include "Waveguides/Probe.h"
-#include "Waveguides/WaveguideMode.h"
+#include "physics/Waveguides/CircularWaveguide.h"
+#include "physics/Waveguides/Probe.h"
+#include "physics/Waveguides/WaveguideMode.h"
 
 using namespace rad;
 
@@ -105,7 +105,7 @@ double BathtubAnalytical(double *x, double *par) {
 double CalcAvgBathtubFreq(double ke, double b0, double l0, double l1,
                           double theta) {
   const double gamma{(ke + ME_EV) / ME_EV};
-  const double prefactor{TMath::Qe() * b0 / (gamma * ME * 2 * M_PI)};
+  const double prefactor{QE * b0 / (gamma * ME * 2 * M_PI)};
   const double zMax{l0 / tan(theta)};
   return prefactor * (1 + (zMax * zMax / (2 * l0 * l0)) *
                               pow(1 + l1 * tan(theta) / (M_PI * l0), -1));
@@ -239,7 +239,7 @@ int main(int argc, char *argv[]) {
   // Set up constant electron kinematics
   const double eKE{18.6e3};  // eV
   const double eSpeed{GetSpeedFromKE(eKE, ME)};
-  const double tau{2 * R_E / (3 * TMath::C())};
+  const double tau{2 * R_E / (3 * C)};
 
   // Generation specifics
   const double rGenMax{6e-3};  // metres
@@ -313,7 +313,7 @@ int main(int argc, char *argv[]) {
     xVel = v0.X();
     yVel = v0.Y();
     zVel = v0.Z();
-    BorisSolver solver(field, -TMath::Qe(), ME, tau);
+    BorisSolver solver(field, -QE, ME, tau);
     TVector3 acc{solver.acc(x0, v0)};
     xAcc = acc.X();
     yAcc = acc.Y();

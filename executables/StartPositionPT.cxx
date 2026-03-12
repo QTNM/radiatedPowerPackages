@@ -7,14 +7,15 @@
 
 #include <memory>
 
-#include "BasicFunctions/BasicFunctions.h"
-#include "ElectronDynamics/PenningTraps.h"
-#include "ElectronDynamics/TrajectoryGen.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TString.h"
 #include "TTree.h"
+#include "physics/ElectronDynamics/PenningTraps.h"
+#include "physics/ElectronDynamics/TrajectoryGen.h"
+#include "utilities/BasicCore/Physics.h"
+#include "utilities/ROOTUtils/GraphUtils.h"
 
 using namespace rad;
 
@@ -30,20 +31,22 @@ int main() {
   const double z0{0.15};      // m
   const double rho0{0.05};    // m
   auto trap = new IdealPenningTrap(BFieldMag, v0, rho0, z0);
-  const double fZ{(1 / (2 * TMath::Pi())) *
-                  sqrt(-TMath::Qe() * v0 / (ME * z0 * z0))};
+  const double fZ{(1 / (2 * PI)) * sqrt(-QE * v0 / (ME * z0 * z0))};
   std::cout << "Axial frequency = " << fZ / 1e6 << " MHz\n";
 
   // Electron kinematics
   const double eKE{18.6e3};                      // eV
   const double eSpeed{GetSpeedFromKE(eKE, ME)};  // m s^-1
   const double pitchAngleDeg{89};                // degrees
-  const double pitchAngle{pitchAngleDeg * TMath::Pi() / 180};
+  const double pitchAngle{pitchAngleDeg * PI / 180};
   // Initial velocity vector
   TVector3 initVel(eSpeed * sin(pitchAngle), 0, -eSpeed * cos(pitchAngle));
   // Gyroradius
-  const double rg{GetGyroradius(
-      initVel, trap->evaluate_field_at_point(TVector3(0, 0, 0)), ME)};
+  TVector3 centralField{trap->evaluate_field_at_point(TVector3(0, 0, 0))};
+  double centralFieldArr[3] = {centralField.X(), centralField.Y(),
+                               centralField.Z()};
+  double initVelArr[3] = {initVel.X(), initVel.Y(), initVel.Z()};
+  const double rg{GetGyroradius(initVelArr, centralFieldArr, ME)};
 
   // Now scan through various positions and measure the axial frequency
   const double zMax{0.12};
@@ -135,13 +138,11 @@ int main() {
   /// Generate two more trajectories to show how two electrons with different
   /// initial energies can end up with the same trajectory
   //////////////////////////////////////////////////////////////////////////////
-  const double theta{88 * TMath::Pi() / 180};
+  const double theta{88 * PI / 180};
   TVector3 startVel88(eSpeed * sin(theta), 0, -eSpeed * cos(theta) * 1.0339054);
-  double ke88{(1 / sqrt(1 - pow(eSpeed / TMath::C(), 2)) - 1) * ME *
-              TMath::C() * TMath::C()};
+  double ke88{(1 / sqrt(1 - pow(eSpeed / C, 2)) - 1) * ME * C * C};
   TVector3 startVel90(eSpeed * sin(theta) * 1.000041899, 0, 0);
-  double ke90{(1 / sqrt(1 - pow(eSpeed * sin(theta) / TMath::C(), 2)) - 1) *
-              ME * TMath::C() * TMath::C()};
+  double ke90{(1 / sqrt(1 - pow(eSpeed * sin(theta) / C, 2)) - 1) * ME * C * C};
 
   const double z0_2{0.15};
   const double rho0_2{0.18};
@@ -149,19 +150,19 @@ int main() {
   auto trap2 = new IdealPenningTrap(BFieldMag, v0_2, rho0_2, z0_2);
   const double C{2 * v0_2 / (z0_2 * z0_2 + 0.5 * rho0_2 * rho0_2)};
   const double z90{0.1};
-  const double Ep90{-C * z90 * z90 * TMath::Qe() / 2};
+  const double Ep90{-C * z90 * z90 * QE / 2};
   const double E90{Ep90 + ke90};
   const double Ep88{E90 - ke88};
-  const double z88{sqrt(2 * Ep88 / (-TMath::Qe() * C))};
-  std::cout << "90 degree potential energy = " << Ep90 / TMath::Qe() << " eV\n";
-  std::cout << "88 degree potential energy = " << Ep88 / TMath::Qe() << " eV\n";
+  const double z88{sqrt(2 * Ep88 / (-QE * C))};
+  std::cout << "90 degree potential energy = " << Ep90 / QE << " eV\n";
+  std::cout << "88 degree potential energy = " << Ep88 / QE << " eV\n";
   std::cout << "z_88 = " << z88 * 100 << " cm\n";
 
   TVector3 startPos88(0, -rg, z88);
   TVector3 startPos90(0, -rg, z90);
 
   const double keDiff{ke88 - ke90};
-  std::cout << "KE diff = " << keDiff / TMath::Qe() << " eV\n";
+  std::cout << "KE diff = " << keDiff / QE << " eV\n";
 
   TString trackFile88{outputDir + "/trackFile88.root"};
   ElectronTrajectoryGen traj88(trackFile88, trap2, startPos88, startVel88,
@@ -208,14 +209,13 @@ int main() {
     const double timeShift{27e-9 - 1.2e-11 + 17e-9};
     grX88->SetPoint(i, time88 + timeShift, xPos88 * 100);
     grZ88->SetPoint(i, time88 + timeShift, zPos88 * 100);
-    double beta{sqrt(xVel88 * xVel88 + yVel88 * yVel88 + zVel88 * zVel88) /
-                TMath::C()};
-    double T{(1 / sqrt(1 - beta * beta) - 1) * ME * pow(TMath::C(), 2)};
-    grKE88->SetPoint(i, time88 + timeShift, T / TMath::Qe());
+    double beta{sqrt(xVel88 * xVel88 + yVel88 * yVel88 + zVel88 * zVel88) / C};
+    double T{(1 / sqrt(1 - beta * beta) - 1) * ME * pow(C, 2)};
+    grKE88->SetPoint(i, time88 + timeShift, T / QE);
 
     grVr88->SetPoint(i, time88 + timeShift,
-                     sqrt(xVel88 * xVel88 + yVel88 * yVel88) / TMath::C());
-    grVz88->SetPoint(i, time88 + timeShift, zVel88 / TMath::C());
+                     sqrt(xVel88 * xVel88 + yVel88 * yVel88) / C);
+    grVz88->SetPoint(i, time88 + timeShift, zVel88 / C);
   }
   delete tr88;
   fin88->Close();
@@ -264,14 +264,12 @@ int main() {
     tr90->GetEntry(i);
     grX90->SetPoint(i, time90, xPos90 * 100);
     grZ90->SetPoint(i, time90, zPos90 * 100);
-    double beta{sqrt(xVel90 * xVel90 + yVel90 * yVel90 + zVel90 * zVel90) /
-                TMath::C()};
-    double T{(1 / sqrt(1 - beta * beta) - 1) * ME * pow(TMath::C(), 2)};
-    grKE90->SetPoint(i, time90, T / TMath::Qe());
+    double beta{sqrt(xVel90 * xVel90 + yVel90 * yVel90 + zVel90 * zVel90) / C};
+    double T{(1 / sqrt(1 - beta * beta) - 1) * ME * pow(C, 2)};
+    grKE90->SetPoint(i, time90, T / QE);
 
-    grVr90->SetPoint(i, time90,
-                     sqrt(xVel90 * xVel90 + yVel90 * yVel90) / TMath::C());
-    grVz90->SetPoint(i, time90, zVel90 / TMath::C());
+    grVr90->SetPoint(i, time90, sqrt(xVel90 * xVel90 + yVel90 * yVel90) / C);
+    grVz90->SetPoint(i, time90, zVel90 / C);
   }
   delete tr90;
   fin90->Close();
