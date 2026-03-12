@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "physics/ElectronDynamics/PenningTraps.h"
 #include "physics/ElectronDynamics/QTNMFields.h"
 #include "utilities/ConfigParser/YamlUtils.h"
 
@@ -45,6 +46,17 @@ static const std::unordered_map<std::string, FieldCreator>& GetRegistry() {
          double background =
              GetRequired<double>(params, "background", "HarmonicField");
          return std::make_unique<HarmonicField>(radius, current, background);
+       }},
+
+      {"IdealPenningTrap",
+       [](const YAML::Node& params) {
+         double BField =
+             GetRequired<double>(params, "BField", "IdealPenningTrap");
+         double v0 = GetRequired<double>(params, "v0", "IdealPenningTrap");
+         double rho0 =
+             GetRequired<double>(params, "rho0", "IdealPenningTrap");
+         double z0 = GetRequired<double>(params, "z0", "IdealPenningTrap");
+         return std::make_unique<IdealPenningTrap>(BField, v0, rho0, z0);
        }},
   };
   return registry;

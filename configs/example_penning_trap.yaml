@@ -1,0 +1,20 @@
+# Penning trap trajectory (replaces PenningTrapTraj.cxx)
+
+simulation:
+  output_file: "penning_trap_traj.root"
+  time: 5.0e-8             # 50 ns
+  step_size: 1.0e-12       # 1 ps
+  energy_loss: false
+
+electron:
+  kinetic_energy: 18600    # eV
+  pitch_angle: 88.0        # degrees
+  position: [0.0, 0.0, 0.0]
+
+field:
+  type: "IdealPenningTrap"
+  parameters:
+    BField: 1.0            # [T]
+    v0: -1000.0            # [V] ring-endcap voltage
+    rho0: 0.05             # [m] ring electrode distance
+    z0: 0.1                # [m] endcap distance

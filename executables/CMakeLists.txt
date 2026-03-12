@@ -50,12 +50,6 @@ target_link_libraries(SignalRequirements PRIVATE BasicCore ROOTUtils ${ROOT_LIBR
 add_executable(FakeTrackGen FakeTrackGen.cxx)
 target_link_libraries(FakeTrackGen PRIVATE BasicCore ROOTUtils ${ROOT_LIBRARIES})
 
-add_executable(PenningTrapTraj PenningTrapTraj.cxx)
-target_link_libraries(PenningTrapTraj PRIVATE ElectronDynamics ROOTUtils ${ROOT_LIBRARIES})
-
-add_executable(AxialFreqPT AxialFreqPT.cxx)
-target_link_libraries(AxialFreqPT PRIVATE ElectronDynamics ROOTUtils ${ROOT_LIBRARIES})
-
 add_executable(StartPositionPT StartPositionPT.cxx)
 target_link_libraries(StartPositionPT PRIVATE ElectronDynamics BasicCore ROOTUtils ${ROOT_LIBRARIES})
 
