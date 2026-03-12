@@ -12,3 +12,6 @@ add_subdirectory(ROOTUtils)
 
 # Legacy consolidated utility functions
 add_subdirectory(BasicFunctions)
+
+# YAML configuration parsing utilities
+add_subdirectory(ConfigParser)

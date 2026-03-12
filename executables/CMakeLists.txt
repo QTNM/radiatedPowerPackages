@@ -142,3 +142,6 @@ target_include_directories(MLSampleGeneration PRIVATE ${HDF5_INCLUDE_DIRS})
 
 add_executable(SecondaryElectronProduction SecondaryElectronProduction.cxx)
 target_link_libraries(SecondaryElectronProduction PRIVATE ElectronDynamics Scattering ${ROOT_LIBRARIES})
+
+add_executable(RunTrajectory RunTrajectory.cxx)
+target_link_libraries(RunTrajectory PRIVATE ConfigParser ElectronDynamics ${ROOT_LIBRARIES})

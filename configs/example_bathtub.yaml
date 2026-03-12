@@ -1,0 +1,28 @@
+# Bathtub trap trajectory generation
+# Equivalent to: writeTrajectory -o traj.root -t 1e-6 -s 1e-12 -p 89 -e
+
+simulation:
+  output_file: "trajectory.root"
+  time: 1.0e-6            # 1 microsecond
+  step_size: 1.0e-12      # 1 picosecond
+  energy_loss: true
+
+  # Kill trajectory if electron escapes these bounds
+  bounds:
+    z_min: -0.2            # [m]
+    z_max:  0.2            # [m]
+    r_max:  0.05           # [m]
+
+electron:
+  kinetic_energy: 18600    # eV (tritium endpoint)
+  pitch_angle: 89.0        # degrees
+  position: [0.0, -0.000460441, 0.0]
+
+field:
+  type: "BathtubField"
+  parameters:
+    radius: 0.03
+    current: 4688.0        # 2 * 0.0049 * 0.03 / MU0
+    Z1: -0.15
+    Z2: 0.15
+    background: [0.0, 0.0, 1.0]

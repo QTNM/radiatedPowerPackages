@@ -24,6 +24,9 @@ find_package(HDF5 COMPONENTS C CXX HL REQUIRED)
 # Locate FFTW3
 find_package(FFTW3 REQUIRED)
 
+# Locate yaml-cpp for configuration file parsing
+find_package(yaml-cpp REQUIRED)
+
 # Set build locations for libraries and binaries
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
