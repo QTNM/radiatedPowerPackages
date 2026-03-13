@@ -2,12 +2,14 @@
 #define PIPELINE_CONFIG_H
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "physics/ElectronDynamics/BaseField.h"
 #include "utilities/ConfigParser/DetectorFactory.h"
 #include "utilities/ConfigParser/ElectronConfig.h"
+#include "utilities/ConfigParser/ScatteringConfig.h"
 #include "utilities/ConfigParser/SignalConfig.h"
 #include "utilities/ConfigParser/SimulationConfig.h"
 
@@ -19,6 +21,7 @@ struct PipelineConfig {
   SimulationConfig simulation;
   std::vector<ElectronConfig> electrons;
   std::unique_ptr<BaseField> field;
+  std::optional<ScatteringConfig> scattering;
   Detector detector;
   SignalProcessingConfig signalProcessing;
   OutputConfig output;

@@ -3,6 +3,7 @@ add_library(ConfigParser
     FieldFactory.cxx
     DetectorFactory.cxx
     SignalConfig.cxx
+    ScatteringConfig.cxx
     PipelineConfig.cxx
     ElectronConfig.cxx
     ElectronGenerator.cxx
@@ -10,7 +11,7 @@ add_library(ConfigParser
 )
 
 target_link_libraries(ConfigParser
-    PUBLIC  BasicCore ElectronDynamics Antennas Waveguides yaml-cpp ${ROOT_LIBRARIES}
+    PUBLIC  BasicCore ElectronDynamics Antennas Waveguides Scattering yaml-cpp ${ROOT_LIBRARIES}
 )
 
 target_include_directories(ConfigParser PUBLIC

@@ -54,6 +54,11 @@ PipelineConfig LoadPipelineConfig(const std::string& filepath) {
   }
   config.field = CreateField(root["field"]);
 
+  // Optional: scattering
+  if (root["scattering"]) {
+    config.scattering = ParseScatteringConfig(root["scattering"]);
+  }
+
   // Required: detector
   if (!root["detector"]) {
     throw std::runtime_error("Config missing required 'detector' section");

@@ -2,8 +2,9 @@
   RunSimulation.cxx
 
   Config-driven end-to-end signal generation pipeline.
-  Reads a YAML pipeline config, generates electron trajectories, computes
-  downmixed signals via the configured detector, and writes outputs to HDF5.
+  Reads a YAML pipeline config, generates electron trajectories (optionally
+  with gas scattering), computes downmixed signals via the configured detector,
+  and writes outputs to HDF5.
 
   Usage: RunSimulation <config.yaml>
 */
@@ -16,6 +17,8 @@
 #include <ctime>
 #include <filesystem>
 #include <iostream>
+#include <memory>
+#include <random>
 #include <string>
 #include <tuple>
 #include <variant>
@@ -28,10 +31,13 @@
 #include "TVector3.h"
 
 #include "physics/ElectronDynamics/BorisSolver.h"
+#include "physics/Scattering/ElasticScatter.h"
+#include "physics/Scattering/InelasticScatter.h"
 #include "physics/SignalProcessing/LocalOscillator.h"
 #include "physics/SignalProcessing/NoiseFunc.h"
 #include "physics/SignalProcessing/Signal.h"
 #include "utilities/BasicCore/Constants.h"
+#include "utilities/BasicCore/Physics.h"
 #include "utilities/ConfigParser/PipelineConfig.h"
 #include "utilities/HDF5Writer/HDF5Writer.h"
 
@@ -42,11 +48,36 @@ static std::string MakeUUID() {
       (boost::uuids::random_generator())());
 }
 
-/// Run a single trajectory and write result to a ROOT file
-static void RunSingleTrajectory(const std::string& outputFile,
-                                BorisSolver& solver,
-                                const config::ElectronConfig& electron,
-                                const config::SimulationConfig& simulation) {
+// ─── Species mapping ─────────────────────────────────────────────────────────
+
+struct SpeciesPhysics {
+  Species inelasticSpecies;
+  unsigned int atomicNumber;
+  unsigned int atomicMass;
+};
+
+/// Map a species name to its elastic/inelastic physics parameters.
+/// T/T2 use the same inelastic cross-sections as H/H2 respectively.
+static SpeciesPhysics MapSpecies(const std::string& name) {
+  if (name == "H")  return {H,  1, 1};
+  if (name == "H2") return {H2, 2, 2};
+  if (name == "He") return {He, 2, 4};
+  if (name == "T")  return {H,  1, 3};
+  if (name == "T2") return {H2, 2, 6};
+  throw std::runtime_error("Unknown gas species: " + name);
+}
+
+// ─── Trajectory generation ───────────────────────────────────────────────────
+
+/// Run a single trajectory and write to a ROOT file.
+/// When scattering is present the loop is event-driven; otherwise it
+/// runs fixed Boris steps — both cases produce the same ROOT output format.
+static void RunSingleTrajectory(
+    const std::string& outputFile, BorisSolver& solver,
+    const config::ElectronConfig& electron,
+    const config::SimulationConfig& simulation,
+    const std::optional<config::ScatteringConfig>& scattering) {
+
   TFile* fout = new TFile(outputFile.c_str(), "RECREATE");
   if (!fout || fout->IsZombie()) {
     throw std::runtime_error("Cannot create trajectory file: " + outputFile);
@@ -69,47 +100,132 @@ static void RunSingleTrajectory(const std::string& outputFile,
   tree->Branch("yAcc", &yAcc);
   tree->Branch("zAcc", &zAcc);
 
+  auto Record = [&](double t, const TVector3& p, const TVector3& v,
+                    const TVector3& a) {
+    time = t;
+    xPos = p.X(); yPos = p.Y(); zPos = p.Z();
+    xVel = v.X(); yVel = v.Y(); zVel = v.Z();
+    xAcc = a.X(); yAcc = a.Y(); zAcc = a.Z();
+    tree->Fill();
+  };
+
   TVector3 ePos = electron.position;
   TVector3 eVel = electron.velocity;
   TVector3 eAcc = solver.acc(ePos, eVel);
-
-  time = simulation.initialTime;
-  xPos = ePos.X(); yPos = ePos.Y(); zPos = ePos.Z();
-  xVel = eVel.X(); yVel = eVel.Y(); zVel = eVel.Z();
-  xAcc = eAcc.X(); yAcc = eAcc.Y(); zAcc = eAcc.Z();
-  tree->Fill();
+  Record(simulation.initialTime, ePos, eVel, eAcc);
 
   const double stepSize = simulation.stepSize;
-  const int nSteps = static_cast<int>(std::round(simulation.time / stepSize));
-  const auto& bounds = simulation.bounds;
+  const double maxTime  = simulation.initialTime + simulation.time;
+  const auto&  bounds   = simulation.bounds;
 
   const double printInterval = 1e-6;
-  double printTime = printInterval;
+  double printTime = simulation.initialTime + printInterval;
 
-  for (int i = 1; i < nSteps; i++) {
-    time = simulation.initialTime + double(i) * stepSize;
-    std::tuple<TVector3, TVector3> step =
-        solver.advance_step(stepSize, ePos, eVel);
+  std::mt19937 gen(std::random_device{}());
 
-    if (time >= printTime) {
-      std::cout << "  " << printTime << " s simulated...\n";
-      printTime += printInterval;
+  double t = simulation.initialTime;
+
+  while (t < maxTime) {
+    double dt       = stepSize;
+    bool scattered  = false;
+
+    // ── Per-species scattering objects (only allocated when needed) ─────────
+    std::vector<std::unique_ptr<ElasticScatter>>   elastics;
+    std::vector<std::unique_ptr<InelasticScatter>> inelastics;
+    std::vector<double> elasticXSecs, inelasticXSecs, rates;
+    double totalRate = 0.0;
+
+    if (scattering) {
+      double gamma = 1.0 / std::sqrt(1.0 - eVel.Mag2() / (C * C));
+      double ke    = (gamma - 1.0) * ME_EV;
+      double vMag  = eVel.Mag();
+
+      for (const auto& gas : scattering->gases) {
+        auto sp = MapSpecies(gas.species);
+        auto el = std::make_unique<ElasticScatter>(ke, sp.atomicNumber,
+                                                   sp.atomicMass);
+        auto in = std::make_unique<InelasticScatter>(ke, sp.inelasticSpecies);
+
+        double eSec = el->GetTotalXSec();
+        double iSec = in->GetTotalXSec();
+        double rate = gas.density * (eSec + iSec) * vMag;
+
+        elasticXSecs.push_back(eSec);
+        inelasticXSecs.push_back(iSec);
+        rates.push_back(rate);
+        totalRate += rate;
+
+        elastics.push_back(std::move(el));
+        inelastics.push_back(std::move(in));
+      }
+
+      std::exponential_distribution<double> scatterDist(totalRate);
+      double scatterTime = scatterDist(gen);
+
+      if (scatterTime < stepSize) {
+        dt        = scatterTime;
+        scattered = true;
+      }
     }
 
+    // ── Advance particle ────────────────────────────────────────────────────
+    auto step = solver.advance_step(dt, ePos, eVel);
     ePos = std::get<0>(step);
     eVel = std::get<1>(step);
-    eAcc = solver.acc(ePos, eVel);
+    t += dt;
 
     double r = std::sqrt(ePos.X() * ePos.X() + ePos.Y() * ePos.Y());
-    if (ePos.Z() < bounds.zMin || ePos.Z() > bounds.zMax || r > bounds.rMax) {
-      std::cout << "  Electron exited bounds at t=" << time << " s\n";
+    bool outOfBounds = (ePos.Z() < bounds.zMin || ePos.Z() > bounds.zMax ||
+                        r > bounds.rMax);
+
+    eAcc = solver.acc(ePos, eVel);
+    Record(t, ePos, eVel, eAcc);
+
+    if (outOfBounds) {
+      std::cout << "  Electron exited bounds at t=" << t << " s\n";
       break;
     }
 
-    xPos = ePos.X(); yPos = ePos.Y(); zPos = ePos.Z();
-    xVel = eVel.X(); yVel = eVel.Y(); zVel = eVel.Z();
-    xAcc = eAcc.X(); yAcc = eAcc.Y(); zAcc = eAcc.Z();
-    tree->Fill();
+    // ── Apply scatter kinematics ─────────────────────────────────────────────
+    if (scattered) {
+      std::uniform_real_distribution<double> uni(0.0, 1.0);
+
+      // Pick which species
+      double rSpecies = uni(gen) * totalRate;
+      size_t j = rates.size() - 1;
+      double cumRate = 0.0;
+      for (size_t k = 0; k < rates.size(); k++) {
+        cumRate += rates[k];
+        if (rSpecies <= cumRate) { j = k; break; }
+      }
+
+      double scatterAngle = 0.0;
+      if (uni(gen) < elasticXSecs[j] / (elasticXSecs[j] + inelasticXSecs[j])) {
+        // Elastic
+        scatterAngle     = elastics[j]->GetRandomScatteringAngle();
+        double newKE     = elastics[j]->GetEnergyAfterScatter(scatterAngle);
+        eVel = elastics[j]->GetScatteredVector(eVel, newKE, scatterAngle);
+      } else {
+        // Inelastic
+        double W     = inelastics[j]->GetRandomW();
+        scatterAngle = inelastics[j]->GetRandomTheta(W);
+        eVel = inelastics[j]->GetScatteredVector(eVel, W, scatterAngle);
+      }
+
+      double pitchDeg =
+          std::abs(std::atan(eVel.Perp() / eVel.Z())) * 180.0 / M_PI;
+      std::cout << "  Scatter at t=" << t << " s"
+                << "  angle=" << scatterAngle * 180.0 / M_PI << " deg"
+                << "  pitch=" << pitchDeg << " deg\n";
+
+      eAcc = solver.acc(ePos, eVel);
+      Record(t, ePos, eVel, eAcc);
+    }
+
+    if (t >= printTime) {
+      std::cout << "  " << printTime << " s simulated...\n";
+      printTime += printInterval;
+    }
   }
 
   fout->cd();
@@ -118,7 +234,8 @@ static void RunSingleTrajectory(const std::string& outputFile,
   delete fout;
 }
 
-/// Build GaussianNoise terms from config
+// ─── Signal construction helpers ─────────────────────────────────────────────
+
 static std::vector<GaussianNoise> BuildNoiseTerms(
     const std::vector<config::NoiseConfig>& noiseCfg) {
   std::vector<GaussianNoise> noise;
@@ -128,7 +245,6 @@ static std::vector<GaussianNoise> BuildNoiseTerms(
   return noise;
 }
 
-/// Write requested signal datasets into an HDF5 group
 static void WriteSignalOutputs(H5::Group& group, Signal& sig,
                                 const std::vector<std::string>& datasets) {
   for (const auto& dsName : datasets) {
@@ -143,13 +259,11 @@ static void WriteSignalOutputs(H5::Group& group, Signal& sig,
                               /*writeTimeStep=*/false);
       delete ps;
     } else {
-      std::cerr << "  Warning: unknown dataset '" << dsName
-                << "' — skipping\n";
+      std::cerr << "  Warning: unknown dataset '" << dsName << "' — skipping\n";
     }
   }
 }
 
-/// Write simulation metadata as HDF5 attributes on a group
 static void WriteMetadata(H5::Group& group,
                           const config::SimulationConfig& sim,
                           const config::SignalProcessingConfig& sp) {
@@ -163,7 +277,8 @@ static void WriteMetadata(H5::Group& group,
   }
 }
 
-/// Process one electron: generate trajectory, compute signal(s), write HDF5
+// ─── Per-electron pipeline ────────────────────────────────────────────────────
+
 static void ProcessElectron(H5::H5File& h5file, const std::string& groupName,
                              BorisSolver& solver,
                              const config::ElectronConfig& electron,
@@ -171,10 +286,11 @@ static void ProcessElectron(H5::H5File& h5file, const std::string& groupName,
                              const LocalOscillator& lo,
                              const std::vector<GaussianNoise>& noiseTerms,
                              const std::string& trajFile) {
-  RunSingleTrajectory(trajFile, solver, electron, config.simulation);
+  RunSingleTrajectory(trajFile, solver, electron, config.simulation,
+                      config.scattering);
 
   TString trajPath(trajFile.c_str());
-  const auto& sp = config.signalProcessing;
+  const auto& sp     = config.signalProcessing;
   const auto& output = config.output;
 
   H5::Group group(h5file.createGroup(groupName));
@@ -184,11 +300,8 @@ static void ProcessElectron(H5::H5File& h5file, const std::string& groupName,
         using T = std::decay_t<decltype(det)>;
 
         if constexpr (std::is_same_v<T, config::AntennaDetector>) {
-          // Build raw pointer vector for Signal
           std::vector<IAntenna*> antPtrs;
-          for (const auto& a : det.antennas) {
-            antPtrs.push_back(a.get());
-          }
+          for (const auto& a : det.antennas) antPtrs.push_back(a.get());
           Signal sig(trajPath, antPtrs, lo, sp.sampleRate, noiseTerms,
                      sp.acquisitionTime);
           WriteSignalOutputs(group, sig, output.datasets);
@@ -197,12 +310,11 @@ static void ProcessElectron(H5::H5File& h5file, const std::string& groupName,
           for (size_t j = 0; j < det.probes.size(); j++) {
             Signal sig(trajPath, det.waveguide.get(), lo, sp.sampleRate,
                        det.probes[j], noiseTerms, sp.acquisitionTime);
-
             if (det.probes.size() == 1) {
               WriteSignalOutputs(group, sig, output.datasets);
             } else {
-              std::string probeName = "probe_" + std::to_string(j);
-              H5::Group probeGroup(group.createGroup(probeName));
+              H5::Group probeGroup(
+                  group.createGroup("probe_" + std::to_string(j)));
               WriteSignalOutputs(probeGroup, sig, output.datasets);
             }
           }
@@ -220,6 +332,8 @@ static void ProcessElectron(H5::H5File& h5file, const std::string& groupName,
   }
 }
 
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
 int main(int argc, char* argv[]) {
   if (argc != 2) {
     std::cerr << "Usage: " << argv[0] << " <config.yaml>\n";
@@ -229,45 +343,48 @@ int main(int argc, char* argv[]) {
   try {
     auto config = config::LoadPipelineConfig(argv[1]);
 
-    const auto& sim = config.simulation;
-    const auto& sp = config.signalProcessing;
+    const auto& sim    = config.simulation;
+    const auto& sp     = config.signalProcessing;
     const auto& output = config.output;
 
     std::cout << "Simulation time:  " << sim.time << " s\n";
     std::cout << "Step size:        " << sim.stepSize << " s\n";
-    std::cout << "Energy loss:      " << (sim.energyLoss ? "on" : "off")
-              << "\n";
+    std::cout << "Energy loss:      " << (sim.energyLoss ? "on" : "off") << "\n";
     std::cout << "Electrons:        " << config.electrons.size() << "\n";
     std::cout << "Sample rate:      " << sp.sampleRate / 1e9 << " GHz\n";
     std::cout << "LO frequency:     " << sp.loFrequency / 1e9 << " GHz\n";
     std::cout << "Output file:      " << output.file << "\n";
+    if (config.scattering) {
+      std::cout << "Scattering:       on (" << config.scattering->gases.size()
+                << " gas species)\n";
+    } else {
+      std::cout << "Scattering:       off\n";
+    }
 
-    // Set up shared physics objects
     double tau = sim.energyLoss ? 2.0 * R_E / (3.0 * C) : 0.0;
     BorisSolver solver(config.field.get(), -QE, ME, tau);
 
     LocalOscillator lo(2.0 * PI * sp.loFrequency);
     std::vector<GaussianNoise> noiseTerms = BuildNoiseTerms(sp.noise);
 
-    // Create temp trajectory directory
-    std::string trajDir = output.trajectoryDir + "/RunSimulation_" + MakeUUID();
+    std::string trajDir =
+        output.trajectoryDir + "/RunSimulation_" + MakeUUID();
     std::filesystem::create_directories(trajDir);
 
-    // Open HDF5 output file
     H5::H5File h5file(output.file, H5F_ACC_TRUNC);
 
-    const clock_t startTime = clock();
-    const size_t nElectrons = config.electrons.size();
-    const bool multiElectron = nElectrons > 1;
+    const clock_t startTime  = clock();
+    const size_t  nElectrons = config.electrons.size();
+    const bool    multi      = nElectrons > 1;
 
     for (size_t i = 0; i < nElectrons; i++) {
       std::string trajFile =
           trajDir + "/traj_" + std::to_string(i) + ".root";
       std::string groupName =
-          multiElectron ? output.group + "/electron_" + std::to_string(i)
-                        : output.group;
+          multi ? output.group + "/electron_" + std::to_string(i)
+                : output.group;
 
-      if (multiElectron) {
+      if (multi) {
         std::cout << "\nElectron " << i + 1 << "/" << nElectrons << "\n";
       }
 
@@ -279,7 +396,6 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    // Clean up temp directory (empty if trajectories were removed)
     if (output.cleanupTrajectories) {
       std::filesystem::remove(trajDir);
     }
