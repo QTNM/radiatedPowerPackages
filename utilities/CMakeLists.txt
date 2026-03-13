@@ -15,3 +15,6 @@ add_subdirectory(BasicFunctions)
 
 # YAML configuration parsing utilities
 add_subdirectory(ConfigParser)
+
+# HDF5 output utilities
+add_subdirectory(HDF5Writer)
