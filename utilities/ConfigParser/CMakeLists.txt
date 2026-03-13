@@ -3,6 +3,7 @@ add_library(ConfigParser
     FieldFactory.cxx
     DetectorFactory.cxx
     SignalConfig.cxx
+    PipelineConfig.cxx
     ElectronConfig.cxx
     ElectronGenerator.cxx
     SimulationConfig.cxx

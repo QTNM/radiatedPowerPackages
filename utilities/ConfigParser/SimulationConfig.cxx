@@ -8,10 +8,9 @@ namespace config {
 SimulationConfig ParseSimulationConfig(const YAML::Node& node) {
   SimulationConfig config;
 
-  if (!node["output_file"]) {
-    throw std::runtime_error("simulation: missing required key 'output_file'");
+  if (node["output_file"]) {
+    config.outputFile = node["output_file"].as<std::string>();
   }
-  config.outputFile = node["output_file"].as<std::string>();
 
   if (!node["time"]) {
     throw std::runtime_error("simulation: missing required key 'time'");
