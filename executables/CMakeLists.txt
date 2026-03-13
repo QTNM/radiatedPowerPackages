@@ -136,3 +136,7 @@ target_link_libraries(SecondaryElectronProduction PRIVATE ElectronDynamics Scatt
 
 add_executable(RunTrajectory RunTrajectory.cxx)
 target_link_libraries(RunTrajectory PRIVATE ConfigParser ElectronDynamics ${ROOT_LIBRARIES})
+
+add_executable(RunSimulation RunSimulation.cxx)
+target_link_libraries(RunSimulation PRIVATE ConfigParser ElectronDynamics SignalProcessing HDF5Writer ${ROOT_LIBRARIES})
+target_include_directories(RunSimulation PRIVATE ${HDF5_INCLUDE_DIRS})
