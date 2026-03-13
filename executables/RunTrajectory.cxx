@@ -2,7 +2,8 @@
   RunTrajectory.cxx
 
   Config-driven electron trajectory generation.
-  Reads a YAML config file and generates a trajectory ROOT file.
+  Reads a YAML config file and generates trajectory ROOT file(s).
+  Supports single or multiple electrons per config.
 
   Usage: RunTrajectory <config.yaml>
 */
@@ -23,57 +24,94 @@
 
 using namespace rad;
 
-int main(int argc, char* argv[]) {
-  if (argc != 2) {
-    std::cerr << "Usage: " << argv[0] << " <config.yaml>" << std::endl;
-    return 1;
+/// Replace all occurrences of "{index}" in str with the given index value
+static std::string SubstituteIndex(const std::string& str, size_t index) {
+  std::string result = str;
+  const std::string placeholder = "{index}";
+  size_t pos = 0;
+  while ((pos = result.find(placeholder, pos)) != std::string::npos) {
+    result.replace(pos, placeholder.length(), std::to_string(index));
+    pos += std::to_string(index).length();
   }
+  return result;
+}
 
-  try {
-    auto config = config::LoadTrajectoryConfig(argv[1]);
+/// Run a single trajectory simulation and write to a ROOT file
+static void RunSingleTrajectory(const std::string& outputFile,
+                                BorisSolver& solver,
+                                const config::ElectronConfig& electron,
+                                const config::SimulationConfig& simulation) {
+  TFile* fout = new TFile(outputFile.c_str(), "RECREATE");
+  if (!fout || fout->IsZombie()) {
+    throw std::runtime_error("Cannot create output file: " + outputFile);
+  }
+  TTree* tree = new TTree("tree", "tree");
 
-    std::cout << "Output file: " << config.simulation.outputFile << std::endl;
-    std::cout << "Simulation time: " << config.simulation.time << " s"
-              << std::endl;
-    std::cout << "Step size: " << config.simulation.stepSize << " s"
-              << std::endl;
-    std::cout << "Energy loss: "
-              << (config.simulation.energyLoss ? "on" : "off") << std::endl;
+  double time{};
+  double xPos{}, yPos{}, zPos{};
+  double xVel{}, yVel{}, zVel{};
+  double xAcc{}, yAcc{}, zAcc{};
 
-    // Set up the Boris solver
-    double tau = config.simulation.energyLoss ? 2 * R_E / (3 * C) : 0.0;
-    BorisSolver solver(config.field.get(), -QE, ME, tau);
+  tree->Branch("time", &time);
+  tree->Branch("xPos", &xPos);
+  tree->Branch("yPos", &yPos);
+  tree->Branch("zPos", &zPos);
+  tree->Branch("xVel", &xVel);
+  tree->Branch("yVel", &yVel);
+  tree->Branch("zVel", &zVel);
+  tree->Branch("xAcc", &xAcc);
+  tree->Branch("yAcc", &yAcc);
+  tree->Branch("zAcc", &zAcc);
 
-    // Open the output ROOT file
-    TFile* fout = new TFile(config.simulation.outputFile.c_str(), "RECREATE");
-    if (!fout || fout->IsZombie()) {
-      throw std::runtime_error("Cannot create output file: " +
-                               config.simulation.outputFile);
+  // Set the initial state
+  TVector3 ePos = electron.position;
+  TVector3 eVel = electron.velocity;
+  TVector3 eAcc = solver.acc(ePos, eVel);
+
+  time = simulation.initialTime;
+  xPos = ePos.X();
+  yPos = ePos.Y();
+  zPos = ePos.Z();
+  xVel = eVel.X();
+  yVel = eVel.Y();
+  zVel = eVel.Z();
+  xAcc = eAcc.X();
+  yAcc = eAcc.Y();
+  zAcc = eAcc.Z();
+  tree->Fill();
+
+  // Advance through the time steps
+  const double stepSize = simulation.stepSize;
+  const int nTimeSteps =
+      static_cast<int>(std::round(simulation.time / stepSize));
+  const auto& bounds = simulation.bounds;
+
+  const double printoutInterval = 1e-6;
+  double printoutTime = printoutInterval;
+
+  for (int i = 1; i < nTimeSteps; i++) {
+    time = simulation.initialTime + double(i) * stepSize;
+    std::tuple<TVector3, TVector3> outputStep =
+        solver.advance_step(stepSize, ePos, eVel);
+
+    if (time >= printoutTime) {
+      std::cout << "  " << printoutTime
+                << " seconds of trajectory simulated..." << std::endl;
+      printoutTime += printoutInterval;
     }
-    TTree* tree = new TTree("tree", "tree");
 
-    double time{};
-    double xPos{}, yPos{}, zPos{};
-    double xVel{}, yVel{}, zVel{};
-    double xAcc{}, yAcc{}, zAcc{};
+    ePos = std::get<0>(outputStep);
+    eVel = std::get<1>(outputStep);
+    eAcc = solver.acc(ePos, eVel);
 
-    tree->Branch("time", &time);
-    tree->Branch("xPos", &xPos);
-    tree->Branch("yPos", &yPos);
-    tree->Branch("zPos", &zPos);
-    tree->Branch("xVel", &xVel);
-    tree->Branch("yVel", &yVel);
-    tree->Branch("zVel", &zVel);
-    tree->Branch("xAcc", &xAcc);
-    tree->Branch("yAcc", &yAcc);
-    tree->Branch("zAcc", &zAcc);
+    // Check geometric bounds
+    double r = std::sqrt(ePos.X() * ePos.X() + ePos.Y() * ePos.Y());
+    if (ePos.Z() < bounds.zMin || ePos.Z() > bounds.zMax || r > bounds.rMax) {
+      std::cout << "  Electron exited bounds at t=" << time << " s"
+                << std::endl;
+      break;
+    }
 
-    // Set the initial state
-    TVector3 ePos = config.electron.position;
-    TVector3 eVel = config.electron.velocity;
-    TVector3 eAcc = solver.acc(ePos, eVel);
-
-    time = config.simulation.initialTime;
     xPos = ePos.X();
     yPos = ePos.Y();
     zPos = ePos.Z();
@@ -83,62 +121,64 @@ int main(int argc, char* argv[]) {
     xAcc = eAcc.X();
     yAcc = eAcc.Y();
     zAcc = eAcc.Z();
+
     tree->Fill();
+  }
 
-    // Advance through the time steps
-    const double stepSize = config.simulation.stepSize;
-    const int nTimeSteps =
-        static_cast<int>(std::round(config.simulation.time / stepSize));
-    const auto& bounds = config.simulation.bounds;
+  fout->cd();
+  tree->Write("", TObject::kOverwrite);
+  fout->Close();
+  delete fout;
+}
 
-    const clock_t beginTime = clock();
-    const double printoutInterval = 1e-6;
-    double printoutTime = printoutInterval;
+int main(int argc, char* argv[]) {
+  if (argc != 2) {
+    std::cerr << "Usage: " << argv[0] << " <config.yaml>" << std::endl;
+    return 1;
+  }
 
-    for (int i = 1; i < nTimeSteps; i++) {
-      time = config.simulation.initialTime + double(i) * stepSize;
-      std::tuple<TVector3, TVector3> outputStep =
-          solver.advance_step(stepSize, ePos, eVel);
+  try {
+    auto config = config::LoadTrajectoryConfig(argv[1]);
 
-      if (time >= printoutTime) {
-        std::cout << printoutTime << " seconds of trajectory simulated..."
-                  << std::endl;
-        printoutTime += printoutInterval;
-      }
+    std::cout << "Simulation time: " << config.simulation.time << " s"
+              << std::endl;
+    std::cout << "Step size: " << config.simulation.stepSize << " s"
+              << std::endl;
+    std::cout << "Energy loss: "
+              << (config.simulation.energyLoss ? "on" : "off") << std::endl;
+    std::cout << "Electrons: " << config.electrons.size() << std::endl;
 
-      ePos = std::get<0>(outputStep);
-      eVel = std::get<1>(outputStep);
-      eAcc = solver.acc(ePos, eVel);
-
-      // Check geometric bounds
-      double r = std::sqrt(ePos.X() * ePos.X() + ePos.Y() * ePos.Y());
-      if (ePos.Z() < bounds.zMin || ePos.Z() > bounds.zMax ||
-          r > bounds.rMax) {
-        std::cout << "Electron exited bounds at t=" << time << " s"
-                  << std::endl;
-        break;
-      }
-
-      xPos = ePos.X();
-      yPos = ePos.Y();
-      zPos = ePos.Z();
-      xVel = eVel.X();
-      yVel = eVel.Y();
-      zVel = eVel.Z();
-      xAcc = eAcc.X();
-      yAcc = eAcc.Y();
-      zAcc = eAcc.Z();
-
-      tree->Fill();
+    // Validate output filename for multi-electron runs
+    if (config.electrons.size() > 1 &&
+        config.simulation.outputFile.find("{index}") == std::string::npos) {
+      throw std::runtime_error(
+          "Multi-electron config requires '{index}' placeholder in output_file "
+          "(e.g. \"traj_{index}.root\")");
     }
 
-    fout->cd();
-    tree->Write("", TObject::kOverwrite);
-    fout->Close();
-    delete fout;
+    // Set up the Boris solver (shared across all electrons — same field)
+    double tau = config.simulation.energyLoss ? 2 * R_E / (3 * C) : 0.0;
+    BorisSolver solver(config.field.get(), -QE, ME, tau);
+
+    const clock_t beginTime = clock();
+
+    for (size_t i = 0; i < config.electrons.size(); i++) {
+      std::string filename =
+          SubstituteIndex(config.simulation.outputFile, i);
+
+      if (config.electrons.size() > 1) {
+        std::cout << "Electron " << i + 1 << "/" << config.electrons.size()
+                  << ": " << filename << std::endl;
+      } else {
+        std::cout << "Output file: " << filename << std::endl;
+      }
+
+      RunSingleTrajectory(filename, solver, config.electrons[i],
+                           config.simulation);
+    }
 
     const clock_t endTime = clock();
-    std::cout << "Execution time: "
+    std::cout << "Total execution time: "
               << float(endTime - beginTime) / CLOCKS_PER_SEC << " seconds"
               << std::endl;
 

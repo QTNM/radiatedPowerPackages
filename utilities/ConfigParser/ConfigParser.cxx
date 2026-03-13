@@ -4,6 +4,7 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include "utilities/ConfigParser/ElectronGenerator.h"
 #include "utilities/ConfigParser/FieldFactory.h"
 
 namespace rad {
@@ -27,10 +28,24 @@ TrajectoryConfig LoadTrajectoryConfig(const std::string& filepath) {
   }
   config.simulation = ParseSimulationConfig(root["simulation"]);
 
-  if (!root["electron"]) {
-    throw std::runtime_error("Config missing required 'electron' section");
+  // Support both singular "electron" and plural "electrons" keys
+  bool hasSingular = root["electron"].IsDefined();
+  bool hasPlural = root["electrons"].IsDefined();
+
+  if (hasSingular && hasPlural) {
+    throw std::runtime_error(
+        "Config has both 'electron' and 'electrons' — use one or the other");
   }
-  config.electron = ParseElectronConfig(root["electron"]);
+  if (!hasSingular && !hasPlural) {
+    throw std::runtime_error(
+        "Config missing required 'electron' or 'electrons' section");
+  }
+
+  if (hasSingular) {
+    config.electrons.push_back(ParseElectronConfig(root["electron"]));
+  } else {
+    config.electrons = GenerateElectrons(root["electrons"]);
+  }
 
   if (!root["field"]) {
     throw std::runtime_error("Config missing required 'field' section");

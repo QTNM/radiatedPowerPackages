@@ -1,10 +1,7 @@
 #include "utilities/ConfigParser/ElectronConfig.h"
 
-#include <cmath>
 #include <stdexcept>
 
-#include "utilities/BasicCore/Constants.h"
-#include "utilities/BasicCore/Physics.h"
 #include "utilities/ConfigParser/YamlUtils.h"
 
 namespace rad {
@@ -38,13 +35,7 @@ ElectronConfig ParseElectronConfig(const YAML::Node& node) {
           "electron: kinetic_energy requires pitch_angle");
     }
     double pitchDeg = node["pitch_angle"].as<double>();
-    double pitchRad = pitchDeg * PI / 180.0;
-
-    double speed = GetSpeedFromKE(ke, ME);
-    double vPerp = speed * std::sin(pitchRad);
-    double vPar = speed * std::cos(pitchRad);
-
-    config.velocity = TVector3(vPerp, 0.0, vPar);
+    config.velocity = VelocityFromKEAndPitch(ke, pitchDeg);
   } else {
     config.velocity = ParseVector3(node["velocity"], "electron.velocity");
   }

@@ -1,0 +1,25 @@
+# Multi-electron scan example
+# Scans pitch angle from 85 to 90 degrees with fixed energy
+
+simulation:
+  output_file: "scan_{index}.root"
+  time: 1.0e-8
+  step_size: 1.0e-12
+  energy_loss: false
+
+electrons:
+  count: 5
+  seed: 42
+  kinetic_energy: 18600
+  pitch_angle:
+    scan: {min: 85.0, max: 90.0}
+  position: [0.0, 0.0, 0.0]
+
+field:
+  type: "BathtubField"
+  parameters:
+    radius: 0.03
+    current: 4688.0
+    Z1: -0.15
+    Z2: 0.15
+    background: [0.0, 0.0, 1.0]

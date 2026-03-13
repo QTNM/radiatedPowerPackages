@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "physics/ElectronDynamics/BaseField.h"
 #include "utilities/ConfigParser/ElectronConfig.h"
@@ -14,7 +15,7 @@ namespace config {
 /// Full trajectory configuration parsed from a YAML file
 struct TrajectoryConfig {
   SimulationConfig simulation;
-  ElectronConfig electron;
+  std::vector<ElectronConfig> electrons;
   std::unique_ptr<BaseField> field;
 };
 
