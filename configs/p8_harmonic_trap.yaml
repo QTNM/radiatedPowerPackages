@@ -1,0 +1,63 @@
+# P8 harmonic trap signal generation (replaces P8HarmonicTrap)
+#
+# Generates waveguide signals for electrons in a harmonic trap across a
+# range of pitch angles, reproducing the setup from arXiv:1901.02844.
+#
+# Usage: RunSimulation configs/p8_harmonic_trap.yaml
+#
+# The original executable scanned over nzMaxPnts=41 values of zMax from
+# 0 to 0.6 cm.  The pitch angle follows theta = atan2(l0, zMax) with
+# l0 = 0.20 m, giving a scan from 90 deg (equatorial) down to ~88.28 deg.
+# Post-processing (sideband peak extraction, ROOT plots) is not reproduced
+# here; use the output HDF5 file to perform equivalent analysis in Python.
+#
+# Field parameters: b0 = 1.000 T, l0 = 0.20 m, rCoil = 1.2 cm,
+#   trapDepth = 4 mT, bkgField = b0 + trapDepth = 1.004 T
+#   iCoil = 2 * 1.2e-2 * 4e-3 / MU0 ≈ 76.4 A
+# Electron: KE = 30 keV, gyroradius ≈ 0.594 mm at bkgField
+# Cyclotron frequency ≈ 26.44 GHz (equatorial) to 26.45 GHz (88.28 deg)
+# LO = f_c - sample_rate/4 using mid-range f_c ≈ 26.447 GHz → 26.072 GHz
+
+simulation:
+  time: 1.0e-6            # 1 us (same as original)
+  step_size: 2.47e-12     # 1/(15 * 27 GHz) ≈ 2.47 ps
+  energy_loss: false
+  bounds:
+    z_min: -0.10          # [m]
+    z_max:  0.10          # [m]
+    r_max:  0.005         # waveguide radius  [m]
+
+electrons:
+  count: 41               # nzMaxPnts in original
+  kinetic_energy: 30000   # eV
+  pitch_angle:
+    scan: {min: 88.28, max: 90.0}  # atan2(0.20, 0.006)..atan2(0.20, 0) deg
+  position: [0.0, 0.000594, 0.0]   # gyroradius offset at 30 keV, 1.004 T  [m]
+
+field:
+  type: "HarmonicField"
+  parameters:
+    radius:  0.012        # rCoil  [m]
+    current: 76.4         # iCoil = 2 * 1.2e-2 * 4e-3 / MU0  [A]
+    background: 1.004     # bkgField  [T]
+
+detector:
+  type: "CircularWaveguide"
+  parameters:
+    radius: 5.0e-3        # wgRadius  [m]
+    length: 8.0e-2        # wgLength  [m]
+  probes:
+    - position: [0.0, 0.0, 0.04]   # +z end of waveguide  [m]
+      mode: {type: TE, m: 1, n: 1}
+      polarisation: true
+
+signal_processing:
+  sample_rate: 1.5e9      # 1.5 GHz
+  lo_frequency: 26.072e9  # mid-range f_c - sample_rate/4  [Hz]
+
+output:
+  file: "p8_harmonic_trap.h5"
+  group: "/signals"
+  datasets: [voltage_i, power_spectrum]
+  metadata: true
+  cleanup_trajectories: true

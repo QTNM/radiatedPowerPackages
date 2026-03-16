@@ -53,8 +53,6 @@ target_link_libraries(FakeTrackGen PRIVATE BasicCore ROOTUtils ${ROOT_LIBRARIES}
 add_executable(StartPositionPT StartPositionPT.cxx)
 target_link_libraries(StartPositionPT PRIVATE ElectronDynamics BasicCore ROOTUtils ${ROOT_LIBRARIES})
 
-add_executable(NicePenningTraj NicePenningTraj.cxx)
-target_link_libraries(NicePenningTraj PRIVATE BasicCore ElectronDynamics ${ROOT_LIBRARIES})
 
 add_executable(Project8CCA Project8CCA.cxx)
 target_link_libraries(Project8CCA PRIVATE BasicCore ROOTUtils Waveguides ${ROOT_LIBRARIES})
@@ -89,8 +87,6 @@ target_link_libraries(FourCoilEnergyRes PRIVATE ElectronDynamics SignalProcessin
 add_executable(SignalFromWaveguide SignalFromWaveguide.cxx)
 target_link_libraries(SignalFromWaveguide PRIVATE ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES})
 
-add_executable(P8HarmonicTrap P8HarmonicTrap.cxx)
-target_link_libraries(P8HarmonicTrap PRIVATE ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES})
 
 add_executable(WaveguideSignalGen WaveguideSignalGen.cxx)
 target_link_libraries(WaveguideSignalGen PRIVATE ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
@@ -118,10 +114,6 @@ target_include_directories(EventGenWithScattering PRIVATE ${HDF5_INCLUDE_DIRS})
 add_executable(TemplateGeneration TemplateGeneration.cxx)
 target_link_libraries(TemplateGeneration PRIVATE ElectronDynamics Scattering SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
 target_include_directories(TemplateGeneration PRIVATE ${HDF5_INCLUDE_DIRS})
-
-add_executable(GenerateAtPitchAngle GenerateAtPitchAngle.cxx)
-target_link_libraries(GenerateAtPitchAngle PRIVATE ElectronDynamics SignalProcessing Waveguides ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
-target_include_directories(GenerateAtPitchAngle PRIVATE ${HDF5_INCLUDE_DIRS})
 
 add_executable(TestWgTheory TestWgTheory.cxx)
 target_link_libraries(TestWgTheory PRIVATE ElectronDynamics SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})

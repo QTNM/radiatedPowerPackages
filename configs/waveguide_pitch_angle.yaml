@@ -1,0 +1,69 @@
+# Waveguide signal at fixed pitch angle (replaces GenerateAtPitchAngle)
+#
+# Generates an ensemble of signals from electrons at a fixed pitch angle in
+# a harmonic trap with a circular waveguide detector. Two probes read both
+# TE11 polarisations from the end of the waveguide.
+#
+# Usage: RunSimulation configs/waveguide_pitch_angle.yaml
+#
+# Equivalent CLI (default parameters):
+#   GenerateAtPitchAngle -o <dir> -n 50 -p 89 -e 18575 -f 1.0 -r 5e-3
+#
+# Notes:
+# - The original executable randomised the azimuthal cyclotron phase of the
+#   initial velocity in addition to the disk position.  ElectronGenerator
+#   places perpendicular velocity along x for a fixed pitch_angle; the
+#   random disk starting position already provides the physically relevant
+#   variation for ensemble statistics.
+# - Field: HarmonicField with deltaTheta = 3.9867 deg giving
+#     trapDepth = B*(1/cos^2(deltaTheta) - 1) ≈ 4.84e-3 T
+#     iCoil    = 2 * trapDepth * rCoil / MU0  ≈ 154.1 A
+#     B_total  = 1.0 + 4.84e-3 ≈ 1.00484 T
+# - LO frequency = f_c - sample_rate/4 ≈ 27.13 GHz - 250 MHz = 26.88 GHz
+
+simulation:
+  time: 10.0e-6           # 10 us
+  step_size: 3.69e-12     # ~1/10 cyclotron period at 27.13 GHz
+  energy_loss: false
+  bounds:
+    z_min: -0.15          # [m]
+    z_max:  0.15          # [m]
+    r_max:  0.005         # waveguide radius  [m]
+
+electrons:
+  count: 50               # nEvents in original (-n flag)
+  kinetic_energy: 18575   # eV (tritium endpoint)
+  pitch_angle: 89.0       # degrees (-p flag)
+  position:
+    disk: {radius: 0.004, z: 0.0}   # rhoGenMax = 4mm, zGen = 0  [m]
+
+field:
+  type: "HarmonicField"
+  parameters:
+    radius:  0.02         # rCoil  [m]
+    current: 154.1        # iCoil = 2 * 4.84e-3 * 0.02 / MU0  [A]
+    background: 1.00484   # bkgField + trapDepth  [T]
+
+detector:
+  type: "CircularWaveguide"
+  parameters:
+    radius: 5.0e-3        # wgRadius  [m]
+    length: 20.0e-2       # wgLength  [m]
+  probes:
+    - position: [0.0, 0.0, 0.10]   # +z end of waveguide  [m]
+      mode: {type: TE, m: 1, n: 1}
+      polarisation: true            # plus polarisation
+    - position: [0.0, 0.0, 0.10]
+      mode: {type: TE, m: 1, n: 1}
+      polarisation: false           # minus polarisation
+
+signal_processing:
+  sample_rate: 1.0e9      # 1 GHz
+  lo_frequency: 26.88e9   # f_c - sample_rate/4  [Hz]
+
+output:
+  file: "waveguide_pitch_angle.h5"
+  group: "/signals"
+  datasets: [voltage_i]
+  metadata: true
+  cleanup_trajectories: true

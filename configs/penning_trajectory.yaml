@@ -1,0 +1,38 @@
+# Penning trap trajectory (replaces NicePenningTraj)
+#
+# Generates an electron trajectory in an ideal Penning trap for
+# visualisation purposes.
+#
+# Usage: RunTrajectory configs/penning_trajectory.yaml
+#
+# The original executable also created a TGraph2D from the first 80 ns of
+# the trajectory.  To reproduce the plot, read the output ROOT file in
+# Python (uproot) or ROOT macro and draw helix[time < 8e-8] in 3D.
+#
+# Trap parameters (same as original NicePenningTraj.cxx):
+#   BField = 10 mT, v0 = -100 V, rho0 = 5 cm, z0 = 10 cm
+# Electron: KE = 100 eV, pitch angle = 88 deg, position = (2 cm, 0, 0)
+# Minimum trap angle: acos(sqrt(-QE * v0 / KE)) ≈ 87.4 deg
+
+simulation:
+  output_file: "penning_trajectory.root"
+  time: 1.0e-6            # 1 us
+  step_size: 1.0e-12      # 1 ps
+  energy_loss: false
+  bounds:
+    z_min: -0.15          # [m]
+    z_max:  0.15          # [m]
+    r_max:  0.08          # [m]
+
+electron:
+  kinetic_energy: 100     # eV
+  pitch_angle: 88.0       # degrees (above minimum trap angle ~87.4 deg)
+  position: [0.02, 0.0, 0.0]   # 2 cm radial offset  [m]
+
+field:
+  type: "IdealPenningTrap"
+  parameters:
+    BField: 0.01          # magnetic field magnitude  [T]
+    v0:    -100.0         # ring-endcap voltage  [V]
+    rho0:    0.05         # ring electrode radius  [m]
+    z0:      0.10         # endcap half-distance  [m]

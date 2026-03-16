@@ -1,0 +1,59 @@
+# Dipole antenna pitch angle scan (replaces GenerateDipoleSignals)
+#
+# Generates downmixed dipole antenna signals for electrons trapped in a
+# bathtub magnetic trap at N different pitch angles (87-90 degrees).
+#
+# Usage: RunSimulation configs/dipole_pitch_scan.yaml
+#
+#
+# Notes:
+# - Position (0, -0.000464, 0) centres the guiding centre at the origin for
+#   a ~88.5 degree pitch angle at B=1T, E=18.6keV (gyroradius ~0.464mm).
+#   The original executable computed the gyroradius per pitch angle; here a
+#   representative mean value is used for all scan points.
+# - LO frequency = f_c - sample_rate/4 + 50 MHz  (≈ 26.81 GHz at 1T, 18.6keV)
+# - Step size = 1/(10 * f_c) ≈ 3.70 ps
+
+simulation:
+  time: 10.0e-6           # 10 us
+  step_size: 3.70e-12     # ~1/10 cyclotron period at 27 GHz
+  energy_loss: false
+  bounds:
+    z_min: -0.15          # [m] trap half-length
+    z_max:  0.15          # [m]
+    r_max:  0.12          # [m] beyond antenna radius
+
+electrons:
+  count: 10               # number of pitch angles (adjust as needed)
+  kinetic_energy: 18600   # eV (tritium endpoint)
+  pitch_angle:
+    scan: {min: 87.0, max: 90.0}
+  position: [0.0, -0.000464, 0.0]   # guiding centre offset
+
+field:
+  type: "BathtubField"
+  parameters:
+    radius: 0.05          # rCoil [m]
+    current: 318.31       # iCoil = 2 * 4e-3 * 0.05 / MU0  [A]
+    Z1: -0.10             # -trapLength/2  [m]
+    Z2:  0.10             # +trapLength/2  [m]
+    background: [0.0, 0.0, 1.0]   # 1 T along z
+
+detector:
+  type: "HalfWaveDipole"
+  parameters:
+    position:  [0.08, 0.0, 0.0]   # 8 cm from trap axis  [m]
+    x_axis:    [1.0,  0.0, 0.0]
+    z_axis:    [0.0,  1.0, 0.0]   # dipole oriented along y
+    frequency: 27.01e9            # f_c at 1T, 18.6keV  [Hz]
+
+signal_processing:
+  sample_rate: 1.0e9      # 1 GHz
+  lo_frequency: 26.81e9   # f_c - sample_rate/4 + 50 MHz  [Hz]
+
+output:
+  file: "dipole_pitch_scan.h5"
+  group: "/signals"
+  datasets: [voltage_i]
+  metadata: true
+  cleanup_trajectories: true
