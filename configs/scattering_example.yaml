@@ -1,0 +1,67 @@
+# Signal from CRES electrons in a waveguide with scattering on gas included
+#
+# Generates an ensemble of electron signals from electrons at a variety of pitch
+# angles in a bathtub trap with a circular waveguide as the readout method
+#
+# Usage: ./build/bin/RunSimulation configs/scattering_example.yaml
+#
+# Equivalent CLI (default parameters):
+#   EventGenWithScattering -o <dir> -n 50 -d 1e18 -t 10e-3 -r 6e-3 -f 0 -p 0
+#
+
+simulation:
+  time: 10.0e-3           # 10 ms
+  step_size: 3.69e-12     # ~1/10 cyclotron period at 27.08 GHz
+  energy_loss: true
+  bounds:
+    z_min: -0.10          # [m]
+    z_max:  0.10          # [m]
+    r_max:  0.006         # waveguide radius  [m]
+
+electrons:
+  count: 50            
+  kinetic_energy:
+    uniform: {min: 17575, max: 18575}   # eV, 1 keV window around endpoint
+  isotropic: true                       # random direction on unit sphere
+  position:
+    disk: {radius: 3.0e-3, z: 0.0}  # rhoGenMax = 0.5 * wgRadius  [m]
+
+field:
+  type: "BathtubField"
+  parameters:
+    radius:  0.02     # rCoil  [m]
+    current: 127.3    # iCoil = 2 * 4e-3 * 0.02 / MU0  [A]
+    background: [0.0, 0.0, 1.0]   # bkgField [T]
+    Z1: -0.1
+    Z2: 0.1
+
+scattering:
+  gases:
+    - species: T
+      density: 0.95e18  # m^-3 
+    - species: He
+      density: 0.05e18  # m^-3
+
+detector:
+  type: "CircularWaveguide"
+  parameters:
+    radius: 6.0e-3        # wgRadius  [m]
+    length: 20.0e-2       # wgLength  [m]
+  probes:
+    - position: [0.0, 0.0, 0.10]   # +z end of waveguide  [m]
+      mode: {type: TE, m: 1, n: 1}
+      polarisation: true            # plus polarisation
+    - position: [0.0, 0.0, 0.10]
+      mode: {type: TE, m: 1, n: 1}
+      polarisation: false           # minus polarisation
+
+signal_processing:
+  sample_rate: 1.0e9      # 1 GHz
+  lo_frequency: 26.83e9   # f_c - sample_rate/4  [Hz]
+
+output:
+  file: "scattering_example.h5"
+  group: "/signals"
+  datasets: [voltage_i]
+  metadata: true
+  cleanup_trajectories: true

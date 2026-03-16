@@ -107,10 +107,6 @@ target_link_libraries(SyntheticSignals PRIVATE Antennas ElectronDynamics FieldCl
 add_executable(TwoElectronSim TwoElectronSim.cxx)
 target_link_libraries(TwoElectronSim PRIVATE BasicFunctions ElectronDynamics ROOTUtils ${ROOT_LIBRARIES})
 
-add_executable(EventGenWithScattering EventGenWithScattering.cxx)
-target_link_libraries(EventGenWithScattering PRIVATE ElectronDynamics Scattering SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
-target_include_directories(EventGenWithScattering PRIVATE ${HDF5_INCLUDE_DIRS})
-
 add_executable(TemplateGeneration TemplateGeneration.cxx)
 target_link_libraries(TemplateGeneration PRIVATE ElectronDynamics Scattering SignalProcessing ${ROOT_LIBRARIES} ${HDF5_CXX_LIBRARIES})
 target_include_directories(TemplateGeneration PRIVATE ${HDF5_INCLUDE_DIRS})
