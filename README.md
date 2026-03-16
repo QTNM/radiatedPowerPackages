@@ -9,8 +9,10 @@ The project is organized into two main categories:
 Reusable mathematical and computational libraries:
 - **BasicCore** - Header-only constants and basic math (no dependencies)
 - **SignalUtils** - FFTW/Boost dependent signal processing utilities
-- **ROOTUtils** - ROOT framework dependent analysis utilities  
+- **ROOTUtils** - ROOT framework dependent analysis utilities
 - **BasicFunctions** - Legacy consolidated utility functions
+- **HDF5Writer** - HDF5 output helpers
+- **ConfigParser** - YAML-driven simulation configuration (fields, electrons, detectors, signal processing)
 
 ### Physics Modules (`physics/`)
 Domain-specific physics implementations:
@@ -26,24 +28,26 @@ Domain-specific physics implementations:
 The core code requires C++20, built with CMake (3.18+) with the following external dependencies:
 
 ### Utility Libraries
-|   | BOOST (1.73+) | ROOT (6.14+) | FFTW3 |
-|:-:|:-------------:|:------------:|:-----:|
-| BasicCore | | | |
-| SignalUtils | x | | x |
-| ROOTUtils | | x | |
-| BasicFunctions | | x | |
+|   | BOOST (1.73+) | ROOT (6.14+) | FFTW3 | HDF5 | yaml-cpp |
+|:-:|:-------------:|:------------:|:-----:|:----:|:--------:|
+| BasicCore | | | | | |
+| SignalUtils | x | | x | | |
+| ROOTUtils | | x | | | |
+| BasicFunctions | | x | | | |
+| HDF5Writer | | | | x | |
+| ConfigParser | | x | | | x |
 
 ### Physics Libraries
 |   | BOOST (1.73+) | ROOT (6.14+) | FFTW3 |
 |:-:|:-------------:|:------------:|:-----:|
 | FieldClasses | | x | |
-| ElectronDynamics | x | x | | 
+| ElectronDynamics | x | x | |
 | Antennas | | x | |
 | SignalProcessing | | x | |
 | Waveguides | | x | |
 | Scattering | | | |
 
-HDF5 libraries are also required for some executables purely for I/O.
+HDF5 is also required by the `RunSimulation` executable and several other executables for I/O.
 
 ### Library Dependencies
 
@@ -52,17 +56,16 @@ HDF5 libraries are also required for some executables purely for I/O.
 - `SignalUtils` → FFTW3 + Boost
 - `ROOTUtils` → BasicCore + SignalUtils + ROOT
 - `BasicFunctions` → BasicCore + ROOT
+- `HDF5Writer` → HDF5
+- `ConfigParser` → BasicCore + ElectronDynamics + Antennas + Waveguides + Scattering + yaml-cpp + ROOT
 
 **Physics Dependencies:**
 - `FieldClasses` → BasicCore + ROOTUtils + ROOT
-- `Antennas` → BasicFunctions + ROOT  
+- `Antennas` → BasicFunctions + ROOT
 - `Waveguides` → BasicCore + ROOT + Boost
 - `ElectronDynamics` → BasicCore + Waveguides + ROOT + Boost
 - `Scattering` → BasicCore + BasicFunctions + Boost
 - `SignalProcessing` → SignalUtils + FieldClasses + Antennas + Waveguides + ROOT
-
-
-There are also 47+ example programs (`executables/`) demonstrating various physics calculations and signal processing workflows. We recommend installing all packages to access the full functionality.
 
 A docker image containing the required external libraries is available at: https://hub.docker.com/repository/docker/sebj101/qtnm_deps.
 
@@ -72,7 +75,7 @@ A minimal set of instructions to install the required dependencies using Ubuntu 
 ```
 $ sudo apt-get update -y
 $ sudo apt-get upgrade -y
-$ sudo apt-get install -y git mpich make wget python3-pip build-essential libssl-dev libfftw3-dev libgsl27
+$ sudo apt-get install -y git mpich make wget python3-pip build-essential libssl-dev libfftw3-dev libgsl27 libyaml-cpp-dev
 ```
 
 ### Install CMake
@@ -87,7 +90,7 @@ $ make install
 
 ### Download (pre-compiled) ROOT
 ```
-$ wget https://root.cern/download/root_v6.26.04.Linux-ubuntu22-x86_64-gcc11.2.tar.gz
+$ wget https://root.cern/download/root_v6.30.06.Linux-ubuntu22.04-x86_64-gcc11.4.tar.gz
 $ tar -xzvf root_v6.26.04.Linux-ubuntu22-x86_64-gcc11.2.tar.gz
 $ echo "source /path/to/root/bin/thisroot.sh" >> ~/.bashrc
 $ source ~/.bashrc
@@ -116,17 +119,51 @@ $ cd build
 $ cmake ..
 $ cmake --build . -jN
 ```
-where N is the number of cores used in the build
+where N is the number of cores used in the build.
 
-### Build System Features
-- **Modular Design**: Each `utilities/` and `physics/` directory manages its own subdirectories
-- **Clean Dependencies**: Clear separation between utility libraries and physics modules
-- **Selective Building**: Can build individual libraries as needed
-- **Professional Structure**: Follows modern C++ project organization patterns
-- **Maintainable**: Easy to add new libraries or modify existing ones
+## Config-driven simulations
+
+The preferred way to run simulations is via the `RunSimulation` and `RunTrajectory` executables, which are driven entirely by YAML configuration files. Example configs are provided in `configs/`.
+
+### Running a full simulation pipeline
+
+```bash
+$ ./build/bin/RunSimulation configs/dipole_pitch_scan.yaml
+```
+
+`RunSimulation` handles the complete chain: trajectory generation → signal processing → HDF5 output. The YAML file specifies:
+
+- **`simulation`** – time, step size, energy loss, geometric bounds
+- **`electron`** / **`electrons`** – single electron or ensemble; kinetic energy, pitch angle (fixed, scan, or uniform), position (fixed, disk, or cylinder), isotropic velocity
+- **`field`** – `BathtubField`, `HarmonicField`, `UniformField`, or `IdealPenningTrap`
+- **`scattering`** *(optional)* – gas species (H, H₂, He, T, T₂) and number densities
+- **`detector`** – antenna (`HalfWaveDipole`, `HertzianDipole`, `PatchAntenna`, `IsotropicAntenna`) or waveguide/cavity (`CircularWaveguide`, `RectangularWaveguide`, `CircularCavity`) with probes
+- **`signal_processing`** – sample rate, LO frequency, optional noise sources
+- **`output`** – HDF5 file path, datasets (`voltage_i`, `voltage_q`, `power_spectrum`), metadata
+
+### Running trajectory generation only
+
+```bash
+$ ./build/bin/RunTrajectory configs/example_bathtub.yaml
+```
+
+`RunTrajectory` generates ROOT trajectory files without signal processing. Supports single or multi-electron configs with the same `electron`/`electrons`/`field` sections as above.
+
+### Example configs
+
+| Config | Description |
+|--------|-------------|
+| `configs/example_bathtub.yaml` | Single electron trajectory in a bathtub trap |
+| `configs/example_penning_trap.yaml` | Single electron trajectory in an ideal Penning trap |
+| `configs/example_scan.yaml` | Multi-electron pitch angle scan (trajectory only) |
+| `configs/dipole_pitch_scan.yaml` | Pitch angle scan with half-wave dipole → HDF5 signals |
+| `configs/waveguide_pitch_angle.yaml` | 50-electron ensemble in circular waveguide |
+| `configs/p8_harmonic_trap.yaml` | 41-point pitch angle scan in harmonic trap (P8 study) |
+| `configs/penning_trajectory.yaml` | Penning trap trajectory for visualisation |
 
 ## Creating electron trajectories
-All the code required to create magnetic fields and electron trajectories is contained within the `physics/ElectronDynamics/` module. 
+**N.B.: The preferred way to create trajectories is now via `RunTrajectory`.**
+All the code required to create magnetic fields and electron trajectories is contained within the `physics/ElectronDynamics/` module.
 It is possible to use the contained classes to generate your own electron trajectories (this is demonstrated in the `writeTrajectory` executable).
 However, a helper class (`ElectronTrajectoryGen` contained within `physics/ElectronDynamics/TrajectoryGen.h`) exists which will create ROOT files containing the trajectories in a format that can be read by other package components.
 
@@ -135,7 +172,7 @@ The required arguments are:
 * A pointer to the magnetic field map (more on this later)
 * A ROOT TVector3 of the initial electron position
 * A ROOT TVector3 of the initial electron velocity
-* The simulation step size to use in seconds (for reference an endpoint electron in a 1T field will have a cyclotron period of about $3.7 \times 10^{-11}$ seconds so 20 steps per orbit would be $1.85 \times 10^{-12}$. 
+* The simulation step size to use in seconds (for reference an endpoint electron in a 1T field will have a cyclotron period of about $3.7 \times 10^{-11}$ seconds so 20 steps per orbit would be $1.85 \times 10^{-12}$.
 * The total time to simulate in seconds
 
 The optional arguments are:
@@ -145,7 +182,7 @@ The optional arguments are:
 Upon successfuly creation of the ```ElectronTrajectoryGen``` object, call the ```GenerateTraj``` member function to produce the file.
 
 ### Solver
-The solver used to propagate the particles is the Boris solver which is energy conserving (except for any specified energy losses). 
+The solver used to propagate the particles is the Boris solver which is energy conserving (except for any specified energy losses).
 An explanation of the solver (named as the Boris C solver) is given in [Ref. 1][1].
 
 ### Magnetic fields
@@ -155,10 +192,10 @@ The most familiar ones are `BathtubField` and `HarmonicField`.
 ## Using the signal processing
 
 ### Antennas
-Different types of antenna are implemented as derived classes of the abstract base class `IAntenna` in `physics/Antennas/`. 
+Different types of antenna are implemented as derived classes of the abstract base class `IAntenna` in `physics/Antennas/`.
 Typically the one used for analyses is the `HalfWaveDipole`.
 Implementations exist for other antennas including `HertzianDipole`, `PatchAntenna`, and `IsotropicAntenna`.
-The `HalfWaveDipole` requires a spatial position, the directions of two (perpendicular) cartesian axes and a central frequency. 
+The `HalfWaveDipole` requires a spatial position, the directions of two (perpendicular) cartesian axes and a central frequency.
 Additionally a time delay (in seconds) may be specified for the antenna.
 
 ### FieldPoint
@@ -166,11 +203,11 @@ If you want to view the EM fields at a given point in space the best class to us
 Calling the function `GenerateFields` is required to generate the fields between two specified times.
 
 ### InducedVoltage
-The `InducedVoltage` class (in `physics/SignalProcessing/`) provides a lighter weight implementation of just the voltage induced on the specific antenna (or array of antennas). 
+The `InducedVoltage` class (in `physics/SignalProcessing/`) provides a lighter weight implementation of just the voltage induced on the specific antenna (or array of antennas).
 The required inputs are an electron trajectory file and either a pointer to an antenna or (in the case of simulating an array of antennas wired together) a vector of antennas.
 Additionally, a boolean can be specified over whether or not to include the signal propagation time when generating the signal.
 
-If one just wants to view this signal without any downmixing, downsampling or noise added then simply call the function `GenerateVoltage`. 
+If one just wants to view this signal without any downmixing, downsampling or noise added then simply call the function `GenerateVoltage`.
 A `TGraph` of the time series signal can then be produced using `GetVoltageGraph`.
 
 ### Signal
