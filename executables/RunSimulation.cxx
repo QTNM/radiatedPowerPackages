@@ -264,6 +264,17 @@ static void WriteSignalOutputs(H5::Group& group, Signal& sig,
   }
 }
 
+static void WriteInitialConditions(H5::Group& group,
+                                   const config::ElectronConfig& electron) {
+  double pos[3] = {electron.position.X(), electron.position.Y(),
+                   electron.position.Z()};
+  hdf5::WriteDataset(group, "initial_position", pos, 3);
+
+  double vel[3] = {electron.velocity.X(), electron.velocity.Y(),
+                   electron.velocity.Z()};
+  hdf5::WriteDataset(group, "initial_velocity", vel, 3);
+}
+
 static void WriteMetadata(H5::Group& group,
                           const config::SimulationConfig& sim,
                           const config::SignalProcessingConfig& sp) {
@@ -330,6 +341,8 @@ static void ProcessElectron(H5::H5File& h5file, const std::string& groupName,
   if (output.metadata) {
     WriteMetadata(group, config.simulation, sp);
   }
+
+  WriteInitialConditions(group, electron);
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -376,6 +389,10 @@ int main(int argc, char* argv[]) {
     const clock_t startTime  = clock();
     const size_t  nElectrons = config.electrons.size();
     const bool    multi      = nElectrons > 1;
+
+    if (multi) {
+      h5file.createGroup(output.group);
+    }
 
     for (size_t i = 0; i < nElectrons; i++) {
       std::string trajFile =
